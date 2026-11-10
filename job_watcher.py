@@ -20,6 +20,11 @@ Usage:
   python job_watcher.py --refresh-metrics
                                         refresh stock metrics and scores now
                                         (needs: pip install yfinance)
+  python job_watcher.py --refilter      re-run your filters on the saved postings only,
+                                        e.g. after editing config.json; makes no requests
+
+Every run keeps two lists: postings.db / all_postings.csv hold every open posting from
+every board, and job_tracker.xlsx holds the ones that pass your filters.
 
 Your Status and Notes edits in the Excel file are preserved between runs.
 Close the Excel file if you want a run to update it; otherwise the update is picked up
@@ -35,13 +40,16 @@ import json
 import logging
 import os
 import re
+import sqlite3
 import sys
 import threading
 import time
+import zlib
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 try:
     import requests
@@ -75,7 +83,11 @@ MANUAL_BOARDS = {"other", "manual", "own"}
 
 # Filled from config at the start of each run
 SETTINGS = {"search_terms": ["software engineer", "software developer", "frontend", "full stack"],
-            "max_pages": 10, "window_days": 1.0, "unsorted_pages": 25, "hard_max_pages": 100}
+            "max_pages": 10, "window_days": 1.0, "unsorted_pages": 25, "hard_max_pages": 100,
+            "backoff": 30,
+            # Minimum seconds between requests to the same site, shared by all worker threads.
+            "host_intervals": {"workable.com": 2.0, "smartrecruiters.com": 0.5, "myworkdayjobs.com": 0.5,
+                               "lever.co": 0.3, "ashbyhq.com": 0.3, "greenhouse.io": 0.2, "default": 0.3}}
 
 log = logging.getLogger("job_watcher")
 _local = threading.local()
@@ -174,10 +186,81 @@ def html_to_text(s):
     return html.unescape(TAG_RE.sub(" ", s))
 
 
-def _request(method, url, params=None, body=None, retries=2):
-    """JSON request. Returns None on 4xx (except 429). Retries transient errors."""
+class RateLimited(Exception):
+    """A site asked us to slow down. The board is skipped quietly and retried next run."""
+
+
+class HostLimiter:
+    """Spaces out requests to each site across all worker threads, and pauses a site
+    entirely when it answers 429 Too Many Requests."""
+    SITES = ("myworkdayjobs.com", "lever.co", "greenhouse.io", "ashbyhq.com",
+             "smartrecruiters.com", "workable.com")
+
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.next_slot = {}
+        self.counts = Counter()
+        self.blocked = set()  # sites that kept refusing this run; left alone until the next run
+        self.strikes = Counter()
+
+    def reset(self):
+        with self.lock:
+            self.counts.clear()
+            self.blocked.clear()
+            self.strikes.clear()
+
+    def refused(self, site):
+        """Three refusals from a site, from any board, and it is left alone for this run."""
+        with self.lock:
+            self.strikes[site] += 1
+            if self.strikes[site] >= 3:
+                self.blocked.add(site)
+
+    def accepted(self, site):
+        with self.lock:
+            self.strikes[site] = 0
+
+    @classmethod
+    def site(cls, url):
+        host = urlparse(url).hostname or ""
+        return next((s for s in cls.SITES if host == s or host.endswith("." + s)), host)
+
+    def wait(self, site):
+        intervals = SETTINGS["host_intervals"]
+        gap = intervals.get(site, intervals.get("default", 0.3))
+        with self.lock:
+            now = time.monotonic()
+            slot = max(now, self.next_slot.get(site, 0.0))
+            self.next_slot[site] = slot + gap
+            self.counts[site] += 1
+        if slot > now:
+            time.sleep(slot - now)
+
+    def cool_down(self, site, seconds):
+        with self.lock:
+            self.next_slot[site] = max(self.next_slot.get(site, 0.0), time.monotonic() + seconds)
+
+
+LIMITER = HostLimiter()
+
+
+def retry_after(response):
+    value = response.headers.get("Retry-After", "")
+    try:
+        seconds = float(value)
+    except ValueError:
+        seconds = SETTINGS["backoff"]
+    return max(5.0, min(seconds, 300.0))
+
+
+def _request(method, url, params=None, body=None, retries=3):
+    """JSON request. Returns None on 4xx. On 429 waits as asked, then gives up with RateLimited."""
+    site = HostLimiter.site(url)
     for attempt in range(retries):
         last = attempt == retries - 1
+        if site in LIMITER.blocked:
+            raise RateLimited(f"{site} asked to slow down")  # no request sent
+        LIMITER.wait(site)
         try:
             if method == "POST":
                 r = session().post(url, json=body, timeout=25)
@@ -188,7 +271,14 @@ def _request(method, url, params=None, body=None, retries=2):
                 raise
             time.sleep(2)
             continue
-        if r.status_code == 429 or r.status_code >= 500:
+        if r.status_code == 429:
+            LIMITER.cool_down(site, retry_after(r))  # every thread holds off this site
+            LIMITER.refused(site)
+            if last:
+                raise RateLimited(f"{site} asked to slow down")
+            continue
+        LIMITER.accepted(site)
+        if r.status_code >= 500:
             if last:
                 r.raise_for_status()
             time.sleep(5)
@@ -208,7 +298,7 @@ def get_json(url, params=None):
     return _request("GET", url, params=params)
 
 
-def post_json(url, body, retries=2):
+def post_json(url, body, retries=3):
     return _request("POST", url, body=body, retries=retries)
 
 
@@ -344,6 +434,8 @@ def fetch_lever(slug, host=None, auto=False):
     for h in ([host] if host else LEVER_HOSTS):
         try:
             data = get_json(f"{h}/v0/postings/{quote(slug)}", {"mode": "json"})
+        except RateLimited:
+            raise
         except Exception:
             continue
         if not isinstance(data, list):
@@ -359,7 +451,9 @@ SR_API = "https://api.smartrecruiters.com/v1/companies"
 
 
 def _sr_detail(slug, pid):
-    d = get_json(f"{SR_API}/{quote(slug)}/postings/{pid}") or {}
+    d = get_json(f"{SR_API}/{quote(slug)}/postings/{pid}")
+    if not isinstance(d, dict):
+        return {}  # failed: leave the description empty so it is tried again next run
     sections = (d.get("jobAd") or {}).get("sections") or {}
     text = " ".join(html_to_text((sections.get(k) or {}).get("text", ""))
                     for k in ("jobDescription", "qualifications", "additionalInformation"))
@@ -469,7 +563,7 @@ def parse_workday(s):
     return s, None, None
 
 
-def _wd_list(tenant, shard, site, term, offset, retries=2):
+def _wd_list(tenant, shard, site, term, offset, retries=3):
     url = f"https://{tenant}.{shard}.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs"
     return post_json(url, {"appliedFacets": {}, "limit": 20, "offset": offset, "searchText": term}, retries)
 
@@ -485,6 +579,8 @@ def discover_workday(tenant, shard=None):
         for site in sites:
             try:
                 data = _wd_list(tenant, sh, site, "", 0, retries=1)
+            except RateLimited:
+                raise  # stop guessing for now; detection continues on a later run
             except requests.ConnectionError:
                 break  # this tenant is not on this shard
             except Exception:
@@ -495,7 +591,9 @@ def discover_workday(tenant, shard=None):
 
 
 def _wd_detail(base, tenant, site, path):
-    d = get_json(f"{base}/wday/cxs/{tenant}/{site}{path}") or {}
+    d = get_json(f"{base}/wday/cxs/{tenant}/{site}{path}")
+    if not isinstance(d, dict):
+        return {}  # failed: leave the description empty so it is tried again next run
     info = d.get("jobPostingInfo") or d
     locs = [info.get("location")] + list(info.get("additionalLocations") or [])
     country = (info.get("country") or {}).get("descriptor") if isinstance(info.get("country"), dict) else None
@@ -560,12 +658,11 @@ AUTO_ORDER = ["greenhouse", "ashby", "lever", "smartrecruiters", "workable"]
 
 
 def slug_variants(name):
-    seen, out = set(), []
+    """The few spellings boards actually use: 'roserocket', 'rose-rocket', 'Rose Rocket'."""
     low = name.lower().strip()
-    for v in (name, low, low.replace(" ", ""), low.replace(" ", "-"),
-              re.sub(r"[^a-z0-9]", "", low), re.sub(r"[^a-z0-9]+", "-", low).strip("-")):
-        if v and v not in seen:
-            seen.add(v)
+    out = []
+    for v in (re.sub(r"[^a-z0-9]", "", low), re.sub(r"[^a-z0-9]+", "-", low).strip("-"), name.strip()):
+        if v and v not in out:
             out.append(v)
     return out
 
@@ -800,84 +897,187 @@ def level_for(title):
     return "Unlabelled"
 
 
-def evaluate_company(row, state, rules, known, rejected, now, window_start, max_age, first_check):
-    """Runs in a worker thread: fetch one board and pick out matching postings.
-    Only reads shared state; the main thread applies the results.
+def fetch_board(row, state, rules, has_text, now, max_age, window_start, known_boards, detail_cap):
+    """Runs in a worker thread. Downloads one board's full list (normally a single request)
+    and returns every posting; filtering happens later, locally, against the saved list.
 
-    A posting is new only if it went up within max_age (default 24 hours). Postings with
-    no date are treated as already up the first time a board is checked, and as new after
-    that, since they were not there on the previous check."""
+    Workday and SmartRecruiters lists carry no descriptions, so a description is fetched
+    only for postings that could match (right title, fresh enough, in one of your regions)
+    and only once: it is saved and never requested again."""
     try:
         loaded = load_company(entry_for(row), state)
+    except RateLimited as exc:
+        return {"row": row, "deferred": str(exc)}
     except Exception as exc:
         return {"row": row, "error": exc}
     if loaded is None:
         return {"row": row, "missing": True}
     provider, res = loaded
-    matches, new_rejects, still_rejected = [], [], []
+    first_check = f"{provider}:{res['slug']}" not in known_boards
 
-    def too_old(posted):
-        return now - posted > max_age or bool(window_start and posted < window_start)
-
-    for job in res["jobs"]:
+    def worth_a_detail_request(job):
         if not rules.title_ok(job["title"]):
-            continue
-        key = job["key"]
-        if key in known:
-            matches.append({"key": key, "known": True, "title": job["title"], "url": job["url"]})
-            continue
-        if key in rejected:
-            still_rejected.append(key)
-            continue
+            return False
         posted = job.get("posted")
-        if posted is not None and too_old(posted):
-            continue
-        if posted is None and first_check and not job.get("load_detail"):
-            new_rejects.append(key)  # undated and already up when this board was first checked
-            continue
-        detail_loaded = False
+        if posted is None and first_check:
+            return False  # undated and already up the first time this board was read
+        if posted is not None and (now - posted > max_age or (window_start and posted < window_start)):
+            return False
+        return job.get("ambiguous_location") or rules.region_for(job["locations"]) is not None
 
-        def load():
-            nonlocal detail_loaded
-            if detail_loaded or not job.get("load_detail"):
-                return
-            detail_loaded = True
+    details = 0
+    postings = []
+    for job in res["jobs"]:
+        if (job.get("text") is None and job.get("load_detail") and job["key"] not in has_text
+                and details < detail_cap and worth_a_detail_request(job)):
+            details += 1
             try:
                 d = job["load_detail"]() or {}
+            except RateLimited:
+                d, detail_cap = {}, 0  # stop asking this site for details until next run
             except Exception:
                 d = {}
             if d.get("locations"):
                 job["locations"] = d["locations"]
-            job["text"] = d.get("text") or job.get("text") or ""
+            if "text" in d:
+                job["text"] = d["text"]
             job["url"] = d.get("url") or job["url"]
             job["posted"] = job.get("posted") or d.get("posted")
+        postings.append({k: job.get(k) for k in ("key", "title", "locations", "url", "posted", "text")})
+    meta = {k: v for k, v in res.items() if k != "jobs"}
+    return {"row": row, "provider": provider, "res": meta, "postings": postings, "details": details}
 
-        def fails_age_after_detail():
-            p = job.get("posted")
-            return (p is not None and too_old(p)) or (p is None and first_check)
 
-        region = rules.region_for(job["locations"])
-        if region is None and job.get("ambiguous_location"):
-            load()
-            region = rules.region_for(job["locations"])
-        if region is None:
-            if detail_loaded:
-                new_rejects.append(key)
+# ----------------------------------------------------------------- local postings store
+class PostingStore:
+    """Every posting from every board, kept locally in SQLite. Filtering reads from here,
+    so changing your rules or re-running the filters never touches the job boards."""
+
+    def __init__(self, path):
+        self.db = sqlite3.connect(path)
+        self.db.row_factory = sqlite3.Row
+        self.db.executescript("""
+            CREATE TABLE IF NOT EXISTS postings (
+                key TEXT PRIMARY KEY, board TEXT, company TEXT, provider TEXT, title TEXT,
+                locations TEXT, url TEXT, posted TEXT, first_seen TEXT, last_seen TEXT,
+                closed TEXT, open INTEGER, baseline INTEGER, text BLOB);
+            CREATE INDEX IF NOT EXISTS postings_board ON postings(board);
+            CREATE INDEX IF NOT EXISTS postings_open ON postings(open);""")
+
+    def keys_with_text(self):
+        return {r[0] for r in self.db.execute("SELECT key FROM postings WHERE text IS NOT NULL")}
+
+    def boards(self):
+        return {r[0] for r in self.db.execute("SELECT DISTINCT board FROM postings")}
+
+    def save_board(self, board, company, provider, postings, now, complete, first_time):
+        stamp = now.isoformat()
+        existing = {r["key"]: r for r in self.db.execute(
+            "SELECT key, locations, text IS NOT NULL AS has_text FROM postings WHERE board = ?", (board,))}
+        new = 0
+        for p in postings:
+            locations = json.dumps(p.get("locations") or [])
+            posted = p["posted"].isoformat() if p.get("posted") else None
+            old = existing.get(p["key"])
+            text = None
+            if p.get("text") is not None and not (old and old["has_text"]):
+                text = zlib.compress(p["text"][:50000].encode("utf-8"))
+            if old:
+                if not p.get("locations"):
+                    locations = old["locations"]  # keep locations learned from a detail page
+                self.db.execute(
+                    "UPDATE postings SET company=?, provider=?, title=?, locations=?, url=?,"
+                    " posted=COALESCE(posted, ?), last_seen=?, open=1, closed=NULL,"
+                    " text=COALESCE(text, ?) WHERE key=?",
+                    (company, provider, p["title"], locations, p["url"], posted, stamp, text, p["key"]))
+            else:
+                new += 1
+                self.db.execute(
+                    "INSERT OR REPLACE INTO postings (key, board, company, provider, title, locations, url,"
+                    " posted, first_seen, last_seen, open, baseline, text) VALUES (?,?,?,?,?,?,?,?,?,?,1,?,?)",
+                    (p["key"], board, company, provider, p["title"], locations, p["url"], posted,
+                     stamp, stamp, 1 if first_time else 0, text))
+        if complete:  # a full list proves anything missing from it was taken down
+            self.db.execute("UPDATE postings SET open=0, closed=? WHERE board=? AND open=1 AND last_seen<?",
+                            (stamp, board, stamp))
+        self.db.commit()
+        return new
+
+    def open_postings(self):
+        return self.db.execute(
+            "SELECT key, board, company, provider, title, locations, url, posted, first_seen, baseline,"
+            " text IS NOT NULL AS has_text FROM postings WHERE open=1").fetchall()
+
+    def text_of(self, key):
+        row = self.db.execute("SELECT text FROM postings WHERE key=?", (key,)).fetchone()
+        return zlib.decompress(row[0]).decode("utf-8") if row and row[0] is not None else None
+
+    def status_of(self, keys):
+        found = {}
+        keys = list(keys)
+        for i in range(0, len(keys), 500):
+            chunk = keys[i:i + 500]
+            q = f"SELECT key, open FROM postings WHERE key IN ({','.join('?' * len(chunk))})"
+            found.update({r["key"]: bool(r["open"]) for r in self.db.execute(q, chunk)})
+        return found
+
+    def counts(self):
+        r = self.db.execute("SELECT COUNT(*), SUM(open) FROM postings").fetchone()
+        return r[0] or 0, r[1] or 0
+
+    def export_csv(self, path, tracked):
+        """The 'all postings' list: every open posting, newest first, readable in Excel."""
+        rows = self.db.execute(
+            "SELECT first_seen, posted, company, title, locations, provider, url, key FROM postings"
+            " WHERE open=1 ORDER BY COALESCE(posted, first_seen) DESC").fetchall()
+        tmp = path.with_name(path.stem + ".saving.csv")
+        try:
+            with open(tmp, "w", newline="", encoding="utf-8-sig") as f:
+                w = csv.writer(f)
+                w.writerow(["First seen", "Posted", "Company", "Title", "Location", "Board",
+                            "In your tracker", "Link"])
+                for r in rows:
+                    first, posted = to_local_naive(r["first_seen"]), to_local_naive(r["posted"])
+                    w.writerow([f"{first:%Y-%m-%d %H:%M}" if first else "",
+                                f"{posted:%Y-%m-%d}" if posted else "", r["company"], r["title"],
+                                "; ".join(json.loads(r["locations"] or "[]")), r["provider"],
+                                "yes" if r["key"] in tracked else "", r["url"]])
+            os.replace(tmp, path)
+        except PermissionError:
+            log.warning("%s is open in another program; it will be updated next run.", path.name)
+            tmp.unlink(missing_ok=True)
+
+    def close(self):
+        self.db.close()
+
+
+def find_new_matches(store, state, rules, now, max_age, window_start):
+    """The local filter: checks every saved open posting against your rules. No requests."""
+    matches = []
+    for r in store.open_postings():
+        key = r["key"]
+        if key in state["jobs"] or not rules.title_ok(r["title"]):
             continue
-        if job.get("text") is None:
-            load()
-        if detail_loaded and fails_age_after_detail():
-            new_rejects.append(key)
+        posted = parse_date(r["posted"])
+        # Undated postings count from when they first appeared, unless they were already
+        # up the first time their board was read.
+        appeared = posted or (None if r["baseline"] else parse_date(r["first_seen"]))
+        if appeared is None or now - appeared > max_age or (window_start and appeared < window_start):
             continue
-        stack = rules.stack_for(job["title"], job.get("text"))
+        locations = json.loads(r["locations"] or "[]")
+        region = rules.region_for(locations)
+        if not region:
+            continue
+        text = store.text_of(key) if r["has_text"] else None
+        if text is None and rules.require_stack:
+            continue  # description not downloaded yet; it is fetched on the next run
+        stack = rules.stack_for(r["title"], text)
         if rules.require_stack and not stack:
-            if detail_loaded:
-                new_rejects.append(key)
             continue
-        job.update(region=region, stack=stack)
-        matches.append(job)
-    return {"row": row, "provider": provider, "res": res, "matches": matches, "rejects": new_rejects,
-            "still_rejected": still_rejected}
+        matches.append({"key": key, "company": r["company"], "provider": r["provider"], "title": r["title"],
+                        "locations": locations, "region": region, "stack": stack, "url": r["url"],
+                        "posted": posted})
+    return matches
 
 
 # ----------------------------------------------------------------- state
@@ -1060,7 +1260,8 @@ def write_excel(path, state, cfg, scores):
     header_row(cs)
     ordered = sorted(state.get("companies", {}).items(),
                      key=lambda kv: (kv[1].get("priority", 9), kv[0].lower()))
-    result_colors = {"OK": "C6EFCE", "NOT FOUND": "F8CBAD", "MANUAL": "DDEBF7"}
+    result_colors = {"OK": "C6EFCE", "NOT FOUND": "F8CBAD", "MANUAL": "DDEBF7", "RETRY": "FFE699",
+                     "PENDING": "EDEDED", "ERROR": "F4B183"}
     for name, c in ordered:
         score, tier = scores.get(name, ("", ""))
         cs.append([c.get("priority", ""), c.get("region", ""), name,
@@ -1115,15 +1316,113 @@ def check_window(cfg, state, now, since_check, hours):
     return now - dt.timedelta(hours=cfg.get("first_check_lookback_hours", 24))
 
 
-def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False):
+def fetch_all(cfg, state, store, rows, rules, now, max_age, window_start, verify):
+    """Step 1: download each board's full list into the local store, one board per request
+    wherever possible. Returns (companies.csv changed?, stats)."""
+    recheck = dt.timedelta(days=cfg.get("recheck_not_found_days", 14))
+    detections_left = int(cfg.get("max_detections_per_run", 40))
+    stats = Counter()
+    todo = []
+    for r in rows:
+        prev = state["companies"].get(r["company"], {})
+        base = {"checked": now.isoformat(), "priority": priority_of(r), "region": r.get("region", ""),
+                "careers_url": r.get("careers_url", "")}
+        if is_manual(r):
+            state["companies"][r["company"]] = {**base, "result": "MANUAL",
+                                                "error": "Uses its own careers site; check it directly."}
+            continue
+        missing = prev.get("result") == "NOT FOUND" or (not prev and r.get("status") == "not_found")
+        last = parse_date(prev.get("checked")) or parse_date(r.get("verified"))
+        if missing and not verify and last and now - last < recheck:
+            stats["skipped"] += 1
+            continue
+        entry = entry_for(r)
+        explicit = ":" in entry and entry.split(":", 1)[0] in FETCHERS
+        needs_detection = entry not in state["resolved"] and (
+            not explicit or (entry.startswith("workday:") and not parse_workday(entry.split(":", 1)[1])[2]))
+        if needs_detection:
+            if detections_left <= 0:  # finding a board takes many guesses; spread them over runs
+                state["companies"][r["company"]] = {
+                    **base, "result": "PENDING",
+                    "error": "Board detection is spread over several runs to avoid rate limits."}
+                stats["waiting"] += 1
+                continue
+            detections_left -= 1
+        todo.append(r)
+
+    has_text, known_boards = store.keys_with_text(), store.boards()
+    detail_cap = int(cfg.get("max_detail_requests_per_board", 25))
+    delay = cfg.get("request_delay_seconds", 0)
+
+    def work(row):
+        try:
+            return fetch_board(row, state, rules, has_text, now, max_age, window_start, known_boards, detail_cap)
+        finally:
+            if delay:
+                time.sleep(delay)
+
+    log.info("Reading %d company boards (%d skipped as not found recently, %d waiting for detection)...",
+             len(todo), stats["skipped"], stats["waiting"])
+    with ThreadPoolExecutor(max_workers=max(1, int(cfg.get("parallel_requests", 8)))) as pool:
+        results = list(pool.map(work, todo))
+
+    csv_dirty, today = False, now.astimezone().date().isoformat()
+    for out in results:
+        row = out["row"]
+        company = row["company"]
+        prev = state["companies"].get(company, {})
+        record = {"checked": now.isoformat(), "priority": priority_of(row),
+                  "region": row.get("region", ""), "careers_url": row.get("careers_url", "")}
+        if out.get("deferred"):
+            record.update({k: prev[k] for k in ("provider", "slug", "open") if k in prev})
+            record.update(result="RETRY", error=f"Paused: {out['deferred']}. Retried next run.")
+            state["companies"][company] = record
+            stats["deferred"] += 1
+            continue
+        if out.get("error"):
+            record.update(result="ERROR", error=str(out["error"])[:200])
+            state["companies"][company] = record
+            log.warning("%s: %s", company, out["error"])
+            continue
+        if out.get("missing"):
+            record.update(result="NOT FOUND",
+                          error="No supported job board found. Add the careers URL or slug in "
+                                "companies.csv, or set board to 'other'.")
+            state["companies"][company] = record
+            if row.get("status") != "not_found":
+                row.update(status="not_found", verified=today)
+                csv_dirty = True
+            continue
+
+        provider, res = out["provider"], out["res"]
+        slug = res["slug"]
+        if (row.get("board"), row.get("slug"), row.get("status")) != (provider, slug, "ok"):
+            row.update(board=provider, slug=slug, status="ok", verified=today)
+            csv_dirty = True
+        board = f"{provider}:{slug}"
+        stats["new_postings"] += store.save_board(board, company, provider, out["postings"], now,
+                                                  res.get("complete", True), board not in known_boards)
+        stats["fetched"] += 1
+        stats["details"] += out["details"]
+        record.update(result="OK", provider=provider, slug=slug, open=len(out["postings"]),
+                      error=res.get("note", ""))
+        state["companies"][company] = record
+    return csv_dirty, stats
+
+
+def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, offline=False):
     now = dt.datetime.now(dt.timezone.utc)
     SETTINGS["search_terms"] = cfg.get("search_terms") or SETTINGS["search_terms"]
     SETTINGS["max_pages"] = int(cfg.get("max_pages_per_search", 10))
+    SETTINGS["backoff"] = float(cfg.get("rate_limit_backoff_seconds", 30))
+    SETTINGS["host_intervals"] = {**SETTINGS["host_intervals"], **cfg.get("host_min_interval_seconds", {})}
+    LIMITER.reset()
     rules = Rules(cfg)
     excel_path = BASE / cfg.get("excel_file", "job_tracker.xlsx")
     state = load_json(STATE_PATH, {"jobs": {}, "resolved": {}, "companies": {}})
-    for k in ("jobs", "resolved", "companies", "rejected"):
+    for k in ("jobs", "resolved", "companies"):
         state.setdefault(k, {})
+    state.pop("rejected", None)  # replaced by the local postings store
     since_check = since_check or cfg.get("since_last_check_by_default", False)
     window_start = check_window(cfg, state, now, since_check, hours)
     if window_start:
@@ -1151,119 +1450,51 @@ def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False):
         if ("allowed_age_h" not in j and untouched and posted and found
                 and found - posted > rules.max_age + dt.timedelta(hours=1)):
             del state["jobs"][key]
-            state["rejected"][key] = now.isoformat()
             pruned += 1
     if pruned:
         log.info("Removed %d older postings that did not meet the %d-hour limit when found.",
                  pruned, rules.max_age.total_seconds() // 3600)
 
     all_rows = load_company_rows(cfg)
-    csv_dirty = refresh_metrics(cfg, all_rows, force=refresh)
+    csv_dirty = False if offline else refresh_metrics(cfg, all_rows, force=refresh)
     csv_dirty = rescore(all_rows) or csv_dirty
     scores = {r["company"]: (r.get("score", ""), r.get("tier", "")) for r in all_rows}
-
     rows = sorted((r for r in all_rows if is_enabled(r)),
                   key=lambda r: (priority_of(r), r["company"].lower()))
     names = {r["company"] for r in rows}
     for stale in [e for e in state["companies"] if e not in names]:
         del state["companies"][stale]
 
-    # Companies confirmed missing recently are skipped until the recheck interval passes.
-    recheck = dt.timedelta(days=cfg.get("recheck_not_found_days", 14))
-    todo, skipped = [], 0
-    for r in rows:
-        base_rec = {"checked": now.isoformat(), "priority": priority_of(r), "region": r.get("region", ""),
-                    "careers_url": r.get("careers_url", "")}
-        if is_manual(r):
-            state["companies"][r["company"]] = {**base_rec, "result": "MANUAL",
-                                                "error": "Uses its own careers site; check it directly."}
-            continue
-        prev = state["companies"].get(r["company"], {})
-        missing = prev.get("result") == "NOT FOUND" or (not prev and r.get("status") == "not_found")
-        last = parse_date(prev.get("checked")) or parse_date(r.get("verified"))
-        if missing and not verify and last and now - last < recheck:
-            skipped += 1
-            continue
-        todo.append(r)
+    store = PostingStore(BASE / cfg.get("postings_db", "postings.db"))
+    try:
+        stats = Counter()
+        if not offline:  # step 1: download
+            changed, stats = fetch_all(cfg, state, store, rows, rules, now, max_age, window_start, verify)
+            csv_dirty = changed or csv_dirty
+        if csv_dirty:
+            save_company_rows(cfg, all_rows)
 
-    # Forget rejected postings after 60 days so a re-posted role gets a fresh look.
-    cutoff = now - dt.timedelta(days=60)
-    state["rejected"] = {k: v for k, v in state["rejected"].items() if (parse_date(v) or now) > cutoff}
-    known, rejected = set(state["jobs"]), set(state["rejected"])
-    delay = cfg.get("request_delay_seconds", 1)
-
-    checked_before = {name for name, c in state["companies"].items() if c.get("result") == "OK"}
-
-    def work(row):
-        try:
-            return evaluate_company(row, state, rules, known, rejected, now, window_start, max_age,
-                                    first_check=row["company"] not in checked_before)
-        finally:
-            time.sleep(delay)
-
-    log.info("Checking %d company boards (%d skipped as not found recently)...", len(todo), skipped)
-    with ThreadPoolExecutor(max_workers=max(1, int(cfg.get("parallel_requests", 8)))) as pool:
-        results = list(pool.map(work, todo))
-
-    new_jobs, today = [], now.astimezone().date().isoformat()
-    for out in results:
-        row = out["row"]
-        company = row["company"]
-        record = {"checked": now.isoformat(), "priority": priority_of(row),
-                  "region": row.get("region", ""), "careers_url": row.get("careers_url", "")}
-        if out.get("error"):
-            record.update(result="ERROR", error=str(out["error"])[:200])
-            state["companies"][company] = record
-            log.warning("%s: %s", company, out["error"])
-            continue
-        if out.get("missing"):
-            record.update(result="NOT FOUND",
-                          error="No supported job board found. Add the careers URL or slug in "
-                                "companies.csv, or set board to 'other'.")
-            state["companies"][company] = record
-            if row.get("status") != "not_found":
-                row.update(status="not_found", verified=today)
-                csv_dirty = True
-            continue
-
-        provider, res = out["provider"], out["res"]
-        slug = res["slug"]
-        if (row.get("board"), row.get("slug"), row.get("status")) != (provider, slug, "ok"):
-            row.update(board=provider, slug=slug, status="ok", verified=today)
-            csv_dirty = True
-        for key in out["rejects"] + out["still_rejected"]:
-            state["rejected"][key] = now.isoformat()  # refreshed while still posted
-        seen = set()
-        for job in out["matches"]:
-            key = job["key"]
-            seen.add(key)
-            existing = state["jobs"].get(key)
-            if job.get("known") and existing:
-                existing.update(open=True, title=job["title"], company=company)
-                continue
-            if existing is None:
-                existing = state["jobs"][key] = {
-                    "key": key, "found": now.isoformat(), "status": "New", "notes": "",
-                    "allowed_age_h": round(max_age.total_seconds() / 3600, 1)}
-                new_jobs.append(f"{company}: {job['title']} ({job['region']})")
-            existing.update({
-                "company": company, "provider": provider, "title": job["title"],
-                "locations": job["locations"], "region": job["region"], "stack": job["stack"],
-                "level": level_for(job["title"]), "url": job["url"],
-                "posted": job["posted"].isoformat() if job.get("posted") else None, "open": True,
-            })
-        if res.get("complete", True):  # partial searches cannot prove a posting was removed
-            prefix = f"{provider}:{slug}:"
-            for key, j in state["jobs"].items():
-                if key.startswith(prefix) and key not in seen and j.get("open"):
-                    j["open"] = False
+        # Step 2: filter locally against everything saved.
+        new_jobs = []
+        for m in find_new_matches(store, state, rules, now, max_age, window_start):
+            state["jobs"][m["key"]] = {
+                **m, "found": now.isoformat(), "status": "New", "notes": "", "open": True,
+                "level": level_for(m["title"]), "posted": m["posted"].isoformat() if m["posted"] else None,
+                "allowed_age_h": round(max_age.total_seconds() / 3600, 1)}
+            new_jobs.append(f"{m['company']}: {m['title']} ({m['region']})")
+        status = store.status_of(state["jobs"].keys())  # keep open/closed in step with the boards
+        for key, j in state["jobs"].items():
+            if key in status:
+                if j.get("open") and not status[key]:
                     j["closed"] = now.isoformat()
-        record.update(result="OK", provider=provider, slug=slug, open=len(res["jobs"]),
-                      matches=len(out["matches"]), error=res.get("note", ""))
-        state["companies"][company] = record
-
-    if csv_dirty:
-        save_company_rows(cfg, all_rows)
+                j["open"] = status[key]
+        tracked_open = Counter(j["company"] for j in state["jobs"].values() if j.get("open"))
+        for name, c in state["companies"].items():
+            c["matches"] = tracked_open.get(name, 0)
+        store.export_csv(BASE / cfg.get("all_postings_csv", "all_postings.csv"), set(state["jobs"]))
+        saved_total, saved_open = store.counts()
+    finally:
+        store.close()
 
     report = []
     if window_start:
@@ -1286,11 +1517,16 @@ def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False):
     save_json(STATE_PATH, state)
     write_excel(excel_path, state, cfg, scores)
 
-    ok = sum(1 for c in state["companies"].values() if c["result"] == "OK")
-    missing = sum(1 for c in state["companies"].values() if c["result"] in ("NOT FOUND", "ERROR"))
+    if offline:
+        log.info("Re-filtered %d saved open postings locally (no requests made).", saved_open)
+    else:
+        sites = ", ".join(f"{s} {n}" for s, n in LIMITER.counts.most_common())
+        log.info("Read %d boards with %d requests (%s). %d paused by rate limits and retried next run.",
+                 stats["fetched"], sum(LIMITER.counts.values()), sites or "none", stats["deferred"])
+        log.info("All postings: %d open saved locally, %d new this run, %d descriptions downloaded.",
+                 saved_open, stats["new_postings"], stats["details"])
     open_total = sum(1 for j in state["jobs"].values() if j.get("open"))
-    log.info("Checked %d boards (%d not found or errored). %d new matches, %d open matches total.",
-             ok, missing, len(new_jobs), open_total)
+    log.info("%d new matches, %d open matches in your tracker.", len(new_jobs), open_total)
     for line in new_jobs:
         log.info("  NEW  %s", line)
     if window_start:
@@ -1317,6 +1553,8 @@ def main():
                         help="re-check every company in companies.csv, including ones marked not_found")
     parser.add_argument("--refresh-metrics", action="store_true",
                         help="refresh stock metrics and company scores now (needs yfinance)")
+    parser.add_argument("--refilter", action="store_true",
+                        help="re-run your filters on the saved postings only; makes no requests")
     args = parser.parse_args()
     if args.hours and not args.since_last_check:
         args.since_last_check = True
@@ -1331,7 +1569,7 @@ def main():
             sys.exit(f"Could not read {CONFIG_PATH.name}")
         try:
             run_once(cfg, since_check=args.since_last_check, hours=args.hours,
-                     verify=args.verify, refresh=args.refresh_metrics)
+                     verify=args.verify, refresh=args.refresh_metrics, offline=args.refilter)
             args.verify = args.refresh_metrics = False  # only the first cycle of --loop forces these
         except Exception:
             log.exception("Run failed")

@@ -4,6 +4,12 @@ Checks company career sites on Greenhouse, Ashby, Lever, Workday, SmartRecruiter
 
 Only postings that went up in the last 24 hours are added. Anything older, or already in your tracker, is ignored.
 
+**Two lists.** Each run downloads every board's full list (normally one request per board) and keeps it locally:
+- `postings.db` and `all_postings.csv`: every open posting from every board. Open the CSV in Excel to browse everything.
+- `job_tracker.xlsx`: only the postings that pass your filters.
+
+Filtering happens on your computer against the saved list, so changing your rules never costs extra requests. After editing `config.json`, run `python job_watcher.py --refilter` to re-apply your filters instantly with no requests at all.
+
 ## 1. Install (one time)
 
 1. Install Python 3.10 or newer from python.org (on Windows, tick "Add Python to PATH").
@@ -21,9 +27,13 @@ cd path\to\JobWatcher
 python job_watcher.py
 ```
 
-**The first run takes a while (roughly 15 to 30 minutes)**: it detects the job board for every `auto` company, finds Workday career sites, and pulls stock metrics. It writes what it learns back into `companies.csv`, so later runs take a few minutes.
+**Finding each company's job board takes several runs.** Each `auto` company has to be tried on several boards, so the script detects up to 40 companies per run and leaves the rest marked PENDING. With the background task running every 30 minutes, the whole list is sorted out within a few hours. Detected boards are written back into `companies.csv`, after which each board costs one request per run.
 
-It creates `job_tracker.xlsx`, `job_watcher_state.json` and `job_watcher.log`. Open the **Companies** tab to see which boards were found.
+It creates `job_tracker.xlsx`, `all_postings.csv`, `postings.db`, `job_watcher_state.json` and `job_watcher.log`. Open the **Companies** tab to see which boards were found.
+
+**Being polite to the job boards.** Requests to each site are spaced out (Workable gets the most room, at one every 2 seconds). If a site answers "too many requests", the script waits as long as the site asks, and after three refusals it leaves that site alone for the rest of the run. Those companies show RETRY on the Companies tab and are picked up on the next run, with no errors in the log. The log ends each run with the number of requests made per site.
+
+Workday and SmartRecruiters lists do not include job descriptions, so for those sites a description is downloaded only for postings that could match (right title, fresh, in your regions), and only once.
 
 ## 3. Run it in the background
 
@@ -139,6 +149,11 @@ Changes apply on the next run, no restart needed.
 | `interval_minutes` | Used only with `--loop` |
 | `parallel_requests` | How many boards are checked at once (default 8) |
 | `recheck_not_found_days` | How long to skip a company with no board before trying again |
+| `max_detections_per_run` | How many new companies to detect boards for per run (default 40) |
+| `max_detail_requests_per_board` | Cap on description downloads per Workday or SmartRecruiters board per run |
+| `host_min_interval_seconds` | Minimum seconds between requests to each site |
+| `rate_limit_backoff_seconds` | How long to pause a site that says "too many requests" without saying for how long |
+| `postings_db`, `all_postings_csv` | File names for the all-postings list |
 | `companies` | Optional quick additions, e.g. `["greenhouse:acme"]` |
 
 ## 8. Using the tracker

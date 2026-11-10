@@ -1,6 +1,8 @@
 job_watcher.log
 job_tracker.xlsx
 job_watcher_state.json
+postings.db
+all_postings.csv
 ~$*
 *.saving.xlsx
 *.saving.csv

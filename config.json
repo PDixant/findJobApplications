@@ -1,10 +1,24 @@
 {
   "excel_file": "job_tracker.xlsx",
   "companies_file": "companies.csv",
+  "postings_db": "postings.db",
+  "all_postings_csv": "all_postings.csv",
   "interval_minutes": 30,
-  "request_delay_seconds": 1,
+  "request_delay_seconds": 0,
+  "host_min_interval_seconds": {
+    "workable.com": 2.0,
+    "smartrecruiters.com": 0.5,
+    "myworkdayjobs.com": 0.5,
+    "lever.co": 0.3,
+    "ashbyhq.com": 0.3,
+    "greenhouse.io": 0.2,
+    "default": 0.3
+  },
+  "rate_limit_backoff_seconds": 30,
   "parallel_requests": 8,
   "recheck_not_found_days": 14,
+  "max_detections_per_run": 40,
+  "max_detail_requests_per_board": 25,
   "search_terms": [
     "software engineer",
     "software developer",
