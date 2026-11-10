@@ -1,319 +1,544 @@
-﻿priority,region,company,board,slug,hubs,enabled,status,verified,notes
-1,Vancouver / BC,1QBit,auto,,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,Absolute Software,auto,absolute,Vancouver / BC; Ottawa,yes,not_found,2026-11-09,
-1,Vancouver / BC,ActiveState,auto,,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,AlgaeCal,auto,,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,Amazon Web Services,auto,aws,Vancouver / BC; Seattle; Toronto / GTA,yes,not_found,2026-11-09,Likely its own careers system
-1,Vancouver / BC,Article,auto,,Vancouver / BC,yes,not_found,2026-11-09,Furniture e-commerce
-1,Vancouver / BC,Asana,greenhouse,asana,Vancouver / BC; California,yes,ok,2026-11-09,Listed hiring in Vancouver
-1,Vancouver / BC,Astera Labs,greenhouse,asteralabs,Vancouver / BC; California,yes,ok,2026-11-09,
-1,Vancouver / BC,Boast.ai,auto,boast,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,Brex,greenhouse,brex,Vancouver / BC; California,yes,ok,2026-11-09,Listed hiring in Vancouver
-1,Vancouver / BC,Certn,auto,,Vancouver / BC,yes,not_found,2026-11-09,Victoria
-1,Vancouver / BC,Checkfront,auto,,Vancouver / BC,yes,not_found,2026-11-09,Victoria
-1,Vancouver / BC,Clio,auto,,Vancouver / BC; Toronto / GTA; Rest of Canada,yes,not_found,2026-11-09,"Legal tech, Burnaby HQ"
-1,Vancouver / BC,Copperleaf,auto,,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,D-Wave,auto,dwave,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,Dapper Labs,auto,dapperlabs,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,Dialpad,greenhouse,Dialpad,Vancouver / BC; California; Toronto / GTA,yes,ok,2026-11-09,Large Vancouver engineering office
-1,Vancouver / BC,Elastic Path,auto,elasticpath,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,FISPAN,auto,fispan,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,Fresh Prep,auto,freshprep,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,Grammarly,auto,,Vancouver / BC; California,yes,not_found,2026-11-09,Vancouver engineering hub
-1,Vancouver / BC,Hootsuite,greenhouse,Hootsuite,Vancouver / BC; Toronto / GTA,yes,ok,2026-11-09,
-1,Vancouver / BC,Jane App,auto,janeapp,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,Kabam,lever,kabam,Vancouver / BC,yes,ok,2026-11-09,Games
-1,Vancouver / BC,Klue,ashby,Klue,Vancouver / BC,yes,ok,2026-11-09,
-1,Vancouver / BC,Later,greenhouse,Later,Vancouver / BC,yes,ok,2026-11-09,
-1,Vancouver / BC,Lululemon,auto,,Vancouver / BC,yes,not_found,2026-11-09,"Vancouver HQ, digital team"
-1,Vancouver / BC,MistyWest,auto,,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,Mogo,auto,,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,Mojio,greenhouse,Mojio,Vancouver / BC,yes,ok,2026-11-09,
-1,Vancouver / BC,Mozilla,greenhouse,Mozilla,Vancouver / BC; Toronto / GTA; Remote / other US,yes,ok,2026-11-09,
-1,Vancouver / BC,Phoenix Labs,auto,phoenixlabs,Vancouver / BC,yes,not_found,2026-11-09,Games
-1,Vancouver / BC,Plurilock,auto,,Vancouver / BC,yes,not_found,2026-11-09,Victoria
-1,Vancouver / BC,PressReader,auto,,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,Procurify,ashby,Procurify,Vancouver / BC,yes,ok,2026-11-09,
-1,Vancouver / BC,Relic Entertainment,auto,relic,Vancouver / BC,yes,not_found,2026-11-09,Games
-1,Vancouver / BC,Rivian,auto,,Vancouver / BC; California,yes,not_found,2026-11-09,Vancouver software office
-1,Vancouver / BC,Routific,auto,,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,Sanctuary AI,ashby,sanctuary,Vancouver / BC,yes,ok,2026-11-09,
-1,Vancouver / BC,Semios,auto,,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,Shopify,auto,,Ottawa; Toronto / GTA; Vancouver / BC,yes,not_found,2026-11-09,Uses its own careers system; kept for completeness
-1,Vancouver / BC,SkyHive,auto,,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,Spare Labs,ashby,spare,Vancouver / BC,yes,ok,2026-11-09,
-1,Vancouver / BC,Thinkific,greenhouse,Thinkific,Vancouver / BC,yes,ok,2026-11-09,
-1,Vancouver / BC,Thrive Health,auto,thrivehealth,Vancouver / BC,yes,not_found,2026-11-09,
-1,Vancouver / BC,Trulioo,ashby,Trulioo,Vancouver / BC,yes,ok,2026-11-09,
-1,Vancouver / BC,Unbounce,greenhouse,Unbounce,Vancouver / BC,yes,ok,2026-11-09,
-1,Vancouver / BC,Unity,auto,,Vancouver / BC; Toronto / GTA; Rest of Canada,yes,not_found,2026-11-09,
-1,Vancouver / BC,Visier,ashby,Visier,Vancouver / BC; Toronto / GTA,yes,ok,2026-11-09,
-1,Vancouver / BC,Wishpond,lever,wishpond,Vancouver / BC,yes,ok,2026-11-09,
-2,Ottawa,Assent,auto,,Ottawa,yes,not_found,2026-11-09,
-2,Ottawa,BitHeads,auto,,Ottawa,yes,not_found,2026-11-09,
-2,Ottawa,Ciena,auto,,Ottawa,yes,not_found,2026-11-09,Likely its own careers system
-2,Ottawa,CIRA,auto,cira,Ottawa,yes,not_found,2026-11-09,Canadian Internet Registration Authority
-2,Ottawa,Clearwater Clinical,auto,,Ottawa,yes,not_found,2026-11-09,
-2,Ottawa,Crank Software,auto,crank,Ottawa,yes,not_found,2026-11-09,
-2,Ottawa,Evidence Partners,auto,evidencepartners,Ottawa,yes,not_found,2026-11-09,
-2,Ottawa,Field Effect,auto,fieldeffect,Ottawa,yes,not_found,2026-11-09,
-2,Ottawa,Foko Retail,auto,foko,Ottawa,yes,not_found,2026-11-09,
-2,Ottawa,Fullscript,lever,fullscript,Ottawa,yes,ok,2026-11-09,
-2,Ottawa,Kinaxis,auto,,Ottawa,yes,not_found,2026-11-09,
-2,Ottawa,Kivuto,auto,,Ottawa,yes,not_found,2026-11-09,
-2,Ottawa,Klipfolio,auto,,Ottawa,yes,not_found,2026-11-09,
-2,Ottawa,Lightspeed,ashby,Lightspeed,Ottawa; Rest of Canada,yes,ok,2026-11-09,"Montreal HQ, Ottawa office"
-2,Ottawa,Martello,auto,,Ottawa,yes,not_found,2026-11-09,
-2,Ottawa,MindBridge,auto,mindbridge,Ottawa,yes,not_found,2026-11-09,
-2,Ottawa,Mitel,auto,,Ottawa,yes,not_found,2026-11-09,
-2,Ottawa,Noibu,ashby,Noibu,Ottawa,yes,ok,2026-11-09,
-2,Ottawa,Rewind,ashby,Rewind,Ottawa,yes,ok,2026-11-09,
-2,Ottawa,Ross Video,auto,rossvideo,Ottawa,yes,not_found,2026-11-09,
-2,Ottawa,Solink,ashby,Solink,Ottawa,yes,ok,2026-11-09,
-2,Ottawa,Tehama,auto,,Ottawa,yes,not_found,2026-11-09,
-2,Ottawa,TrueContext,auto,,Ottawa,yes,not_found,2026-11-09,
-2,Ottawa,Veem,auto,,Ottawa; California,yes,not_found,2026-11-09,
-3,Seattle,Allen Institute for AI,auto,allenai,Seattle,yes,not_found,2026-11-09,
-3,Seattle,Amperity,greenhouse,Amperity,Seattle,yes,ok,2026-11-09,
-3,Seattle,Anduril,auto,,California; Seattle,yes,not_found,2026-11-09,
-3,Seattle,Anthropic,greenhouse,anthropic,California; Seattle,yes,ok,2026-11-09,
-3,Seattle,Auger,auto,,Seattle,yes,not_found,2026-11-09,AI startup
-3,Seattle,Aurora,auto,aurorainnovation,California; Seattle,yes,not_found,2026-11-09,
-3,Seattle,Avalara,auto,,Seattle,yes,not_found,2026-11-09,
-3,Seattle,Avante,greenhouse,Avante,Seattle,yes,ok,2026-11-09,AI startup
-3,Seattle,Blue Origin,lever,blueorigin,Seattle,yes,ok,2026-11-09,
-3,Seattle,Bungie,greenhouse,Bungie,Seattle,yes,ok,2026-11-09,"Bellevue, games"
-3,Seattle,Carta,greenhouse,Carta,California; Rest of Canada; Seattle,yes,ok,2026-11-09,Waterloo office
-3,Seattle,CopilotKit,lever,copilotkit,Seattle,yes,ok,2026-11-09,AI startup
-3,Seattle,DoorDash,auto,,California; Toronto / GTA; Seattle,yes,not_found,2026-11-09,
-3,Seattle,Dropzone AI,greenhouse,dropzoneai,Seattle,yes,ok,2026-11-09,AI startup
-3,Seattle,Glowforge,auto,,Seattle,yes,not_found,2026-11-09,
-3,Seattle,Gradial,greenhouse,Gradial,Seattle,yes,ok,2026-11-09,AI startup
-3,Seattle,Highspot,lever,highspot,Seattle,yes,ok,2026-11-09,
-3,Seattle,Howie,auto,,Seattle,yes,not_found,2026-11-09,AI startup
-3,Seattle,Icertis,auto,,Seattle,yes,not_found,2026-11-09,
-3,Seattle,MotherDuck,ashby,MotherDuck,Seattle,yes,ok,2026-11-09,
-3,Seattle,Niantic,ashby,Niantic,California; Seattle,yes,ok,2026-11-09,
-3,Seattle,OfferUp,greenhouse,OfferUp,Seattle,yes,ok,2026-11-09,
-3,Seattle,Oumi,ashby,Oumi,Seattle,yes,ok,2026-11-09,AI startup
-3,Seattle,Outreach,lever,outreach,Seattle,yes,ok,2026-11-09,
-3,Seattle,Payscale,ashby,Payscale,Seattle,yes,ok,2026-11-09,
-3,Seattle,Porch,auto,,Seattle,yes,not_found,2026-11-09,
-3,Seattle,Pulumi,auto,,Seattle; Remote / other US,yes,not_found,2026-11-09,
-3,Seattle,Qumulo,ashby,Qumulo,Seattle,yes,ok,2026-11-09,
-3,Seattle,Rec Room,auto,recroom,Seattle,yes,not_found,2026-11-09,
-3,Seattle,Redfin,auto,,Seattle,yes,not_found,2026-11-09,
-3,Seattle,Remitly,auto,,Seattle,yes,not_found,2026-11-09,
-3,Seattle,Rover,lever,rover,Seattle,yes,ok,2026-11-09,
-3,Seattle,SeekOut,greenhouse,SeekOut,Seattle,yes,ok,2026-11-09,
-3,Seattle,Seeq,auto,,Seattle,yes,not_found,2026-11-09,
-3,Seattle,Smartsheet,greenhouse,Smartsheet,Seattle,yes,ok,2026-11-09,
-3,Seattle,Snowflake,ashby,Snowflake,Toronto / GTA; Seattle; California,yes,ok,2026-11-09,Likely its own careers system
-3,Seattle,SpaceX,greenhouse,spacex,California; Seattle,yes,ok,2026-11-09,
-3,Seattle,Stackline,greenhouse,Stackline,Seattle,yes,ok,2026-11-09,
-3,Seattle,Statsig,auto,,Seattle,yes,not_found,2026-11-09,
-3,Seattle,Tanium,greenhouse,Tanium,Seattle,yes,ok,2026-11-09,Kirkland
-3,Seattle,Temporal,auto,temporaltechnologies,Seattle; Remote / other US,yes,not_found,2026-11-09,
-3,Seattle,Textio,greenhouse,Textio,Seattle,yes,ok,2026-11-09,
-3,Seattle,Truveta,greenhouse,Truveta,Seattle,yes,ok,2026-11-09,
-3,Seattle,XBOW,auto,,Seattle,yes,not_found,2026-11-09,AI startup
-3,Seattle,Yoodli,auto,,Seattle,yes,not_found,2026-11-09,AI startup
-3,Seattle,Zillow,auto,,Seattle,yes,not_found,2026-11-09,Likely its own careers system
-4,California,Affirm,greenhouse,affirm,California; Remote / other US,yes,ok,2026-11-09,
-4,California,Airbnb,greenhouse,airbnb,California,yes,ok,2026-11-09,
-4,California,Airbyte,ashby,Airbyte,California; Remote / other US,yes,ok,2026-11-09,
-4,California,Airtable,greenhouse,airtable,California,yes,ok,2026-11-09,
-4,California,Algolia,greenhouse,Algolia,California,yes,ok,2026-11-09,
-4,California,Amplitude,ashby,Amplitude,California,yes,ok,2026-11-09,
-4,California,Anyscale,ashby,Anyscale,California,yes,ok,2026-11-09,
-4,California,Anysphere (Cursor),auto,anysphere,California,yes,not_found,2026-11-09,
-4,California,Applied Intuition,auto,appliedintuition,California,yes,not_found,2026-11-09,
-4,California,Baseten,ashby,Baseten,California,yes,ok,2026-11-09,
-4,California,Benchling,ashby,Benchling,California,yes,ok,2026-11-09,
-4,California,Block,greenhouse,Block,California; Toronto / GTA,yes,ok,2026-11-09,
-4,California,Calm,greenhouse,Calm,California,yes,ok,2026-11-09,
-4,California,Cerebras,ashby,Cerebras,California; Toronto / GTA,yes,ok,2026-11-09,Toronto office
-4,California,Character.AI,ashby,character,California,yes,ok,2026-11-09,
-4,California,Checkr,greenhouse,Checkr,California,yes,ok,2026-11-09,
-4,California,Chime,greenhouse,Chime,California,yes,ok,2026-11-09,
-4,California,Clerk,ashby,Clerk,California; Remote / other US,yes,ok,2026-11-09,
-4,California,ClickUp,ashby,ClickUp,California,yes,ok,2026-11-09,San Diego
-4,California,Cloudflare,greenhouse,cloudflare,California; Remote / other US,yes,ok,2026-11-09,
-4,California,Cohere,ashby,Cohere,Toronto / GTA; California,yes,ok,2026-11-09,
-4,California,Coinbase,greenhouse,Coinbase,California; Remote / other US,yes,ok,2026-11-09,
-4,California,Databricks,greenhouse,databricks,California; Toronto / GTA,yes,ok,2026-11-09,
-4,California,dbt Labs,auto,dbtlabs,California; Remote / other US,yes,not_found,2026-11-09,
-4,California,Discord,greenhouse,discord,California,yes,ok,2026-11-09,
-4,California,Docker,ashby,Docker,California; Remote / other US,yes,ok,2026-11-09,
-4,California,Drata,ashby,Drata,California,yes,ok,2026-11-09,San Diego
-4,California,Dropbox,greenhouse,dropbox,California; Remote / other US,yes,ok,2026-11-09,Hires remote in Canada
-4,California,Eventbrite,auto,,California,yes,not_found,2026-11-09,
-4,California,Faire,greenhouse,faire,California; Toronto / GTA; Rest of Canada,yes,ok,2026-11-09,Large Kitchener-Waterloo and Toronto teams
-4,California,Figma,greenhouse,figma,California,yes,ok,2026-11-09,
-4,California,Fireworks AI,auto,fireworksai,California,yes,not_found,2026-11-09,
-4,California,Fivetran,greenhouse,Fivetran,California,yes,ok,2026-11-09,
-4,California,Flexport,greenhouse,Flexport,California,yes,ok,2026-11-09,
-4,California,Front,auto,,California,yes,not_found,2026-11-09,
-4,California,Glean,auto,,California,yes,not_found,2026-11-09,
-4,California,Gong,auto,,California,yes,not_found,2026-11-09,
-4,California,GoodRx,ashby,GoodRx,California,yes,ok,2026-11-09,
-4,California,Gusto,greenhouse,gusto,California; Toronto / GTA,yes,ok,2026-11-09,
-4,California,Harvey,ashby,Harvey,California,yes,ok,2026-11-09,
-4,California,Headspace,auto,,California,yes,not_found,2026-11-09,
-4,California,Hex,ashby,Hex,California,yes,ok,2026-11-09,
-4,California,Hightouch,ashby,Hightouch,California,yes,ok,2026-11-09,
-4,California,Hims & Hers,auto,hims,California,yes,not_found,2026-11-09,
-4,California,Instacart,greenhouse,instacart,California; Toronto / GTA,yes,ok,2026-11-09,
-4,California,Intercom,greenhouse,Intercom,California,yes,ok,2026-11-09,
-4,California,Lattice,greenhouse,Lattice,California,yes,ok,2026-11-09,
-4,California,LaunchDarkly,greenhouse,LaunchDarkly,California,yes,ok,2026-11-09,
-4,California,Linear,ashby,linear,California; Remote / other US,yes,ok,2026-11-09,
-4,California,Lyft,greenhouse,lyft,California; Toronto / GTA,yes,ok,2026-11-09,
-4,California,Marqeta,auto,,California,yes,not_found,2026-11-09,
-4,California,Mercury,greenhouse,Mercury,California; Remote / other US,yes,ok,2026-11-09,
-4,California,Mixpanel,greenhouse,Mixpanel,California,yes,ok,2026-11-09,
-4,California,Modal,ashby,Modal,California,yes,ok,2026-11-09,
-4,California,Moveworks,auto,,California; Toronto / GTA,yes,not_found,2026-11-09,
-4,California,Mux,ashby,Mux,California,yes,ok,2026-11-09,
-4,California,Navan,auto,,California,yes,not_found,2026-11-09,
-4,California,NerdWallet,ashby,NerdWallet,California,yes,ok,2026-11-09,
-4,California,Netlify,greenhouse,Netlify,California; Remote / other US,yes,ok,2026-11-09,
-4,California,Nextdoor,greenhouse,Nextdoor,California,yes,ok,2026-11-09,
-4,California,Notion,ashby,notion,California,yes,ok,2026-11-09,
-4,California,Nuro,greenhouse,Nuro,California,yes,ok,2026-11-09,
-4,California,Okta,greenhouse,okta,California; Toronto / GTA,yes,ok,2026-11-09,
-4,California,OpenAI,ashby,openai,California,yes,ok,2026-11-09,
-4,California,Opendoor,auto,,California,yes,not_found,2026-11-09,
-4,California,PagerDuty,greenhouse,PagerDuty,California; Toronto / GTA,yes,ok,2026-11-09,
-4,California,Patreon,ashby,Patreon,California,yes,ok,2026-11-09,
-4,California,Perplexity,ashby,Perplexity,California,yes,ok,2026-11-09,
-4,California,Pilot,auto,,California,yes,not_found,2026-11-09,
-4,California,Pinecone,ashby,Pinecone,California,yes,ok,2026-11-09,
-4,California,Pinterest,greenhouse,pinterest,California; Toronto / GTA,yes,ok,2026-11-09,
-4,California,Plaid,lever,plaid,California,yes,not_found,2026-11-09,
-4,California,Postman,auto,,California,yes,not_found,2026-11-09,
-4,California,Quora,ashby,Quora,California; Remote / other US,yes,ok,2026-11-09,
-4,California,Reddit,greenhouse,Reddit,California; Toronto / GTA,yes,ok,2026-11-09,
-4,California,Relativity Space,greenhouse,relativity,California,yes,ok,2026-11-09,
-4,California,Replit,ashby,Replit,California,yes,ok,2026-11-09,
-4,California,Retool,auto,,California,yes,not_found,2026-11-09,
-4,California,Ripple,greenhouse,Ripple,California; Toronto / GTA,yes,ok,2026-11-09,
-4,California,Rippling,auto,,California; Remote / other US,yes,not_found,2026-11-09,
-4,California,Robinhood,greenhouse,robinhood,California; Toronto / GTA,yes,ok,2026-11-09,
-4,California,Roblox,greenhouse,roblox,California,yes,ok,2026-11-09,
-4,California,Samsara,greenhouse,samsara,California,yes,ok,2026-11-09,
-4,California,Scale AI,greenhouse,scaleai,California,yes,ok,2026-11-09,
-4,California,Sentry,ashby,Sentry,California; Toronto / GTA,yes,ok,2026-11-09,Toronto office
-4,California,ServiceTitan,auto,,California,yes,not_found,2026-11-09,
-4,California,Snapdocs,ashby,Snapdocs,California,yes,ok,2026-11-09,
-4,California,Snorkel AI,greenhouse,snorkelai,California,yes,ok,2026-11-09,
-4,California,SoFi,greenhouse,SoFi,California,yes,ok,2026-11-09,
-4,California,Sourcegraph,auto,,California; Remote / other US,yes,not_found,2026-11-09,
-4,California,Stripe,greenhouse,stripe,California; Toronto / GTA,yes,ok,2026-11-09,
-4,California,Supabase,ashby,Supabase,California; Remote / other US,yes,ok,2026-11-09,
-4,California,Tenstorrent,greenhouse,Tenstorrent,Toronto / GTA; California,yes,ok,2026-11-09,
-4,California,Thumbtack,ashby,Thumbtack,California,yes,ok,2026-11-09,
-4,California,Together AI,greenhouse,togetherai,California,yes,ok,2026-11-09,
-4,California,Turo,auto,,California; Rest of Canada,yes,not_found,2026-11-09,Large Montreal team
-4,California,Twilio,greenhouse,twilio,California; Remote / other US,yes,ok,2026-11-09,
-4,California,Vanta,ashby,Vanta,California; Remote / other US,yes,ok,2026-11-09,
-4,California,Vercel,greenhouse,Vercel,California; Remote / other US,yes,ok,2026-11-09,
-4,California,Verkada,greenhouse,Verkada,California,yes,ok,2026-11-09,
-4,California,Waymo,greenhouse,Waymo,California,yes,ok,2026-11-09,
-4,California,Wealthfront,lever,wealthfront,California,yes,ok,2026-11-09,
-4,California,Webflow,greenhouse,Webflow,California; Remote / other US,yes,ok,2026-11-09,
-4,California,Weights & Biases,auto,wandb,California,yes,not_found,2026-11-09,
-4,California,Writer,ashby,Writer,California,yes,ok,2026-11-09,
-4,California,ZipRecruiter,greenhouse,ZipRecruiter,California,yes,ok,2026-11-09,
-4,California,Zoox,lever,zoox,California,yes,ok,2026-11-09,
-5,Toronto / GTA,1Password,ashby,1password,Toronto / GTA; Remote / other US,yes,ok,2026-11-09,"Remote-first, Toronto HQ"
-5,Toronto / GTA,Achievers,lever,achievers,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Ada,auto,ada,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,AlayaCare,greenhouse,AlayaCare,Toronto / GTA; Rest of Canada,yes,ok,2026-11-09,
-5,Toronto / GTA,Basetwo,auto,,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,BenchSci,ashby,BenchSci,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Borderless AI,auto,borderless,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,Borrowell,auto,,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,Clearco,ashby,Clearco,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Clutch,greenhouse,clutch,Toronto / GTA,yes,ok,2026-11-09,Online car retailer
-5,Toronto / GTA,Coinsquare,auto,,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,Datadog,greenhouse,datadog,Remote / other US; Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Docebo,ashby,Docebo,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,ecobee,auto,,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,Enso Connect,auto,ensoconnect,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,Float,auto,floatcard,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,FreshBooks,auto,,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,Geotab,greenhouse,Geotab,Toronto / GTA,yes,ok,2026-11-09,Oakville
-5,Toronto / GTA,HubSpot,auto,,Toronto / GTA,yes,not_found,2026-11-09,Likely its own careers system
-5,Toronto / GTA,Index Exchange,auto,indexexchange,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,Jobber,ashby,jobber,Rest of Canada; Toronto / GTA,yes,ok,2026-11-09,Edmonton
-5,Toronto / GTA,Kepler Communications,ashby,kepler,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Klarna,auto,,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,KOHO,ashby,koho,Toronto / GTA; Remote / other US,yes,ok,2026-11-09,
-5,Toronto / GTA,League,auto,,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,Ledn,auto,,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,Loopio,ashby,Loopio,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Maple,lever,getmaple,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,MongoDB,greenhouse,mongodb,Toronto / GTA; Remote / other US,yes,ok,2026-11-09,
-5,Toronto / GTA,Nudge,ashby,Nudge,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Plooto,lever,plooto,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Points,auto,,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,PolicyMe,lever,policyme,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Prodigy Education,auto,prodigy,Toronto / GTA,yes,not_found,2026-11-09,Oakville
-5,Toronto / GTA,Q4 Inc,auto,q4inc,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,Ritual,greenhouse,Ritual,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Rose Rocket,ashby,Rose Rocket,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Spotify,lever,spotify,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Super.com,greenhouse,super,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Swift Medical,auto,swiftmedical,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,Tailscale,greenhouse,Tailscale,Toronto / GTA; Remote / other US,yes,ok,2026-11-09,
-5,Toronto / GTA,Tealbook,lever,tealbook,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Top Hat,auto,tophat,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,TouchBistro,greenhouse,TouchBistro,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,TribalScale,greenhouse,TribalScale,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Tulip,auto,tulipretail,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,Untether AI,auto,untether,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,Validere,auto,,Toronto / GTA; Rest of Canada,yes,not_found,2026-11-09,
-5,Toronto / GTA,Vena Solutions,auto,vena,Toronto / GTA,yes,not_found,2026-11-09,
-5,Toronto / GTA,Waabi,lever,waabi,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Wattpad,lever,wattpad,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Wave,lever,waveapps,Toronto / GTA,yes,ok,2026-11-09,
-5,Toronto / GTA,Wealthsimple,ashby,Wealthsimple,Toronto / GTA; Remote / other US,yes,ok,2026-11-09,
-5,Toronto / GTA,Xanadu,auto,,Toronto / GTA,yes,not_found,2026-11-09,
-6,Rest of Canada,ApplyBoard,auto,,Rest of Canada,yes,not_found,2026-11-09,Kitchener
-6,Rest of Canada,Arctic Wolf,auto,arcticwolf,Rest of Canada,yes,not_found,2026-11-09,Waterloo
-6,Rest of Canada,Axonify,auto,,Rest of Canada,yes,not_found,2026-11-09,Waterloo
-6,Rest of Canada,Benevity,ashby,Benevity,Rest of Canada,yes,ok,2026-11-09,Calgary
-6,Rest of Canada,Busbud,auto,,Rest of Canada,yes,not_found,2026-11-09,Montreal
-6,Rest of Canada,Coconut Software,greenhouse,coconutsoftware,Rest of Canada,yes,ok,2026-11-09,Saskatoon
-6,Rest of Canada,Coveo,auto,,Rest of Canada,yes,not_found,2026-11-09,"Quebec City, Montreal"
-6,Rest of Canada,D2L,greenhouse,d2l,Rest of Canada,yes,ok,2026-11-09,Kitchener
-6,Rest of Canada,Dialogue,auto,,Rest of Canada,yes,not_found,2026-11-09,Montreal
-6,Rest of Canada,Helcim,auto,,Rest of Canada,yes,not_found,2026-11-09,Calgary
-6,Rest of Canada,Hopper,ashby,Hopper,Rest of Canada,yes,ok,2026-11-09,Montreal
-6,Rest of Canada,Magnet Forensics,lever,magnetforensics,Rest of Canada,yes,ok,2026-11-09,Waterloo
-6,Rest of Canada,Miovision,ashby,Miovision,Rest of Canada,yes,ok,2026-11-09,Kitchener
-6,Rest of Canada,Neo Financial,ashby,neofinancial,Rest of Canada,yes,ok,2026-11-09,"Calgary, Winnipeg"
-6,Rest of Canada,nesto,auto,,Rest of Canada,yes,not_found,2026-11-09,Montreal
-6,Rest of Canada,Nuvei,auto,,Rest of Canada,yes,not_found,2026-11-09,Montreal
-6,Rest of Canada,Plotly,ashby,Plotly,Rest of Canada,yes,ok,2026-11-09,Montreal
-6,Rest of Canada,Symend,auto,,Rest of Canada,yes,not_found,2026-11-09,Calgary
-6,Rest of Canada,Vendasta,auto,,Rest of Canada,yes,not_found,2026-11-09,Saskatoon
-6,Rest of Canada,Vention,auto,,Rest of Canada,yes,not_found,2026-11-09,Montreal
-6,Rest of Canada,Vidyard,auto,,Rest of Canada,yes,not_found,2026-11-09,Kitchener
-6,Rest of Canada,Workleap,greenhouse,Workleap,Rest of Canada,yes,ok,2026-11-09,Montreal
-7,Remote / other US,Bitwarden,greenhouse,Bitwarden,Remote / other US,yes,ok,2026-11-09,
-7,Remote / other US,Buffer,ashby,Buffer,Remote / other US,yes,ok,2026-11-09,
-7,Remote / other US,Canonical,greenhouse,Canonical,Remote / other US,yes,ok,2026-11-09,
-7,Remote / other US,Close,ashby,close,Remote / other US,yes,ok,2026-11-09,
-7,Remote / other US,Deel,ashby,Deel,Remote / other US,yes,ok,2026-11-09,
-7,Remote / other US,Doist,auto,,Remote / other US,yes,not_found,2026-11-09,
-7,Remote / other US,Elastic,greenhouse,Elastic,Remote / other US,yes,ok,2026-11-09,
-7,Remote / other US,GitLab,greenhouse,gitlab,Remote / other US,yes,ok,2026-11-09,"Remote, hires in Canada"
-7,Remote / other US,Grafana Labs,greenhouse,grafanalabs,Remote / other US,yes,ok,2026-11-09,
-7,Remote / other US,Hotjar,auto,,Remote / other US,yes,not_found,2026-11-09,
-7,Remote / other US,Kraken,lever,kraken,Remote / other US,yes,ok,2026-11-09,
-7,Remote / other US,PostHog,ashby,PostHog,Remote / other US,yes,ok,2026-11-09,
-7,Remote / other US,Ramp,ashby,ramp,Remote / other US,yes,ok,2026-11-09,New York
-7,Remote / other US,Remote,greenhouse,remote,Remote / other US,yes,ok,2026-11-09,
-7,Remote / other US,Zapier,ashby,Zapier,Remote / other US,yes,ok,2026-11-09,
+﻿priority,region,company,score,tier,type,ticker,stage,last_raise,layoffs_12m,board,slug,careers_url,hubs,enabled,status,verified,market_cap_b,stock_12m_pct,revenue_growth_pct,profit_margin_pct,metrics_updated,notes
+1,Vancouver / BC,1QBit,,,private,,Late,,,auto,,,Vancouver / BC,yes,,,,,,,,Quantum and AI software
+1,Vancouver / BC,AbCellera,,,public,ABCL,,,,auto,,,Vancouver / BC,yes,,,,,,,,Biotech with large software and data teams
+1,Vancouver / BC,Absolute Software,,,private,,Late,,,auto,absolute,,Vancouver / BC; Ottawa,yes,,,,,,,,Private since 2023
+1,Vancouver / BC,ActiveState,,,private,,Late,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,AlgaeCal,,,private,,Bootstrapped,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Amazon,,,public,AMZN,,,"2026-01 (16,000); 2026-04; 2026-10",other,,https://www.amazon.jobs,Vancouver / BC; Seattle; California; Toronto / GTA,yes,,,,,,,,Uses its own careers site
+1,Vancouver / BC,Arista Networks,,,public,ANET,,,,other,,https://www.arista.com/en/careers,Vancouver / BC; California,yes,,,,,,,,Burnaby engineering office
+1,Vancouver / BC,Article,,,private,,Late,,,auto,,,Vancouver / BC,yes,,,,,,,,Furniture e-commerce
+1,Vancouver / BC,Asana,,,public,ASAN,,,,greenhouse,asana,,Vancouver / BC; California,yes,,,,,,,,Listed hiring in Vancouver
+1,Vancouver / BC,Astera Labs,,,public,ALAB,,,,auto,asteralabs,,Vancouver / BC; California,yes,,,,,,,,Listed hiring in Vancouver
+1,Vancouver / BC,Blackbird Interactive,,,private,,Late,,,auto,,,Vancouver / BC,yes,,,,,,,,Games
+1,Vancouver / BC,Boast.ai,,,private,,Series B,,,auto,boast,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Brex,,,private,,Unicorn,,,greenhouse,brex,,Vancouver / BC; California,yes,,,,,,,,Listed hiring in Vancouver
+1,Vancouver / BC,Certn,,,private,,Series B,,,auto,,,Vancouver / BC,yes,,,,,,,,Victoria
+1,Vancouver / BC,Checkfront,,,private,,Late,,,auto,,,Vancouver / BC,yes,,,,,,,,Victoria
+1,Vancouver / BC,Clio,,,private,,Unicorn,,,auto,,,Vancouver / BC; Toronto / GTA; Rest of Canada,yes,,,,,,,,"Legal tech, Burnaby HQ"
+1,Vancouver / BC,Copperleaf,,,private,,Subsidiary,,,auto,,,Vancouver / BC,yes,,,,,,,,Owned by IFS
+1,Vancouver / BC,D-Wave,,,public,QBTS,,,,auto,dwave,,Vancouver / BC,yes,,,,,,,,"Quantum computing, Burnaby"
+1,Vancouver / BC,Dapper Labs,,,private,,Late,,,auto,dapperlabs,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,DarkVision,,,private,,Series B,,,auto,,,Vancouver / BC,yes,,,,,,,,North Vancouver
+1,Vancouver / BC,Dialpad,,,private,,Unicorn,,,auto,,,Vancouver / BC; California; Toronto / GTA,yes,,,,,,,,Large Vancouver engineering office
+1,Vancouver / BC,Diligent,,,private,,Late,,,auto,,,Vancouver / BC; California,yes,,,,,,,,Includes the former Galvanize Vancouver team
+1,Vancouver / BC,EarthDaily Analytics,,,private,,Late,,,auto,earthdaily,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Elastic Path,,,private,,Late,,,auto,elasticpath,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Electronic Arts,,,public,EA,,,2026-10 (400),other,,https://jobs.ea.com,Vancouver / BC; California; Rest of Canada,yes,,,,,,,,Burnaby studio; take-private deal announced 2025
+1,Vancouver / BC,Eventbase,,,private,,Late,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,FISPAN,,,private,,Series B,,,auto,fispan,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Fortinet,,,public,FTNT,,,,workday,fortinet,,Vancouver / BC; Ottawa; California,yes,,,,,,,,Burnaby and Ottawa offices
+1,Vancouver / BC,Fresh Prep,,,private,,Series B,,,auto,freshprep,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Grammarly (Superhuman),,,private,,Unicorn,,,auto,grammarly,,Vancouver / BC; California,yes,,,,,,,,Vancouver engineering hub
+1,Vancouver / BC,Hootsuite,,,private,,Late,,,auto,,,Vancouver / BC; Toronto / GTA,yes,,,,,,,,
+1,Vancouver / BC,HP Inc,,,public,HPQ,,,,workday,hp/wd5/ExternalCareerSite,,Vancouver / BC; California,yes,,,,,,,,Vancouver team from Teradici
+1,Vancouver / BC,Indochino,,,private,,Late,,,auto,,,Vancouver / BC,yes,,,,,,,,Menswear e-commerce
+1,Vancouver / BC,Jane App,,,private,,Late,,,auto,janeapp,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Kabam,,,private,,Subsidiary,,,auto,,,Vancouver / BC,yes,,,,,,,,"Games, owned by Netmarble"
+1,Vancouver / BC,Kardium,,,private,,Late,,,auto,,,Vancouver / BC,yes,,,,,,,,"Medical devices, Burnaby"
+1,Vancouver / BC,Klue,,,private,,Series B,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Later,,,private,,Late,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Lululemon,,,public,LULU,,,,auto,,,Vancouver / BC,yes,,,,,,,,"Vancouver HQ, digital team"
+1,Vancouver / BC,Mastercard,,,public,MA,,,,workday,mastercard/wd1/CorporateCareers,,Vancouver / BC; Toronto / GTA,yes,,,,,,,,Vancouver tech hub
+1,Vancouver / BC,MDA Space,,,public,MDA.TO,,,,auto,mda,,Vancouver / BC; Toronto / GTA,yes,,,,,,,,"Brampton HQ, Richmond BC site"
+1,Vancouver / BC,Microsoft,,,public,MSFT,,,2026-06 (300),other,,https://careers.microsoft.com,Vancouver / BC; Seattle; California; Toronto / GTA,yes,,,,,,,,Uses its own careers site
+1,Vancouver / BC,MistyWest,,,private,,Bootstrapped,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Mogo,,,public,MOGO,,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Mojio,,,private,,Late,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Motorola Solutions,,,public,MSI,,,,workday,motorolasolutions/wd5/Careers,,Vancouver / BC,yes,,,,,,,,Vancouver team from Avigilon
+1,Vancouver / BC,Mozilla,,,nonprofit,,Nonprofit,,,auto,,,Vancouver / BC; Toronto / GTA; Remote / other US,yes,,,,,,,,
+1,Vancouver / BC,Phoenix Labs,,,private,,Subsidiary,,,auto,phoenixlabs,,Vancouver / BC,yes,,,,,,,,Games
+1,Vancouver / BC,Plurilock,,,public,PLUR.V,,,,auto,,,Vancouver / BC,yes,,,,,,,,Victoria
+1,Vancouver / BC,PressReader,,,private,,Late,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Procurify,,,private,,Series C,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,RB Global,,,public,RBA,,,,auto,,,Vancouver / BC,yes,,,,,,,,Burnaby tech teams (Ritchie Bros)
+1,Vancouver / BC,RBC,,,public,RY,,,,other,,https://jobs.rbc.com,Toronto / GTA; Vancouver / BC,yes,,,,,,,,Uses its own careers site
+1,Vancouver / BC,Redbrick,,,private,,Late,,,auto,,,Vancouver / BC,yes,,,,,,,,Victoria
+1,Vancouver / BC,Relic Entertainment,,,private,,Late,,,auto,relic,,Vancouver / BC,yes,,,,,,,,Games
+1,Vancouver / BC,Rise People,,,private,,Late,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Rivian,,,public,RIVN,,,,auto,,,Vancouver / BC; California,yes,,,,,,,,Vancouver software office
+1,Vancouver / BC,Routific,,,private,,Series A,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Salesforce,,,public,CRM,,,,workday,salesforce/wd12/External_Career_Site,,Vancouver / BC; Seattle; California; Toronto / GTA,yes,,,,,,,,
+1,Vancouver / BC,Sanctuary AI,,,private,,Series B,,,auto,sanctuary,,Vancouver / BC,yes,,,,,,,,Humanoid robotics
+1,Vancouver / BC,SAP,,,public,SAP,,,,other,,https://jobs.sap.com,Vancouver / BC; Toronto / GTA; Rest of Canada,yes,,,,,,,,Uses its own careers site
+1,Vancouver / BC,Semios,,,private,,Series C,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Shopify,,,public,SHOP,,,"2026-05 (30, minor)",other,,https://www.shopify.com/careers,Ottawa; Toronto / GTA; Vancouver / BC,yes,,,,,,,,Uses its own careers site
+1,Vancouver / BC,SkyHive,,,private,,Series B,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Spare Labs,,,private,,Series B,,,auto,spare,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Spring Financial,,,private,,Late,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Tantalus Systems,,,public,GRID.TO,,,,auto,tantalus,,Vancouver / BC,yes,,,,,,,,Burnaby
+1,Vancouver / BC,Telus,,,public,TU,,,,other,,https://careers.telus.com,Vancouver / BC; Toronto / GTA,yes,,,,,,,,Vancouver HQ
+1,Vancouver / BC,Thinkific,,,public,THNC.TO,,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Thrive Health,,,private,,Series A,,,auto,thrivehealth,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Trulioo,,,private,,Late,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Unbounce,,,private,,Subsidiary,,,auto,,,Vancouver / BC,yes,,,,,,,,Owned by CM Group
+1,Vancouver / BC,Unity,,,public,U,,,,auto,,,Vancouver / BC; Toronto / GTA; Rest of Canada,yes,,,,,,,,
+1,Vancouver / BC,Visier,,,private,,Unicorn,,,auto,,,Vancouver / BC; Toronto / GTA,yes,,,,,,,,
+1,Vancouver / BC,Wishpond,,,public,WISH.V,,,,auto,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Workday,,,public,WDAY,,,,workday,workday/wd5/Workday,,Vancouver / BC; Seattle; California; Toronto / GTA,yes,,,,,,,,"Hiring in Vancouver, Toronto, Bellevue"
+2,Ottawa,Adobe,,,public,ADBE,,,,workday,adobe/wd5/external_experienced,,Ottawa; Seattle; California,yes,,,,,,,,
+2,Ottawa,Alludo (Corel),,,private,,Late,,,auto,alludo,,Ottawa,yes,,,,,,,,
+2,Ottawa,Assent,,,private,,Unicorn,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,BitHeads,,,private,,Bootstrapped,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,BlackBerry,,,public,BB,,,,workday,bb/wd3/BlackBerry,,Ottawa; Toronto / GTA; Rest of Canada,yes,,,,,,,,"QNX in Kanata, Waterloo HQ"
+2,Ottawa,Cadence Design Systems,,,public,CDNS,,,,workday,cadence,,Ottawa; California,yes,,,,,,,,
+2,Ottawa,Calian,,,public,CGY.TO,,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,CGI,,,public,GIB,,,,other,,https://www.cgi.com/en/careers,Ottawa; Toronto / GTA; Rest of Canada,yes,,,,,,,,Uses its own careers site
+2,Ottawa,Ciena,,,public,CIEN,,,,workday,ciena/wd5/Careers,,Ottawa,yes,,,,,,,,Kanata is its largest R&D site
+2,Ottawa,CIRA,,,nonprofit,,Nonprofit,,,auto,cira,,Ottawa,yes,,,,,,,,Canadian Internet Registration Authority
+2,Ottawa,Cisco,,,public,CSCO,,,,other,,https://jobs.cisco.com,Ottawa; California; Toronto / GTA,yes,,,,,,,,Uses its own careers site
+2,Ottawa,Clearwater Clinical,,,private,,Bootstrapped,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Crank Software,,,private,,Subsidiary,,,auto,crank,,Ottawa,yes,,,,,,,,
+2,Ottawa,Ericsson,,,public,ERIC,,,,other,,https://jobs.ericsson.com,Ottawa; Rest of Canada,yes,,,,,,,,Uses its own careers site
+2,Ottawa,Evidence Partners,,,private,,Late,,,auto,evidencepartners,,Ottawa,yes,,,,,,,,DistillerSR
+2,Ottawa,Field Effect,,,private,,Late,,,auto,fieldeffect,,Ottawa,yes,,,,,,,,Cybersecurity
+2,Ottawa,Foko Retail,,,private,,Series A,,,auto,foko,,Ottawa,yes,,,,,,,,
+2,Ottawa,Ford,,,public,F,,,,other,,https://corporate.ford.com/careers.html,Ottawa; Rest of Canada,yes,,,,,,,,Ottawa software centre
+2,Ottawa,Fullscript,,,private,,Unicorn,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,IBM,,,public,IBM,,,,other,,https://www.ibm.com/careers,Ottawa; Toronto / GTA; Rest of Canada,yes,,,,,,,,Uses its own careers site
+2,Ottawa,Kinaxis,,,public,KXS.TO,,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Kivuto,,,private,,Late,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Klipfolio,,,private,,Late,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Lightspeed,,,public,LSPD,,,,auto,,,Ottawa; Rest of Canada,yes,,,,,,,,"Montreal HQ, Ottawa office"
+2,Ottawa,Martello,,,public,MTLO.V,,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,MindBridge,,,private,,Series B,,,auto,mindbridge,,Ottawa,yes,,,,,,,,
+2,Ottawa,Mitel,,,private,,Late,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Noibu,,,private,,Series B,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Nokia,,,public,NOK,,,,other,,https://www.nokia.com/about-us/careers/,Ottawa,yes,,,,,,,,Uses its own careers site
+2,Ottawa,Pythian,,,private,,Late,,,auto,,,Ottawa,yes,,,,,,,,Data consulting
+2,Ottawa,Recollective,,,private,,Bootstrapped,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Rewind,,,private,,Series B,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Ribbon Communications,,,public,RBBN,,,,auto,,,Ottawa,yes,,,,,,,,Kanata office
+2,Ottawa,Ross Video,,,private,,Bootstrapped,,,auto,rossvideo,,Ottawa,yes,,,,,,,,Employee-owned
+2,Ottawa,Shoebox,,,private,,Series A,,,auto,,,Ottawa,yes,,,,,,,,Hearing tech
+2,Ottawa,Solink,,,private,,Series B,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Synopsys,,,public,SNPS,,,,workday,synopsys,,Ottawa; California,yes,,,,,,,,
+2,Ottawa,Tehama,,,private,,Series A,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Telesat,,,public,TSAT,,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Trend Micro,,,public,4704.T,,,,other,,,Ottawa,yes,,,,,,,,Ottawa office; check its careers site directly
+2,Ottawa,TrueContext,,,public,TCXT.V,,,,auto,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Veem,,,private,,Late,,,auto,,,Ottawa; California,yes,,,,,,,,
+3,Seattle,Allen Institute for AI,,,nonprofit,,Nonprofit,,,auto,allenai,,Seattle,yes,,,,,,,,
+3,Seattle,Amperity,,,private,,Unicorn,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Anduril,,,private,,Unicorn,,,auto,,,California; Seattle,yes,,,,,,,,
+3,Seattle,Anthropic,,,private,,Unicorn,,,greenhouse,anthropic,,Seattle; California,yes,,,,,,,,Seattle and San Francisco offices
+3,Seattle,Apple,,,public,AAPL,,,,other,,https://jobs.apple.com,California; Seattle,yes,,,,,,,,Uses its own careers site
+3,Seattle,Auger,,,private,,Early-stage,,,auto,,,Seattle,yes,,,,,,,,AI startup
+3,Seattle,Aurora,,,public,AUR,,,,auto,aurorainnovation,,California; Seattle,yes,,,,,,,,
+3,Seattle,Avalara,,,private,,Late,,,auto,,,Seattle,yes,,,,,,,,Private since 2022
+3,Seattle,Avante,,,private,,Early-stage,,,auto,,,Seattle,yes,,,,,,,,AI startup
+3,Seattle,Blue Origin,,,private,,Late,,,auto,blueorigin,,Seattle,yes,,,,,,,,
+3,Seattle,Bungie,,,private,,Subsidiary,,,auto,,,Seattle,yes,,,,,,,,"Bellevue, owned by Sony"
+3,Seattle,Capital One,,,public,COF,,,,workday,capitalone/wd12/Capital_One,,Seattle; California; Toronto / GTA,yes,,,,,,,,Toronto tech centre
+3,Seattle,Carta,,,private,,Unicorn,,,auto,,,California; Rest of Canada; Seattle,yes,,,,,,,,Waterloo office
+3,Seattle,Chronosphere,,,private,,Unicorn,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,CopilotKit,,,private,,Early-stage,,,auto,,,Seattle,yes,,,,,,,,AI startup
+3,Seattle,Coupang,,,public,CPNG,,,,auto,,,Seattle; California,yes,,,,,,,,Large Seattle engineering office
+3,Seattle,Databricks,,,private,,Unicorn,,,greenhouse,databricks,,California; Toronto / GTA; Seattle,yes,,,,,,,,
+3,Seattle,DocuSign,,,public,DOCU,,,,workday,docusign,,Seattle; California,yes,,,,,,,,
+3,Seattle,DoorDash,,,public,DASH,,,,auto,,,California; Toronto / GTA; Seattle,yes,,,,,,,,
+3,Seattle,Dropzone AI,,,private,,Series B,,,auto,dropzoneai,,Seattle,yes,,,,,,,,AI startup
+3,Seattle,Expedia,,,public,EXPE,,,,workday,expedia,,Seattle,yes,,,,,,,,
+3,Seattle,F5,,,public,FFIV,,,,workday,f5,,Seattle,yes,,,,,,,,
+3,Seattle,Flexe,,,private,,Series D+,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Glowforge,,,private,,Late,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Google,,,public,GOOGL,,,,other,,https://www.google.com/about/careers/applications/,Seattle; California; Toronto / GTA; Rest of Canada,yes,,,,,,,,Uses its own careers site
+3,Seattle,Gradial,,,private,,Early-stage,,,auto,,,Seattle,yes,,,,,,,,AI startup
+3,Seattle,Highspot,,,private,,Unicorn,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Hiya,,,private,,Late,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Howie,,,private,,Early-stage,,,auto,,,Seattle,yes,,,,,,,,AI startup
+3,Seattle,Icertis,,,private,,Unicorn,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Impinj,,,public,PI,,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Indeed,,,private,,Subsidiary,,,other,,https://www.indeed.jobs,Seattle; Toronto / GTA,yes,,,,,,,,Owned by Recruit
+3,Seattle,Leafly,,,public,LFLY,,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Meta,,,public,META,,,"2026-04 (~8,000); 2026-05 (10%)",other,,https://www.metacareers.com,Seattle; California,yes,,,,,,,,Uses its own careers site
+3,Seattle,MotherDuck,,,private,,Series B,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Niantic,,,private,,Late,,,auto,,,California; Seattle,yes,,,,,,,,
+3,Seattle,Nintendo of America,,,public,NTDOY,,,,other,,https://careers.nintendo.com,Seattle,yes,,,,,,,,Redmond
+3,Seattle,Nintex,,,private,,Late,,,auto,,,Seattle,yes,,,,,,,,Bellevue
+3,Seattle,NVIDIA,,,public,NVDA,,,,workday,nvidia/wd5/NVIDIAExternalCareerSite,,California; Seattle; Toronto / GTA,yes,,,,,,,,Toronto AI lab
+3,Seattle,OfferUp,,,private,,Late,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Okta,,,public,OKTA,,,,greenhouse,okta,,California; Toronto / GTA; Seattle,yes,,,,,,,,
+3,Seattle,OpenAI,,,private,,Unicorn,,,ashby,openai,,California; Seattle,yes,,,,,,,,
+3,Seattle,Oracle,,,public,ORCL,,,"2026-04 (~10,000, unconfirmed); 2026-09",other,,https://careers.oracle.com,California; Seattle; Toronto / GTA,yes,,,,,,,,Uses its own careers site
+3,Seattle,Oumi,,,private,,Early-stage,,,auto,,,Seattle,yes,,,,,,,,AI startup
+3,Seattle,Outreach,,,private,,Unicorn,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Pacvue,,,private,,Late,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Payscale,,,private,,Late,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Pinterest,,,public,PINS,,,,greenhouse,pinterest,,Seattle; California; Toronto / GTA,yes,,,,,,,,Toronto office
+3,Seattle,Pioneer Square Labs,,,private,,Early-stage,,,auto,psl,,Seattle,yes,,,,,,,,Startup studio
+3,Seattle,PitchBook,,,private,,Subsidiary,,,auto,,,Seattle,yes,,,,,,,,Owned by Morningstar
+3,Seattle,Pokemon Company International,,,private,,Subsidiary,,,auto,pokemon,,Seattle,yes,,,,,,,,Bellevue
+3,Seattle,Porch,,,public,PRCH,,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Pulumi,,,private,,Series C,,,auto,,,Seattle; Remote / other US,yes,,,,,,,,
+3,Seattle,Qualtrics,,,private,,Late,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Qumulo,,,private,,Late,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Rec Room,,,private,,Unicorn,,,auto,recroom,,Seattle,yes,,,,,,,,
+3,Seattle,Redfin,,,private,,Subsidiary,,,auto,,,Seattle,yes,,,,,,,,Owned by Rocket Companies
+3,Seattle,Remitly,,,public,RELY,,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Rover,,,private,,Late,,,auto,,,Seattle,yes,,,,,,,,Private since 2024
+3,Seattle,SeekOut,,,private,,Series C,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Seeq,,,private,,Series C,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Smartsheet,,,private,,Late,,,auto,,,Seattle,yes,,,,,,,,Private since 2025
+3,Seattle,Snap,,,public,SNAP,,,"2026-04 (1,000)",other,,https://careers.snap.com,California; Seattle,yes,,,,,,,,Uses its own careers site
+3,Seattle,Snowflake,,,public,SNOW,,,,other,,https://careers.snowflake.com,Toronto / GTA; Seattle; California,yes,,,,,,,,Uses its own careers site
+3,Seattle,SpaceX,,,private,,Unicorn,,,greenhouse,spacex,,California; Seattle,yes,,,,,,,,
+3,Seattle,Stackline,,,private,,Late,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Starbucks,,,public,SBUX,,,,other,,https://careers.starbucks.com,Seattle,yes,,,,,,,,Tech teams in Seattle
+3,Seattle,Statsig,,,private,,Subsidiary,,,auto,,,Seattle,yes,,,,,,,,Acquired by OpenAI in 2025
+3,Seattle,Stripe,,,private,,Unicorn,,,greenhouse,stripe,,Seattle; California; Toronto / GTA,yes,,,,,,,,Toronto office
+3,Seattle,T-Mobile,,,public,TMUS,,,,other,,https://careers.t-mobile.com,Seattle,yes,,,,,,,,Bellevue
+3,Seattle,Tanium,,,private,,Unicorn,,,auto,,,Seattle,yes,,,,,,,,Kirkland
+3,Seattle,Temporal,,,private,,Unicorn,,,auto,temporaltechnologies,,Seattle; Remote / other US,yes,,,,,,,,
+3,Seattle,Textio,,,private,,Late,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Truveta,,,private,,Unicorn,,,auto,,,Seattle,yes,,,,,,,,
+3,Seattle,Uber,,,public,UBER,,,"2026-09 (~3,300)",other,,https://www.uber.com/careers,Seattle; California; Toronto / GTA,yes,,,,,,,,Uses its own careers site
+3,Seattle,Valve,,,private,,Bootstrapped,,,other,,https://www.valvesoftware.com/jobs,Seattle,yes,,,,,,,,Bellevue
+3,Seattle,XBOW,,,private,,Series B,,,auto,,,Seattle,yes,,,,,,,,AI startup
+3,Seattle,Yoodli,,,private,,Series B,,,auto,,,Seattle,yes,,,,,,,,AI startup
+3,Seattle,Zillow,,,public,Z,,,2026-08 (500+),workday,zillow/wd5/Zillow_Group_External,,Seattle,yes,,,,,,,,
+4,California,Abnormal Security,,,private,,Unicorn,,,auto,abnormalsecurity,,California,yes,,,,,,,,
+4,California,Affirm,,,public,AFRM,,,,greenhouse,affirm,,California; Remote / other US,yes,,,,,,,,Hires remote in Canada
+4,California,Airbnb,,,public,ABNB,,,,greenhouse,airbnb,,California,yes,,,,,,,,
+4,California,Airbyte,,,private,,Unicorn,,,auto,,,California; Remote / other US,yes,,,,,,,,
+4,California,Airtable,,,private,,Unicorn,,2026-10,greenhouse,airtable,,California,yes,,,,,,,,
+4,California,Alchemy,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Algolia,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,AMD,,,public,AMD,,,,workday,amd,,California; Toronto / GTA,yes,,,,,,,,Large Markham office
+4,California,Amplitude,,,public,AMPL,,,,auto,,,California,yes,,,,,,,,
+4,California,Anyscale,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Anysphere (Cursor),,,private,,Unicorn,,,auto,anysphere,,California,yes,,,,,,,,
+4,California,Applied Intuition,,,private,,Unicorn,,,auto,appliedintuition,,California,yes,,,,,,,,
+4,California,Applied Materials,,,public,AMAT,,,,workday,amat,,California,yes,,,,,,,,
+4,California,Autodesk,,,public,ADSK,,,,workday,autodesk/wd1/Ext,,California; Toronto / GTA; Rest of Canada,yes,,,,,,,,Toronto and Montreal offices
+4,California,Baseten,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Benchling,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Block,,,public,XYZ,,,"2026-02 (4,000+)",auto,,,California; Toronto / GTA,yes,,,,,,,,
+4,California,Box,,,public,BOX,,,,auto,,,California,yes,,,,,,,,
+4,California,Broadcom,,,public,AVGO,,,,workday,broadcom/wd1/External_Career,,California,yes,,,,,,,,
+4,California,Calm,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Cerebras,,,private,,Unicorn,,,auto,,,California; Toronto / GTA,yes,,,,,,,,Toronto office
+4,California,Character.AI,,,private,,Unicorn,,,auto,character,,California,yes,,,,,,,,
+4,California,Checkr,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Chime,,,public,CHYM,,,,auto,,,California,yes,,,,,,,,
+4,California,Clerk,,,private,,Series C,,,auto,,,California; Remote / other US,yes,,,,,,,,
+4,California,ClickUp,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,San Diego
+4,California,Cloudflare,,,public,NET,,,"2026-05 (1,100)",greenhouse,cloudflare,,California; Remote / other US,yes,,,,,,,,
+4,California,Cognition,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,Makers of Devin and Windsurf
+4,California,Cohere,,,private,,Unicorn,,,auto,,,Toronto / GTA; California,yes,,,,,,,,
+4,California,Coinbase,,,public,COIN,,,,auto,,,California; Remote / other US,yes,,,,,,,,Hires remote in Canada
+4,California,Confluent,,,public,CFLT,,,,auto,,,California; Remote / other US,yes,,,,,,,,IBM acquisition announced late 2025
+4,California,Contentful,,,private,,Unicorn,,,auto,,,Remote / other US; California,yes,,,,,,,,
+4,California,Coursera,,,public,COUR,,,,auto,,,California,yes,,,,,,,,
+4,California,CrowdStrike,,,public,CRWD,,,,workday,crowdstrike/wd5/crowdstrikecareers,,Remote / other US; California,yes,,,,,,,,Hires remote in Canada
+4,California,Crusoe,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,dbt Labs,,,private,,Unicorn,,,auto,dbtlabs,,California; Remote / other US,yes,,,,,,,,Merging with Fivetran
+4,California,Decagon,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Discord,,,private,,Unicorn,,,greenhouse,discord,,California,yes,,,,,,,,
+4,California,Docker,,,private,,Unicorn,,,auto,,,California; Remote / other US,yes,,,,,,,,
+4,California,Doximity,,,public,DOCS,,,,auto,,,California; Remote / other US,yes,,,,,,,,
+4,California,Drata,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,San Diego
+4,California,Dropbox,,,public,DBX,,,2026-10 (~200),greenhouse,dropbox,Hires remote in Canada,California; Remote / other US,yes,,,,,,,,
+4,California,eBay,,,public,EBAY,,,,other,,https://jobs.ebayinc.com,California,yes,,,,,,,,Uses its own careers site
+4,California,Eventbrite,,,public,EB,,,2026-04,auto,,,California,yes,,,,,,,,
+4,California,Fastly,,,public,FSLY,,,,auto,,,California,yes,,,,,,,,
+4,California,Figma,,,public,FIG,,,,greenhouse,figma,,California,yes,,,,,,,,
+4,California,Figure AI,,,private,,Unicorn,,,auto,figureai,,California,yes,,,,,,,,
+4,California,Fireworks AI,,,private,,Unicorn,,,auto,fireworksai,,California,yes,,,,,,,,
+4,California,Five9,,,public,FIVN,,,,auto,,,California,yes,,,,,,,,
+4,California,Fivetran,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Flexport,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Front,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Glean,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Gong,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,GoodRx,,,public,GDRX,,,,auto,,,California,yes,,,,,,,,
+4,California,Guidewire,,,public,GWRE,,,,workday,guidewire,,California; Toronto / GTA,yes,,,,,,,,Large Mississauga team
+4,California,Gusto,,,private,,Unicorn,,,greenhouse,gusto,,California; Toronto / GTA,yes,,,,,,,,
+4,California,Harness,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Harvey,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Headspace,,,private,,Late,,2026-10,auto,,,California,yes,,,,,,,,
+4,California,Hex,,,private,,Series C,,,auto,,,California,yes,,,,,,,,
+4,California,Hightouch,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Hims & Hers,,,public,HIMS,,,,auto,hims,,California,yes,,,,,,,,
+4,California,Honeycomb,,,private,,Series D+,,,auto,,,California,yes,,,,,,,,
+4,California,Instacart,,,public,CART,,,,greenhouse,instacart,,California; Toronto / GTA,yes,,,,,,,,
+4,California,Intel,,,public,INTC,,,,workday,intel/wd1/External,,California,yes,,,,,,,,
+4,California,Intercom,,,private,,Late,,,auto,,,California,yes,,,,,,,,
+4,California,Intuit,,,public,INTU,,,"2026-05 (~3,000)",other,,https://jobs.intuit.com,California; Toronto / GTA; Rest of Canada,yes,,,,,,,,Toronto and Edmonton offices
+4,California,KLA,,,public,KLAC,,,,workday,kla,,California,yes,,,,,,,,
+4,California,Lam Research,,,public,LRCX,,,,workday,lamresearch,,California,yes,,,,,,,,
+4,California,Lambda,,,private,,Unicorn,,,auto,lambdalabs,,California,yes,,,,,,,,
+4,California,Lattice,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,LaunchDarkly,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Linear,,,private,,Unicorn,,,ashby,linear,,California; Remote / other US,yes,,,,,,,,
+4,California,Lyft,,,public,LYFT,,,,greenhouse,lyft,,California; Toronto / GTA,yes,,,,,,,,
+4,California,Marqeta,,,public,MQ,,,,auto,,,California,yes,,,,,,,,
+4,California,Marvell,,,public,MRVL,,,,workday,marvell,,California,yes,,,,,,,,
+4,California,Medium,,,private,,Late,,,auto,,,California,yes,,,,,,,,
+4,California,Mercor,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Mercury,,,private,,Unicorn,,,auto,,,California; Remote / other US,yes,,,,,,,,
+4,California,Mixpanel,,,private,,Late,,,auto,,,California,yes,,,,,,,,
+4,California,Modal,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Moveworks,,,private,,Subsidiary,,,auto,,,California; Toronto / GTA,yes,,,,,,,,Owned by ServiceNow
+4,California,Mux,,,private,,Series D+,,,auto,,,California,yes,,,,,,,,
+4,California,Navan,,,public,NAVN,,,,auto,,,California,yes,,,,,,,,
+4,California,NerdWallet,,,public,NRDS,,,,auto,,,California,yes,,,,,,,,
+4,California,NetApp,,,public,NTAP,,,,workday,netapp,,California,yes,,,,,,,,
+4,California,Netflix,,,public,NFLX,,,"2026-10 (~1,000)",other,,https://jobs.netflix.com,California,yes,,,,,,,,Uses its own careers site
+4,California,Netlify,,,private,,Late,,,auto,,,California; Remote / other US,yes,,,,,,,,
+4,California,Netskope,,,public,NTSK,,,,auto,,,California,yes,,,,,,,,
+4,California,New Relic,,,private,,Late,,,auto,,,California,yes,,,,,,,,Private since 2023
+4,California,Nextdoor,,,public,NXDR,,,,auto,,,California,yes,,,,,,,,
+4,California,Notion,,,private,,Unicorn,,,ashby,notion,,California,yes,,,,,,,,
+4,California,Nuro,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Nutanix,,,public,NTNX,,,,workday,nutanix,,California,yes,,,,,,,,
+4,California,Opendoor,,,public,OPEN,,,,auto,,,California,yes,,,,,,,,
+4,California,PagerDuty,,,public,PD,,,,auto,,,California; Toronto / GTA,yes,,,,,,,,Toronto office
+4,California,Palo Alto Networks,,,public,PANW,,,,other,,https://jobs.paloaltonetworks.com,California,yes,,,,,,,,Uses its own careers site
+4,California,Patreon,,,private,,Unicorn,,2026-07 (93),auto,,,California,yes,,,,,,,,
+4,California,PayPal,,,public,PYPL,,,2026-05; 2026-09,workday,paypal/wd1/jobs,,California; Remote / other US,yes,,,,,,,,
+4,California,Perplexity,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Physical Intelligence,,,private,,Unicorn,,,auto,physicalintelligence,,California,yes,,,,,,,,
+4,California,Pilot,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Pinecone,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Plaid,,,private,,Unicorn,,,lever,plaid,,California,yes,,,,,,,,
+4,California,Postman,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Pure Storage,,,public,PSTG,,,,auto,,,California,yes,,,,,,,,
+4,California,Qualcomm,,,public,QCOM,,,2026-04 (104); 2026-10,workday,qualcomm,Markham office,California; Toronto / GTA,yes,,,,,,,,
+4,California,Quizlet,,,private,,Late,,,auto,,,California,yes,,,,,,,,
+4,California,Quora,,,private,,Late,,,auto,,,California; Remote / other US,yes,,,,,,,,
+4,California,Reddit,,,public,RDDT,,,,auto,,,California; Toronto / GTA,yes,,,,,,,,Toronto office
+4,California,Redis,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Relativity Space,,,private,,Late,,,auto,relativity,,California,yes,,,,,,,,
+4,California,Replit,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Retool,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,RingCentral,,,public,RNG,,,,auto,,,California,yes,,,,,,,,
+4,California,Ripple,,,private,,Unicorn,,,auto,,,California; Toronto / GTA,yes,,,,,,,,Toronto office
+4,California,Rippling,,,private,,Unicorn,,,auto,,,California; Remote / other US,yes,,,,,,,,
+4,California,Robinhood,,,public,HOOD,,,2026-06 (~290),greenhouse,robinhood,Toronto office,California; Toronto / GTA,yes,,,,,,,,
+4,California,Roblox,,,public,RBLX,,,,greenhouse,roblox,,California,yes,,,,,,,,
+4,California,Rubrik,,,public,RBRK,,,,auto,,,California,yes,,,,,,,,
+4,California,SambaNova,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Samsara,,,public,IOT,,,,greenhouse,samsara,,California,yes,,,,,,,,
+4,California,Sandisk,,,public,SNDK,,,,workday,sandisk,,California,yes,,,,,,,,
+4,California,Scale AI,,,private,,Unicorn,,,auto,scaleai,,California,yes,,,,,,,,
+4,California,Sentry,,,private,,Unicorn,,,auto,,,California; Toronto / GTA,yes,,,,,,,,Toronto office
+4,California,ServiceNow,,,public,NOW,,,,smartrecruiters,ServiceNow,,California; Toronto / GTA; Rest of Canada,yes,,,,,,,,Montreal and Toronto offices
+4,California,ServiceTitan,,,public,TTAN,,,,auto,,,California,yes,,,,,,,,
+4,California,Sierra,,,private,,Unicorn,,,auto,sierra,,California,yes,,,,,,,,
+4,California,Skydio,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Snapdocs,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Snorkel AI,,,private,,Unicorn,,,auto,snorkelai,,California,yes,,,,,,,,
+4,California,SoFi,,,public,SOFI,,,,auto,,,California,yes,,,,,,,,
+4,California,Stytch,,,private,,Series B,,,auto,,,California,yes,,,,,,,,
+4,California,Substack,,,private,,Series C,,,auto,,,California,yes,,,,,,,,
+4,California,Supabase,,,private,,Unicorn,,,auto,,,California; Remote / other US,yes,,,,,,,,
+4,California,Tenstorrent,,,private,,Unicorn,,,auto,,,Toronto / GTA; California,yes,,,,,,,,
+4,California,Tesla,,,public,TSLA,,,,other,,https://www.tesla.com/careers,California,yes,,,,,,,,Uses its own careers site
+4,California,Thumbtack,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Together AI,,,private,,Unicorn,,,auto,togetherai,,California,yes,,,,,,,,
+4,California,Turo,,,private,,Late,,,auto,,,California; Rest of Canada,yes,,,,,,,,Large Montreal team
+4,California,Twilio,,,public,TWLO,,,,greenhouse,twilio,,California; Remote / other US,yes,,,,,,,,
+4,California,Upstart,,,public,UPST,,,,auto,,,California,yes,,,,,,,,
+4,California,Vanta,,,private,,Unicorn,,,auto,,,California; Remote / other US,yes,,,,,,,,
+4,California,Veeva Systems,,,public,VEEV,,,,lever,veeva,,California; Toronto / GTA,yes,,,,,,,,Toronto R&D
+4,California,Vercel,,,private,,Unicorn,,,auto,,,California; Remote / other US,yes,,,,,,,,
+4,California,Verkada,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Visa,,,public,V,,,,smartrecruiters,Visa,,California; Toronto / GTA,yes,,,,,,,,Toronto office
+4,California,Waymo,,,private,,Subsidiary,,,auto,,,California,yes,,,,,,,,Owned by Alphabet
+4,California,Wealthfront,,,public,WLTH,,,,auto,,,California,yes,,,,,,,,
+4,California,Webflow,,,private,,Unicorn,,,auto,,,California; Remote / other US,yes,,,,,,,,
+4,California,Weights & Biases,,,private,,Subsidiary,,,auto,wandb,,California,yes,,,,,,,,Owned by CoreWeave
+4,California,Western Digital,,,public,WDC,,,,workday,wdc,,California,yes,,,,,,,,
+4,California,WorkOS,,,private,,Series B,,,auto,,,California,yes,,,,,,,,
+4,California,Writer,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,xAI,,,private,,Unicorn,,,auto,,,California,yes,,,,,,,,
+4,California,Yelp,,,public,YELP,,,,auto,,,California; Remote / other US,yes,,,,,,,,
+4,California,ZipRecruiter,,,public,ZIP,,,,auto,,,California,yes,,,,,,,,
+4,California,Zoom,,,public,ZM,,,,workday,zoom/wd5/Zoom,,California,yes,,,,,,,,
+4,California,Zoox,,,private,,Subsidiary,,,lever,zoox,,California,yes,,,,,,,,Owned by Amazon
+4,California,Zscaler,,,public,ZS,,,,workday,zscaler,,California,yes,,,,,,,,
+5,Toronto / GTA,1Password,,,private,,Unicorn,,,auto,1password,,Toronto / GTA; Remote / other US,yes,,,,,,,,"Remote-first, Toronto HQ"
+5,Toronto / GTA,Achievers,,,private,,Subsidiary,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Ada,,,private,,Unicorn,,,auto,ada,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,AlayaCare,,,private,,Late,,,auto,,,Toronto / GTA; Rest of Canada,yes,,,,,,,,
+5,Toronto / GTA,Basetwo,,,private,,Series A,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,BCE (Bell),,,public,BCE,,,,other,,https://jobs.bell.ca,Toronto / GTA; Rest of Canada,yes,,,,,,,,Uses its own careers site
+5,Toronto / GTA,BenchSci,,,private,,Series D+,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,BMO,,,public,BMO,,,,workday,bmo/wd3/External,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Borderless AI,,,private,,Series A,,,auto,borderless,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Borrowell,,,private,,Late,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Canadian Tire,,,public,CTC-A.TO,,,,other,,https://corp.canadiantire.ca/English/careers,Toronto / GTA,yes,,,,,,,,Digital team in Toronto
+5,Toronto / GTA,Celestica,,,public,CLS,,,,workday,celestica,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,CIBC,,,public,CM,,,,workday,cibc/wd3/search,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Clearco,,,private,,Late,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Clutch,,,private,,Late,,,auto,clutch,,Toronto / GTA,yes,,,,,,,,Online car retailer
+5,Toronto / GTA,Coinsquare,,,private,,Subsidiary,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Datadog,,,public,DDOG,,,,greenhouse,datadog,,Toronto / GTA; Remote / other US,yes,,,,,,,,
+5,Toronto / GTA,Dayforce,,,private,,Late,,,other,,,Toronto / GTA,yes,,,,,,,,Taken private by Thoma Bravo (2025 deal)
+5,Toronto / GTA,Descartes Systems,,,public,DSGX,,,,auto,descartes,,Toronto / GTA; Rest of Canada,yes,,,,,,,,Waterloo HQ
+5,Toronto / GTA,Docebo,,,public,DCBO,,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Dye & Durham,,,public,DND.TO,,,,auto,dyedurham,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,ecobee,,,private,,Subsidiary,,,auto,,,Toronto / GTA,yes,,,,,,,,Owned by Generac
+5,Toronto / GTA,Enghouse,,,public,ENGH.TO,,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Enso Connect,,,private,,Series A,,,auto,ensoconnect,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,EQ Bank,,,public,EQB.TO,,,,auto,eqbank,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Felix Health,,,private,,Series A,,,auto,felix,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Float,,,private,,Series B,,,auto,floatcard,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,FreshBooks,,,private,,Unicorn,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,General Motors,,,public,GM,,,2026-05 (~600),other,,https://search-careers.gm.com,Toronto / GTA,yes,,,,,,,,Markham technical centre
+5,Toronto / GTA,Geotab,,,private,,Late,,,auto,,,Toronto / GTA,yes,,,,,,,,Oakville
+5,Toronto / GTA,HubSpot,,,public,HUBS,,,2026-10 (~660),auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Index Exchange,,,private,,Late,,,auto,indexexchange,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Intact Financial,,,public,IFC.TO,,,,other,,https://careers.intactfc.com,Toronto / GTA; Rest of Canada,yes,,,,,,,,Uses its own careers site
+5,Toronto / GTA,Interac,,,private,,Late,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Jobber,,,private,,Unicorn,,,auto,jobber,,Rest of Canada; Toronto / GTA,yes,,,,,,,,Edmonton
+5,Toronto / GTA,Kepler Communications,,,private,,Late,,,auto,kepler,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Klarna,,,public,KLAR,,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,KOHO,,,private,,Unicorn,,,auto,koho,,Toronto / GTA; Remote / other US,yes,,,,,,,,
+5,Toronto / GTA,League,,,private,,Late,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Ledn,,,private,,Series B,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Loblaw Digital,,,public,L.TO,,,,other,,https://careers.loblaw.ca,Toronto / GTA,yes,,,,,,,,Uses its own careers site
+5,Toronto / GTA,Loopio,,,private,,Late,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Manulife,,,public,MFC,,,,workday,manulife/wd3/MFCJH_Jobs,,Toronto / GTA; Rest of Canada,yes,,,,,,,,
+5,Toronto / GTA,Maple,,,private,,Late,,,auto,getmaple,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Moneris,,,private,,Subsidiary,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,MongoDB,,,public,MDB,,,,greenhouse,mongodb,,Toronto / GTA; Remote / other US,yes,,,,,,,,
+5,Toronto / GTA,Nudge,,,private,,Series B,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,ODAIA,,,private,,Series B,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,OpenText,,,public,OTEX,,,,workday,opentext,,Toronto / GTA; Rest of Canada,yes,,,,,,,,Waterloo HQ
+5,Toronto / GTA,PartnerStack,,,private,,Series B,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Pivotree,,,public,PVT.V,,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Plooto,,,private,,Series B,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,PocketHealth,,,private,,Series B,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Points,,,private,,Subsidiary,,,auto,,,Toronto / GTA,yes,,,,,,,,Owned by Plusgrade
+5,Toronto / GTA,PolicyMe,,,private,,Series B,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Private AI,,,private,,Series A,,,auto,privateai,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Prodigy Education,,,private,,Late,,,auto,prodigy,,Toronto / GTA,yes,,,,,,,,Oakville
+5,Toronto / GTA,Propel Holdings,,,public,PRL.TO,,,,auto,propel,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Q4 Inc,,,private,,Late,,,auto,q4inc,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Questrade,,,private,,Late,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Real Matters,,,public,REAL.TO,,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Ritual,,,private,,Late,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Rogers,,,public,RCI,,,,workday,rogers,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Rose Rocket,,,private,,Series B,,,ashby,Rose Rocket,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Sangoma,,,public,SANG,,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Scotiabank,,,public,BNS,,,,other,,https://jobs.scotiabank.com,Toronto / GTA,yes,,,,,,,,Uses its own careers site
+5,Toronto / GTA,Spotify,,,public,SPOT,,,,lever,spotify,,Toronto / GTA,yes,,,,,,,,Toronto office
+5,Toronto / GTA,StackAdapt,,,private,,Late,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Sun Life,,,public,SLF,,,,workday,sunlife/wd3/Experienced-Jobs,,Toronto / GTA; Rest of Canada,yes,,,,,,,,
+5,Toronto / GTA,Super.com,,,private,,Late,,,auto,super,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Swift Medical,,,private,,Series B,,,auto,swiftmedical,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Tailscale,,,private,,Unicorn,,,auto,,,Toronto / GTA; Remote / other US,yes,,,,,,,,
+5,Toronto / GTA,TD Bank,,,public,TD,,,,workday,td/wd3/TD_Bank_Careers,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Tealbook,,,private,,Series B,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Thomson Reuters,,,public,TRI,,,,workday,thomsonreuters/wd5/External_Career_Site,,Toronto / GTA; Rest of Canada,yes,,,,,,,,
+5,Toronto / GTA,Top Hat,,,private,,Late,,,auto,tophat,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,TouchBistro,,,private,,Late,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,TribalScale,,,private,,Bootstrapped,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Tulip,,,private,,Late,,,auto,tulipretail,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Uberflip,,,private,,Late,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Ubisoft,,,public,UBI.PA,,,2026-06 (up to 380),smartrecruiters,Ubisoft2,Toronto and Montreal studios,Toronto / GTA; Rest of Canada,yes,,,,,,,,
+5,Toronto / GTA,Untether AI,,,private,,Subsidiary,,,auto,untether,,Toronto / GTA,yes,,,,,,,,Team joined AMD in 2025
+5,Toronto / GTA,Validere,,,private,,Series B,,,auto,,,Toronto / GTA; Rest of Canada,yes,,,,,,,,
+5,Toronto / GTA,Vector Institute,,,nonprofit,,Nonprofit,,,auto,,,Toronto / GTA,yes,,,,,,,,AI research institute
+5,Toronto / GTA,Vena Solutions,,,private,,Unicorn,,,auto,vena,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Voiceflow,,,private,,Series B,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Waabi,,,private,,Series B,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Wattpad,,,private,,Subsidiary,,,auto,,,Toronto / GTA,yes,,,,,,,,Owned by Naver
+5,Toronto / GTA,Wave,,,private,,Subsidiary,,,auto,waveapps,,Toronto / GTA,yes,,,,,,,,Owned by H&R Block
+5,Toronto / GTA,Wealthsimple,,,private,,Unicorn,,,auto,,,Toronto / GTA; Remote / other US,yes,,,,,,,,
+5,Toronto / GTA,Xanadu,,,private,,Unicorn,,,auto,,,Toronto / GTA,yes,,,,,,,,Announced plans to go public
+6,Rest of Canada,7shifts,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Saskatoon
+6,Rest of Canada,AltaML,,,private,,Series A,,,auto,,,Rest of Canada,yes,,,,,,,,Edmonton
+6,Rest of Canada,Amii,,,nonprofit,,Nonprofit,,,auto,,,Rest of Canada,yes,,,,,,,,Edmonton AI institute
+6,Rest of Canada,ApplyBoard,,,private,,Unicorn,,,auto,,,Rest of Canada,yes,,,,,,,,Kitchener
+6,Rest of Canada,Arctic Wolf,,,private,,Unicorn,,,auto,arcticwolf,,Rest of Canada,yes,,,,,,,,Waterloo
+6,Rest of Canada,Auvik,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Waterloo
+6,Rest of Canada,Axonify,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Waterloo
+6,Rest of Canada,Behaviour Interactive,,,private,,Late,,,auto,behaviour,,Rest of Canada,yes,,,,,,,,"Montreal, games"
+6,Rest of Canada,Benevity,,,private,,Unicorn,,,auto,,,Rest of Canada,yes,,,,,,,,Calgary
+6,Rest of Canada,Bold Commerce,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Winnipeg
+6,Rest of Canada,Botpress,,,private,,Series B,,,auto,,,Rest of Canada,yes,,,,,,,,"Montreal, AI"
+6,Rest of Canada,Busbud,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal
+6,Rest of Canada,Coconut Software,,,private,,Late,,,auto,coconutsoftware,,Rest of Canada,yes,,,,,,,,Saskatoon
+6,Rest of Canada,Coveo,,,public,CVO.TO,,,,auto,,,Rest of Canada,yes,,,,,,,,"Quebec City, Montreal"
+6,Rest of Canada,D2L,,,public,DTOL.TO,,,,auto,d2l,,Rest of Canada,yes,,,,,,,,Kitchener
+6,Rest of Canada,Dejero,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Waterloo
+6,Rest of Canada,Dialogue,,,private,,Subsidiary,,,auto,,,Rest of Canada,yes,,,,,,,,"Montreal, owned by Sun Life"
+6,Rest of Canada,eSentire,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Waterloo
+6,Rest of Canada,Flare Systems,,,private,,Series B,,,auto,flare,,Rest of Canada,yes,,,,,,,,Montreal
+6,Rest of Canada,Helcim,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Calgary
+6,Rest of Canada,Hopper,,,private,,Unicorn,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal
+6,Rest of Canada,Igloo Software,,,private,,Late,,,auto,igloo,,Rest of Canada,yes,,,,,,,,Kitchener
+6,Rest of Canada,Magnet Forensics,,,private,,Late,,,auto,magnetforensics,,Rest of Canada,yes,,,,,,,,Waterloo
+6,Rest of Canada,Mila,,,nonprofit,,Nonprofit,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal AI institute
+6,Rest of Canada,Miovision,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Kitchener
+6,Rest of Canada,Mirego,,,private,,Bootstrapped,,,auto,,,Rest of Canada,yes,,,,,,,,Quebec City
+6,Rest of Canada,National Bank,,,public,NA.TO,,,,other,,https://jobs.nbc.ca,Rest of Canada,yes,,,,,,,,Montreal
+6,Rest of Canada,Neo Financial,,,private,,Unicorn,,,auto,neofinancial,,Rest of Canada,yes,,,,,,,,"Calgary, Winnipeg"
+6,Rest of Canada,nesto,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal
+6,Rest of Canada,Nuvei,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,"Montreal, private since 2024"
+6,Rest of Canada,Paper,,,private,,Late,,,auto,paper,,Rest of Canada,yes,,,,,,,,"Montreal, education"
+6,Rest of Canada,Pason Systems,,,public,PSI.TO,,,,auto,pason,,Rest of Canada,yes,,,,,,,,Calgary
+6,Rest of Canada,Plotly,,,private,,Series C,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal
+6,Rest of Canada,Plusgrade,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal
+6,Rest of Canada,Proposify,,,private,,Series A,,,auto,,,Rest of Canada,yes,,,,,,,,Halifax
+6,Rest of Canada,Showpass,,,private,,Series A,,,auto,,,Rest of Canada,yes,,,,,,,,Calgary
+6,Rest of Canada,SkipTheDishes,,,private,,Subsidiary,,,auto,,,Rest of Canada,yes,,,,,,,,Winnipeg
+6,Rest of Canada,SSENSE,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal
+6,Rest of Canada,Symend,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Calgary
+6,Rest of Canada,Tecsys,,,public,TCS.TO,,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal
+6,Rest of Canada,Vendasta,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Saskatoon
+6,Rest of Canada,Vention,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal
+6,Rest of Canada,Vidyard,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Kitchener
+6,Rest of Canada,Workleap,,,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal
+7,Remote / other US,37signals,,,private,,Bootstrapped,,,auto,,,Remote / other US,yes,,,,,,,,Makers of Basecamp
+7,Remote / other US,Articulate,,,private,,Unicorn,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Automattic,,,private,,Late,,,other,,https://automattic.com/work-with-us/,Remote / other US,yes,,,,,,,,Uses its own careers site
+7,Remote / other US,Bitwarden,,,private,,Late,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Brave,,,private,,Late,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Buffer,,,private,,Bootstrapped,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Cal.com,,,private,,Series A,,,auto,calcom,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Calendly,,,private,,Unicorn,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Canonical,,,private,,Late,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Chainalysis,,,private,,Unicorn,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Chainguard,,,private,,Unicorn,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Circle,,,public,CRCL,,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,CircleCI,,,private,,Unicorn,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Close,,,private,,Bootstrapped,,,auto,close,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Cockroach Labs,,,private,,Unicorn,,,auto,cockroachlabs,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,CoreWeave,,,public,CRWV,,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Deel,,,private,,Unicorn,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Directus,,,private,,Series A,,,auto,,,Remote / other US,yes,,,,,,,,Headless CMS
+7,Remote / other US,Discourse,,,private,,Bootstrapped,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Doist,,,private,,Bootstrapped,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,DuckDuckGo,,,private,,Late,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Elastic,,,public,ESTC,,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Fly.io,,,private,,Series C,,,auto,flyio,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Gemini,,,public,GEMI,,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Ghost,,,nonprofit,,Nonprofit,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,GitLab,,,public,GTLB,,,2026-06 (~350),greenhouse,gitlab,"Remote, hires in Canada",Remote / other US,yes,,,,,,,,
+7,Remote / other US,Grafana Labs,,,private,,Unicorn,,,auto,grafanalabs,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Help Scout,,,private,,Late,,,auto,helpscout,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Hotjar,,,private,,Subsidiary,,,auto,,,Remote / other US,yes,,,,,,,,Owned by Contentsquare
+7,Remote / other US,Hugging Face,,,private,,Unicorn,,,auto,huggingface,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Khan Academy,,,nonprofit,,Nonprofit,,,auto,khanacademy,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Kraken,,,private,,Unicorn,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Mattermost,,,private,,Late,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,PlanetScale,,,private,,Late,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,PostHog,,,private,,Unicorn,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Railway,,,private,,Series B,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Ramp,,,private,,Unicorn,,,ashby,ramp,,Remote / other US,yes,,,,,,,,New York
+7,Remote / other US,Raycast,,,private,,Series B,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Remote,,,private,,Unicorn,,,auto,remote,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Render,,,private,,Series C,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Sanity,,,private,,Series C,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Snyk,,,private,,Unicorn,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,StackBlitz (Bolt.new),,,private,,Unicorn,,,auto,stackblitz,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Storyblok,,,private,,Series C,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Strapi,,,private,,Series B,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Toggl,,,private,,Bootstrapped,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Warp,,,private,,Series B,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Wikimedia Foundation,,,nonprofit,,Nonprofit,,,auto,wikimedia,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Zapier,,,private,,Bootstrapped,,,auto,,,Remote / other US,yes,,,,,,,,
+7,Remote / other US,Zed,,,private,,Series B,,,auto,zedindustries,,Remote / other US,yes,,,,,,,,

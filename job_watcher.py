@@ -2,42 +2,44 @@
 """
 Job Watcher
 
-Checks company job boards on Greenhouse, Ashby and Lever directly through their
-public JSON feeds, filters postings by title, location and tech stack, and keeps
-a colour-coded Excel tracker up to date.
+Checks company career sites on Greenhouse, Ashby, Lever, Workday, SmartRecruiters and
+Workable directly through their public JSON feeds, filters postings by title, location
+and tech stack, scores each company on stock, growth, layoff and funding signals, and
+keeps a colour-coded Excel tracker up to date.
 
 Usage:
   python job_watcher.py                 run once
   python job_watcher.py --loop          keep running, checking every interval_minutes
-  python job_watcher.py --loop --interval 15
   python job_watcher.py --since-last-check
-                                        only report postings that appeared since the
-                                        last time you ran with this flag (first time:
-                                        the past 24 hours). Results go to the
-                                        "Since Last Check" tab and the log.
-  python job_watcher.py --verify        re-check every company in companies.csv,
-                                        including ones previously marked not_found
+                                        only report postings that appeared since the last
+                                        time you ran with this flag (first time: past 24h)
   python job_watcher.py --since-last-check --hours 6
                                         same, but look back a fixed 6 hours this time
+  python job_watcher.py --verify        re-check every company in companies.csv,
+                                        including ones previously marked not_found
+  python job_watcher.py --refresh-metrics
+                                        refresh stock metrics and scores now
+                                        (needs: pip install yfinance)
 
 Your Status and Notes edits in the Excel file are preserved between runs.
-Close the Excel file if you want a run to update it; otherwise the update is
-picked up on the next run (nothing is lost, everything is kept in the state file).
+Close the Excel file if you want a run to update it; otherwise the update is picked up
+on the next run (nothing is lost, everything is kept in the state file).
 """
 from __future__ import annotations
 
 import argparse
 import csv
 import datetime as dt
-import threading
-from concurrent.futures import ThreadPoolExecutor
 import html
 import json
 import logging
 import os
 import re
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from pathlib import Path
 from urllib.parse import quote
 
@@ -65,8 +67,15 @@ STATUS_COLORS = {
     "Skipped": ("D9D9D9", "404040"),
 }
 LEVEL_COLORS = {"Senior/Lead": "FFE699", "Mid": "E2EFDA", "Unlabelled": None}
+TIER_COLORS = {"A": "C6EFCE", "B": "FFF2CC", "C": "F8CBAD"}
 LEVER_HOSTS = ["https://api.lever.co", "https://api.eu.lever.co", "https://api.ca.lever.co"]
+WORKDAY_SHARDS = ["wd1", "wd3", "wd5", "wd12", "wd10", "wd103", "wd108"]
 COUNTRY_NAMES = {"CA": "Canada", "US": "United States", "IN": "India", "GB": "United Kingdom"}
+MANUAL_BOARDS = {"other", "manual", "own"}
+
+# Filled from config at the start of each run
+SETTINGS = {"search_terms": ["software engineer", "software developer", "frontend", "full stack"],
+            "max_pages": 10}
 
 log = logging.getLogger("job_watcher")
 _local = threading.local()
@@ -75,8 +84,10 @@ _local = threading.local()
 def session():
     """One HTTP session per worker thread."""
     if not hasattr(_local, "s"):
-        _local.s = requests.Session()
-        _local.s.headers["User-Agent"] = "job-watcher/1.0 (personal job search)"
+        s = requests.Session()
+        s.headers.update({"User-Agent": "job-watcher/2.0 (personal job search)",
+                          "Accept": "application/json", "Accept-Language": "en-US"})
+        _local.s = s
     return _local.s
 
 
@@ -105,6 +116,8 @@ def all_matches(matchers, text):
 def parse_date(value):
     if value in (None, ""):
         return None
+    if isinstance(value, dt.datetime):
+        return value if value.tzinfo else value.replace(tzinfo=dt.timezone.utc)
     if isinstance(value, (int, float)):
         return dt.datetime.fromtimestamp(value / 1000 if value > 1e11 else value, tz=dt.timezone.utc)
     s = str(value).strip().replace("Z", "+00:00")
@@ -117,6 +130,20 @@ def parse_date(value):
     return None
 
 
+def parse_relative(text):
+    """Workday's 'Posted Today', 'Posted Yesterday', 'Posted 3 Days Ago', 'Posted 30+ Days Ago'."""
+    if not text:
+        return None
+    now = dt.datetime.now(dt.timezone.utc)
+    t = text.lower()
+    if "today" in t:
+        return now
+    if "yesterday" in t:
+        return now - dt.timedelta(days=1)
+    m = re.search(r"(\d+)\+?\s*day", t)
+    return now - dt.timedelta(days=int(m.group(1))) if m else None
+
+
 TAG_RE = re.compile(r"<[^>]+>")
 
 
@@ -127,35 +154,54 @@ def html_to_text(s):
     return html.unescape(TAG_RE.sub(" ", s))
 
 
-def get_json(url, params=None):
-    """GET a JSON document. Returns None on 404. Retries once on transient errors."""
-    for attempt in range(2):
+def _request(method, url, params=None, body=None, retries=2):
+    """JSON request. Returns None on 4xx (except 429). Retries transient errors."""
+    for attempt in range(retries):
+        last = attempt == retries - 1
         try:
-            r = session().get(url, params=params, timeout=25)
+            if method == "POST":
+                r = session().post(url, json=body, timeout=25)
+            else:
+                r = session().get(url, params=params, timeout=25)
         except requests.RequestException:
-            if attempt:
+            if last:
                 raise
             time.sleep(2)
             continue
-        if r.status_code == 404:
-            return None
         if r.status_code == 429 or r.status_code >= 500:
-            if attempt:
+            if last:
                 r.raise_for_status()
             time.sleep(5)
             continue
-        r.raise_for_status()
+        if r.status_code >= 400:
+            return None
         if "json" not in r.headers.get("Content-Type", ""):
-            if attempt:
-                raise ValueError(f"Non-JSON response from {url}")
+            if last:
+                return None
             time.sleep(2)
             continue
         return r.json()
     return None
 
 
+def get_json(url, params=None):
+    return _request("GET", url, params=params)
+
+
+def post_json(url, body, retries=2):
+    return _request("POST", url, body=body, retries=retries)
+
+
+def result(slug, jobs, host=None, complete=True):
+    return {"slug": slug, "jobs": jobs, "host": host, "complete": complete}
+
+
 # ----------------------------------------------------------------- job boards
-def fetch_greenhouse(slug, host=None):
+# Each fetcher returns result(...) or None when the company has no board there.
+# A job may carry text=None plus load_detail(), which fetches the description only
+# when the title and location already match, to keep request counts low.
+
+def fetch_greenhouse(slug, host=None, auto=False):
     data = get_json(f"https://boards-api.greenhouse.io/v1/boards/{quote(slug)}/jobs", {"content": "true"})
     if not isinstance(data, dict) or "jobs" not in data:
         return None
@@ -170,17 +216,15 @@ def fetch_greenhouse(slug, host=None):
                 if office.get(k):
                     locs.append(office[k])
         jobs.append({
-            "key": f"greenhouse:{slug}:{j.get('id')}",
-            "title": j.get("title", ""),
-            "locations": locs,
+            "key": f"greenhouse:{slug}:{j.get('id')}", "title": j.get("title", ""), "locations": locs,
             "url": j.get("absolute_url", ""),
             "posted": parse_date(j.get("first_published") or j.get("updated_at")),
             "text": html_to_text(j.get("content", "")),
         })
-    return None, jobs
+    return result(slug, jobs)
 
 
-def fetch_ashby(slug, host=None):
+def fetch_ashby(slug, host=None, auto=False):
     data = get_json(f"https://api.ashbyhq.com/posting-api/job-board/{quote(slug)}",
                     {"includeCompensation": "true"})
     if not isinstance(data, dict) or "jobs" not in data:
@@ -199,23 +243,18 @@ def fetch_ashby(slug, host=None):
         if addr:
             locs.append(addr)
         jobs.append({
-            "key": f"ashby:{slug}:{j.get('id')}",
-            "title": j.get("title", ""),
-            "locations": locs,
-            "url": j.get("jobUrl") or j.get("applyUrl", ""),
-            "posted": parse_date(j.get("publishedAt")),
+            "key": f"ashby:{slug}:{j.get('id')}", "title": j.get("title", ""), "locations": locs,
+            "url": j.get("jobUrl") or j.get("applyUrl", ""), "posted": parse_date(j.get("publishedAt")),
             "text": j.get("descriptionPlain") or html_to_text(j.get("descriptionHtml", "")),
         })
-    return None, jobs
+    return result(slug, jobs)
 
 
 def _norm_lever(slug, postings):
     jobs = []
     for j in postings:
         cat = j.get("categories") or {}
-        locs = []
-        if cat.get("location"):
-            locs.append(cat["location"])
+        locs = [cat["location"]] if cat.get("location") else []
         locs.extend(l for l in (cat.get("allLocations") or []) if l)
         if j.get("country"):
             locs.append(COUNTRY_NAMES.get(j["country"], j["country"]))
@@ -225,17 +264,14 @@ def _norm_lever(slug, postings):
             parts.append(html_to_text(lst.get("content", "")))
         parts.append(j.get("additionalPlain") or "")
         jobs.append({
-            "key": f"lever:{slug}:{j.get('id')}",
-            "title": j.get("text", ""),
-            "locations": locs,
-            "url": j.get("hostedUrl", ""),
-            "posted": parse_date(j.get("createdAt")),
+            "key": f"lever:{slug}:{j.get('id')}", "title": j.get("text", ""), "locations": locs,
+            "url": j.get("hostedUrl", ""), "posted": parse_date(j.get("createdAt")),
             "text": " ".join(parts),
         })
     return jobs
 
 
-def fetch_lever(slug, host=None):
+def fetch_lever(slug, host=None, auto=False):
     empty_host = None
     for h in ([host] if host else LEVER_HOSTS):
         try:
@@ -245,12 +281,204 @@ def fetch_lever(slug, host=None):
         if not isinstance(data, list):
             continue
         if data:
-            return h, _norm_lever(slug, data)
+            return result(slug, _norm_lever(slug, data), host=h)
         empty_host = empty_host or h
-    return (empty_host, []) if empty_host else None
+    return result(slug, [], host=empty_host) if empty_host and not auto else None
 
 
-FETCHERS = {"greenhouse": fetch_greenhouse, "ashby": fetch_ashby, "lever": fetch_lever}
+# --- SmartRecruiters
+SR_API = "https://api.smartrecruiters.com/v1/companies"
+
+
+def _sr_detail(slug, pid):
+    d = get_json(f"{SR_API}/{quote(slug)}/postings/{pid}") or {}
+    sections = (d.get("jobAd") or {}).get("sections") or {}
+    text = " ".join(html_to_text((sections.get(k) or {}).get("text", ""))
+                    for k in ("jobDescription", "qualifications", "additionalInformation"))
+    return {"text": text, "url": d.get("postingUrl")}
+
+
+def fetch_smartrecruiters(slug, host=None, auto=False):
+    base = f"{SR_API}/{quote(slug)}/postings"
+    first = get_json(base, {"limit": 100, "offset": 0})
+    if not isinstance(first, dict) or "content" not in first:
+        return None
+    total = first.get("totalFound") or 0
+    if auto and total == 0:
+        return None  # the API answers for any name, so an empty result proves nothing
+    postings = {}
+
+    def read_pages(extra):
+        offset = 0
+        for _ in range(SETTINGS["max_pages"]):
+            data = first if (not extra and offset == 0) else get_json(base, {**extra, "limit": 100,
+                                                                              "offset": offset})
+            if not isinstance(data, dict):
+                return False
+            batch = data.get("content") or []
+            for p in batch:
+                postings.setdefault(p.get("id"), p)
+            offset += 100
+            if not batch or offset >= (data.get("totalFound") or 0):
+                return True
+        return False
+
+    if total <= 100 * SETTINGS["max_pages"]:
+        complete = read_pages({})
+    else:  # very large employer: search for your titles instead of reading everything
+        for term in SETTINGS["search_terms"]:
+            read_pages({"q": term})
+        complete = False
+
+    jobs = []
+    for pid, p in postings.items():
+        if not pid:
+            continue
+        loc = p.get("location") or {}
+        country = COUNTRY_NAMES.get((loc.get("country") or "").upper(), loc.get("country") or "")
+        locs = [", ".join(x for x in (loc.get("city"), loc.get("region"), country) if x)]
+        if loc.get("fullLocation"):
+            locs.append(loc["fullLocation"])
+        if loc.get("remote"):
+            locs.append(f"Remote {country}".strip())
+        jobs.append({
+            "key": f"smartrecruiters:{slug}:{pid}", "title": p.get("name", ""),
+            "locations": [l for l in locs if l],
+            "url": f"https://jobs.smartrecruiters.com/{slug}/{pid}",
+            "posted": parse_date(p.get("releasedDate")), "text": None,
+            "load_detail": partial(_sr_detail, slug, pid),
+        })
+    return result(slug, jobs, complete=complete)
+
+
+# --- Workable
+def fetch_workable(slug, host=None, auto=False):
+    data = get_json(f"https://apply.workable.com/api/v1/widget/accounts/{quote(slug)}", {"details": "true"})
+    if not isinstance(data, dict) or "jobs" not in data:
+        return None
+    jobs = []
+    for j in data["jobs"]:
+        locs = []
+        main = ", ".join(x for x in (j.get("city"), j.get("state"), j.get("country")) if x)
+        if main:
+            locs.append(main)
+        for l in j.get("locations") or []:
+            s = ", ".join(x for x in (l.get("city"), l.get("region"), l.get("country")) if x)
+            if s:
+                locs.append(s)
+        if j.get("telecommuting"):
+            locs.append(f"Remote {j.get('country') or ''}".strip())
+        code = j.get("shortcode") or j.get("code") or j.get("id")
+        jobs.append({
+            "key": f"workable:{slug}:{code}", "title": j.get("title", ""), "locations": locs,
+            "url": j.get("url") or j.get("shortlink") or f"https://apply.workable.com/{slug}/j/{code}/",
+            "posted": parse_date(j.get("published_on") or j.get("created_at")),
+            "text": html_to_text(j.get("description", "")) + " " + html_to_text(j.get("requirements", "")),
+        })
+    return result(slug, jobs)
+
+
+# --- Workday
+WORKDAY_URL_RE = re.compile(
+    r"(?:https?://)?([\w-]+)\.(wd\d+)\.myworkdayjobs\.com/(?:[a-z]{2}-[A-Z]{2}/)?([^/?#]+)")
+
+
+def parse_workday(s):
+    """Accepts a careers URL, 'tenant/wd5/site', or just 'tenant'."""
+    s = s.strip()
+    m = WORKDAY_URL_RE.match(s)
+    if m:
+        return m.group(1), m.group(2), m.group(3)
+    parts = [p for p in s.split("/") if p]
+    if len(parts) == 3:
+        return parts[0], parts[1], parts[2]
+    return s, None, None
+
+
+def _wd_list(tenant, shard, site, term, offset, retries=2):
+    url = f"https://{tenant}.{shard}.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs"
+    return post_json(url, {"appliedFacets": {}, "limit": 20, "offset": offset, "searchText": term}, retries)
+
+
+def discover_workday(tenant, shard=None):
+    """Find the career site name by trying the patterns most companies use."""
+    t = tenant[:1].upper() + tenant[1:]
+    sites = list(dict.fromkeys([
+        "External", "Careers", "careers", tenant, t, f"{t}Careers", f"{tenant}careers",
+        "External_Careers", "ExternalCareers", "External_Career_Site", "ExternalCareerSite",
+        f"{t}_Careers", f"{t}External", "jobs", "Search"]))
+    for sh in ([shard] if shard else WORKDAY_SHARDS):
+        for site in sites:
+            try:
+                data = _wd_list(tenant, sh, site, "", 0, retries=1)
+            except requests.ConnectionError:
+                break  # this tenant is not on this shard
+            except Exception:
+                continue
+            if isinstance(data, dict) and "jobPostings" in data:
+                return sh, site
+    return None
+
+
+def _wd_detail(base, tenant, site, path):
+    d = get_json(f"{base}/wday/cxs/{tenant}/{site}{path}") or {}
+    info = d.get("jobPostingInfo") or d
+    locs = [info.get("location")] + list(info.get("additionalLocations") or [])
+    country = (info.get("country") or {}).get("descriptor") if isinstance(info.get("country"), dict) else None
+    if country:
+        locs.append(country)
+    return {"text": html_to_text(info.get("jobDescription", "")),
+            "locations": [l for l in locs if l],
+            "posted": parse_date(info.get("startDate")), "url": info.get("externalUrl")}
+
+
+def fetch_workday(slug, host=None, auto=False):
+    tenant, shard, site = parse_workday(slug)
+    if not site:
+        found = discover_workday(tenant, shard)
+        if not found:
+            return None
+        shard, site = found
+    base = f"https://{tenant}.{shard}.myworkdayjobs.com"
+    postings, complete = {}, True
+    for i, term in enumerate(SETTINGS["search_terms"]):
+        offset, total = 0, 0
+        for page in range(SETTINGS["max_pages"]):
+            data = _wd_list(tenant, shard, site, term, offset)
+            if not isinstance(data, dict) or "jobPostings" not in data:
+                if i == 0 and page == 0:
+                    return None
+                break
+            if page == 0:
+                total = data.get("total") or 0  # Workday only reports the total on the first page
+            batch = data.get("jobPostings") or []
+            for p in batch:
+                if p.get("externalPath"):
+                    postings.setdefault(p["externalPath"], p)
+            offset += 20
+            if not batch or offset >= total:
+                break
+        else:
+            complete = False
+    canonical = f"{tenant}/{shard}/{site}"
+    jobs = []
+    for path, p in postings.items():
+        loc = p.get("locationsText") or ""
+        ambiguous = bool(re.match(r"^\d+\s+Locations?$", loc.strip(), re.I))
+        jobs.append({
+            "key": f"workday:{canonical}:{path}", "title": p.get("title", ""),
+            "locations": [] if ambiguous or not loc else [loc],
+            "url": f"{base}/en-US/{site}{path}", "posted": parse_relative(p.get("postedOn")),
+            "text": None, "ambiguous_location": ambiguous or not loc,
+            "load_detail": partial(_wd_detail, base, tenant, site, path),
+        })
+    return result(canonical, jobs, complete=complete)
+
+
+FETCHERS = {"greenhouse": fetch_greenhouse, "ashby": fetch_ashby, "lever": fetch_lever,
+            "smartrecruiters": fetch_smartrecruiters, "workable": fetch_workable,
+            "workday": fetch_workday}
+AUTO_ORDER = ["greenhouse", "ashby", "lever", "smartrecruiters", "workable"]
 
 
 def slug_variants(name):
@@ -258,35 +486,33 @@ def slug_variants(name):
     low = name.lower().strip()
     for v in (name, low, low.replace(" ", ""), low.replace(" ", "-"),
               re.sub(r"[^a-z0-9]", "", low), re.sub(r"[^a-z0-9]+", "-", low).strip("-")):
-        if v not in seen:
+        if v and v not in seen:
             seen.add(v)
             out.append(v)
     return out
 
 
 def load_company(entry, state):
-    """Return (provider, slug, jobs) or None. Auto-detects the board for entries without a prefix."""
+    """Return (provider, result) or None. Auto-detects the board for entries without a prefix."""
     cache = state.setdefault("resolved", {})
     if entry in cache:
         c = cache[entry]
-        result = FETCHERS[c["provider"]](c["slug"], c.get("host"))
-        if result is not None:
-            host, jobs = result
-            return c["provider"], c["slug"], jobs
-        del cache[entry]  # board moved or closed; re-detect below
+        r = FETCHERS[c["provider"]](c["slug"], c.get("host"))
+        if r is not None:
+            return c["provider"], r
+        cache.pop(entry, None)  # board moved or closed; re-detect below
 
     if ":" in entry and entry.split(":", 1)[0] in FETCHERS:
         provider, slug = entry.split(":", 1)
-        candidates = [(provider, slug)]
+        candidates = [(provider, slug, False)]
     else:
-        candidates = [(p, v) for p in FETCHERS for v in slug_variants(entry)]
+        candidates = [(p, v, True) for p in AUTO_ORDER for v in slug_variants(entry)]
 
-    for provider, slug in candidates:
-        result = FETCHERS[provider](slug)
-        if result is not None:
-            host, jobs = result
-            cache[entry] = {"provider": provider, "slug": slug, "host": host}
-            return provider, slug, jobs
+    for provider, slug, auto in candidates:
+        r = FETCHERS[provider](slug, None, auto)
+        if r is not None:
+            cache[entry] = {"provider": provider, "slug": r["slug"], "host": r.get("host")}
+            return provider, r
     return None
 
 
@@ -296,8 +522,10 @@ def display_name(entry):
 
 
 # ----------------------------------------------------------------- company list
-CSV_FIELDS = ["priority", "region", "company", "board", "slug", "hubs", "enabled", "status",
-              "verified", "notes"]
+CSV_FIELDS = ["priority", "region", "company", "score", "tier", "type", "ticker", "stage",
+              "last_raise", "layoffs_12m", "board", "slug", "careers_url", "hubs", "enabled",
+              "status", "verified", "market_cap_b", "stock_12m_pct", "revenue_growth_pct",
+              "profit_margin_pct", "metrics_updated", "notes"]
 
 
 def companies_path(cfg):
@@ -323,9 +551,10 @@ def load_company_rows(cfg):
 
 
 def save_company_rows(cfg, rows):
-    """Write detected boards and slugs back so the list fixes itself over time."""
+    """Write detected boards, metrics and scores back so the list maintains itself."""
     path = companies_path(cfg)
-    file_rows = [r for r in rows if r.get("region") != "From config.json"]
+    file_rows = sorted((r for r in rows if r.get("region") != "From config.json"),
+                       key=lambda r: (priority_of(r), r["company"].lower()))
     fields = list(CSV_FIELDS) + sorted({k for r in file_rows for k in r} - set(CSV_FIELDS))
     tmp = path.with_name(path.stem + ".saving.csv")
     try:
@@ -335,7 +564,7 @@ def save_company_rows(cfg, rows):
             writer.writerows(file_rows)
         os.replace(tmp, path)
     except PermissionError:
-        log.warning("%s is open in another program; board updates will be saved next run.", path.name)
+        log.warning("%s is open in another program; updates will be saved next run.", path.name)
         tmp.unlink(missing_ok=True)
 
 
@@ -348,11 +577,113 @@ def is_enabled(row):
     return (row.get("enabled") or "yes").lower() not in ("no", "n", "false", "0")
 
 
+def is_manual(row):
+    return (row.get("board") or "").lower() in MANUAL_BOARDS
+
+
 def priority_of(row):
     try:
         return int(row.get("priority") or 9)
     except ValueError:
         return 9
+
+
+# ----------------------------------------------------------------- scoring
+def num(value):
+    try:
+        return float(str(value).replace("%", "").replace(",", "").strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def clamp(x, lo, hi):
+    return max(lo, min(hi, x))
+
+
+STAGE_BASE = {"seed": 45, "early-stage": 47, "series a": 50, "series b": 55, "series c": 60,
+              "series d+": 64, "late": 64, "unicorn": 68, "bootstrapped": 55, "nonprofit": 55,
+              "subsidiary": 58}
+
+
+def score_row(r, today=None):
+    """0-100 'worth applying' score. Returns ('', '') when there is not enough data yet."""
+    today = today or dt.date.today()
+    layoffs = (r.get("layoffs_12m") or "").strip()
+    penalty = 0 if not layoffs else (4 if "minor" in layoffs.lower() else 12)
+    if (r.get("type") or "").lower() == "public":
+        s12, rg, pm = num(r.get("stock_12m_pct")), num(r.get("revenue_growth_pct")), num(r.get("profit_margin_pct"))
+        cap = num(r.get("market_cap_b"))
+        if s12 is None and rg is None and pm is None:
+            return "", ""
+        score = 50.0
+        if s12 is not None:
+            score += clamp(s12, -50, 50) * 0.3       # share price trend: up to +/-15
+        if rg is not None:
+            score += clamp(rg, -20, 40) * 0.5        # revenue growth: -10 to +20
+        if pm is not None:
+            score += clamp(pm, -30, 30) * 0.25       # profitability: +/-7.5
+        if cap is not None:
+            score += 5 if cap >= 50 else 3 if cap >= 5 else 0 if cap >= 1 else -5
+    else:
+        base = STAGE_BASE.get((r.get("stage") or "").strip().lower())
+        if base is None:
+            return "", ""
+        score = float(base)
+        m = re.match(r"(\d{4})(?:-(\d{1,2}))?", r.get("last_raise") or "")
+        if m:
+            months = (today.year - int(m.group(1))) * 12 + today.month - int(m.group(2) or 6)
+            score += 8 if months <= 18 else -8 if months > 30 else 0  # fresh funding = runway
+    score = round(clamp(score - penalty, 0, 100))
+    return score, ("A" if score >= 65 else "B" if score >= 50 else "C")
+
+
+def refresh_metrics(cfg, rows, force=False):
+    """Pull market cap, 12-month stock change, revenue growth and margin for public companies."""
+    days = cfg.get("metrics_refresh_days", 7)
+    today = dt.date.today()
+
+    def due(r):
+        last = parse_date(r.get("metrics_updated"))
+        return force or not last or (today - last.date()).days >= days
+
+    todo = [r for r in rows if r.get("ticker") and due(r)]
+    if not todo:
+        return False
+    try:
+        import yfinance as yf
+    except ImportError:
+        log.info("Stock metrics skipped: run 'pip install yfinance' to enable them.")
+        return False
+    log.info("Refreshing stock metrics for %d companies...", len(todo))
+    for r in todo:
+        try:
+            t = yf.Ticker(r["ticker"])
+            info = t.info or {}
+            change = info.get("52WeekChange")
+            if change is None:
+                hist = t.history(period="1y")
+                if len(hist) > 1:
+                    change = float(hist["Close"].iloc[-1] / hist["Close"].iloc[0] - 1)
+            cap, rg, pm = info.get("marketCap"), info.get("revenueGrowth"), info.get("profitMargins")
+            r["market_cap_b"] = f"{cap / 1e9:.1f}" if cap else ""
+            r["stock_12m_pct"] = f"{change * 100:.1f}" if change is not None else ""
+            r["revenue_growth_pct"] = f"{rg * 100:.1f}" if rg is not None else ""
+            r["profit_margin_pct"] = f"{pm * 100:.1f}" if pm is not None else ""
+            r["metrics_updated"] = today.isoformat()
+        except Exception as exc:
+            log.warning("Metrics for %s (%s) failed: %s", r["company"], r["ticker"], exc)
+        time.sleep(cfg.get("metrics_delay_seconds", 0.5))
+    return True
+
+
+def rescore(rows):
+    changed = False
+    for r in rows:
+        score, tier = score_row(r)
+        if (str(r.get("score", "")), r.get("tier", "")) != (str(score), tier):
+            r["score"], r["tier"] = str(score), tier
+            changed = True
+    return changed
 
 
 # ----------------------------------------------------------------- filtering
@@ -367,25 +698,18 @@ class Rules:
         days = cfg.get("max_posted_age_days")
         self.max_age = dt.timedelta(days=days) if days else None
 
+    def title_ok(self, title):
+        return any_match(self.title_in, title) and not any_match(self.title_out, title)
+
     def region_for(self, locations):
-        kept = [l for l in locations if not any_match(self.loc_out, l)]
+        kept = [l for l in locations if l and not any_match(self.loc_out, l)]
         for name, matchers in self.regions:
             if any(any_match(matchers, l) for l in kept):
                 return name
         return None
 
-    def evaluate(self, job):
-        """Return (region, stack_terms) if the job fits, else None."""
-        title = job["title"]
-        if not any_match(self.title_in, title) or any_match(self.title_out, title):
-            return None
-        region = self.region_for(job["locations"])
-        if not region:
-            return None
-        stack = all_matches(self.stack, f"{title}\n{job['text']}")
-        if self.require_stack and not stack:
-            return None
-        return region, stack
+    def stack_for(self, title, text):
+        return all_matches(self.stack, f"{title}\n{text or ''}")
 
 
 def level_for(title):
@@ -394,6 +718,67 @@ def level_for(title):
     if re.search(r"(?<![A-Za-z0-9])(II|2|Intermediate|Level 2)(?![A-Za-z0-9])", title):
         return "Mid"
     return "Unlabelled"
+
+
+def evaluate_company(row, state, rules, known, rejected, now, window_start):
+    """Runs in a worker thread: fetch one board and pick out matching postings.
+    Only reads shared state; the main thread applies the results."""
+    try:
+        loaded = load_company(entry_for(row), state)
+    except Exception as exc:
+        return {"row": row, "error": exc}
+    if loaded is None:
+        return {"row": row, "missing": True}
+    provider, res = loaded
+    matches, new_rejects = [], []
+    for job in res["jobs"]:
+        if not rules.title_ok(job["title"]):
+            continue
+        key = job["key"]
+        if key in known:
+            matches.append({"key": key, "known": True, "title": job["title"], "url": job["url"]})
+            continue
+        if key in rejected:
+            continue
+        posted = job.get("posted")
+        if posted and ((rules.max_age and now - posted > rules.max_age)
+                       or (window_start and posted < window_start)):
+            continue
+        detail_loaded = False
+
+        def load():
+            nonlocal detail_loaded
+            if detail_loaded or not job.get("load_detail"):
+                return
+            detail_loaded = True
+            try:
+                d = job["load_detail"]() or {}
+            except Exception:
+                d = {}
+            if d.get("locations"):
+                job["locations"] = d["locations"]
+            job["text"] = d.get("text") or job.get("text") or ""
+            job["url"] = d.get("url") or job["url"]
+            job["posted"] = d.get("posted") or job.get("posted")
+
+        region = rules.region_for(job["locations"])
+        if region is None and job.get("ambiguous_location"):
+            load()
+            region = rules.region_for(job["locations"])
+        if region is None:
+            if detail_loaded:
+                new_rejects.append(key)
+            continue
+        if job.get("text") is None:
+            load()
+        stack = rules.stack_for(job["title"], job.get("text"))
+        if rules.require_stack and not stack:
+            if detail_loaded:
+                new_rejects.append(key)
+            continue
+        job.update(region=region, stack=stack)
+        matches.append(job)
+    return {"row": row, "provider": provider, "res": res, "matches": matches, "rejects": new_rejects}
 
 
 # ----------------------------------------------------------------- state
@@ -419,13 +804,23 @@ def to_local_naive(iso):
 
 
 # ----------------------------------------------------------------- excel
-HEADERS = ["Found", "Posted", "Company", "Title", "Location", "Region", "Level",
-           "Stack match", "Board", "Status", "Notes", "Posting", "Key"]
-WIDTHS = [17, 11, 18, 48, 36, 22, 12, 30, 11, 14, 32, 9, 10]
+COLUMNS = [("Found", 17), ("Posted", 11), ("Company", 20), ("Score", 7), ("Title", 46),
+           ("Location", 34), ("Region", 22), ("Level", 12), ("Stack match", 28), ("Board", 14),
+           ("Status", 14), ("Notes", 30), ("Posting", 9), ("Key", 10)]
+HEADERS = [c for c, _ in COLUMNS]
+COL = {name: i + 1 for i, name in enumerate(HEADERS)}
+LETTER = {name: chr(64 + i) for name, i in COL.items()}
 
 
 def fill(hex_color):
     return PatternFill("solid", start_color=hex_color, end_color=hex_color)
+
+
+def header_row(ws):
+    for cell in ws[ws.max_row]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = fill("1F3864")
+        cell.alignment = Alignment(vertical="center")
 
 
 def read_excel_edits(path):
@@ -434,8 +829,7 @@ def read_excel_edits(path):
         return {}
     try:
         wb = load_workbook(path, read_only=True)
-        ws = wb["Jobs"]
-        rows = ws.iter_rows(values_only=True)
+        rows = wb["Jobs"].iter_rows(values_only=True)
         header = list(next(rows))
         ki, si, ni = header.index("Key"), header.index("Status"), header.index("Notes")
         edits = {}
@@ -449,65 +843,65 @@ def read_excel_edits(path):
         return {}
 
 
-def write_excel(path, state, cfg):
+def write_excel(path, state, cfg, scores):
     region_colors = {r["name"]: r.get("color") for r in cfg["regions"]}
     jobs = sorted(state["jobs"].values(),
                   key=lambda j: (j["open"], j["found"], j.get("posted") or ""), reverse=True)
+
+    def style_job_cells(ws, r, j, cols):
+        if j.get("url"):
+            ws.cell(r, cols["Title"]).hyperlink = j["url"]
+            ws.cell(r, cols["Title"]).font = Font(color="0563C1", underline="single")
+        if region_colors.get(j["region"]):
+            ws.cell(r, cols["Region"]).fill = fill(region_colors[j["region"]])
+        if LEVEL_COLORS.get(j["level"]):
+            ws.cell(r, cols["Level"]).fill = fill(LEVEL_COLORS[j["level"]])
+        tier = scores.get(j["company"], ("", ""))[1]
+        if tier in TIER_COLORS:
+            ws.cell(r, cols["Score"]).fill = fill(TIER_COLORS[tier])
 
     wb = Workbook()
     ws = wb.active
     ws.title = "Jobs"
     ws.append(HEADERS)
-    for cell in ws[1]:
-        cell.font = Font(bold=True, color="FFFFFF")
-        cell.fill = fill("1F3864")
-        cell.alignment = Alignment(vertical="center")
+    header_row(ws)
     ws.row_dimensions[1].height = 22
-
     for j in jobs:
+        score = scores.get(j["company"], ("", ""))[0]
         ws.append([
-            to_local_naive(j["found"]), to_local_naive(j.get("posted")), j["company"], j["title"],
+            to_local_naive(j["found"]), to_local_naive(j.get("posted")), j["company"],
+            int(score) if str(score).isdigit() else None, j["title"],
             "; ".join(dict.fromkeys(j["locations"])), j["region"], j["level"], ", ".join(j["stack"]),
             j["provider"].title(), j.get("status", "New"), j.get("notes", ""),
             "Open" if j["open"] else "Closed", j["key"],
         ])
         r = ws.max_row
-        ws.cell(r, 1).number_format = "yyyy-mm-dd hh:mm"
-        ws.cell(r, 2).number_format = "yyyy-mm-dd"
-        title = ws.cell(r, 4)
-        if j.get("url"):
-            title.hyperlink = j["url"]
-            title.font = Font(color="0563C1", underline="single")
-        if region_colors.get(j["region"]):
-            ws.cell(r, 6).fill = fill(region_colors[j["region"]])
-        if LEVEL_COLORS.get(j["level"]):
-            ws.cell(r, 7).fill = fill(LEVEL_COLORS[j["level"]])
+        ws.cell(r, COL["Found"]).number_format = "yyyy-mm-dd hh:mm"
+        ws.cell(r, COL["Posted"]).number_format = "yyyy-mm-dd"
+        style_job_cells(ws, r, j, COL)
 
     last = max(ws.max_row, 2)
-    for i, w in enumerate(WIDTHS, start=1):
-        ws.column_dimensions[chr(64 + i)].width = w
-    ws.column_dimensions["M"].hidden = True
+    for name, width in COLUMNS:
+        ws.column_dimensions[LETTER[name]].width = width
+    ws.column_dimensions[LETTER["Key"]].hidden = True
     ws.freeze_panes = "A2"
-    ws.auto_filter.ref = f"A1:L{last}"
+    ws.auto_filter.ref = f"A1:{LETTER['Posting']}{last}"
+    S, F, P = LETTER["Status"], LETTER["Found"], LETTER["Posting"]
 
     dv = DataValidation(type="list", formula1='"' + ",".join(STATUSES) + '"', allow_blank=True)
     ws.add_data_validation(dv)
-    dv.add(f"J2:J{last + 500}")
-
-    # Found in the last 24 hours: green, bold
-    ws.conditional_formatting.add(f"A2:A{last}", FormulaRule(
-        formula=["AND(ISNUMBER($A2),NOW()-$A2<1)"],
+    dv.add(f"{S}2:{S}{last + 500}")
+    ws.conditional_formatting.add(f"{F}2:{F}{last}", FormulaRule(
+        formula=[f"AND(ISNUMBER(${F}2),NOW()-${F}2<1)"],
         fill=fill("C6EFCE"), font=Font(bold=True, color="006100")))
-    # Status colours
     for status, (bg, fg) in STATUS_COLORS.items():
-        ws.conditional_formatting.add(f"J2:J{last + 500}", FormulaRule(
-            formula=[f'$J2="{status}"'], fill=fill(bg), font=Font(bold=True, color=fg)))
-    # Rejected, skipped or closed postings: whole row greyed out
-    ws.conditional_formatting.add(f"A2:L{last}", FormulaRule(
-        formula=['OR($J2="Rejected",$J2="Skipped",$L2="Closed")'],
+        ws.conditional_formatting.add(f"{S}2:{S}{last + 500}", FormulaRule(
+            formula=[f'${S}2="{status}"'], fill=fill(bg), font=Font(bold=True, color=fg)))
+    ws.conditional_formatting.add(f"A2:{P}{last}", FormulaRule(
+        formula=[f'OR(${S}2="Rejected",${S}2="Skipped",${P}2="Closed")'],
         font=Font(color="999999", italic=True)))
 
-    # Since Last Check: postings that appeared between your last two checks
+    # Since Last Check
     rep = state.get("last_check_report")
     if rep:
         sc = wb.create_sheet("Since Last Check", 0)
@@ -518,40 +912,38 @@ def write_excel(path, state, cfg):
                    "this tab is rebuilt each time you run with --since-last-check."])
         sc["A2"].font = Font(italic=True, color="595959")
         sc.append([])
-        sc.append(["Posted", "Found", "Company", "Title", "Location", "Region", "Level", "Stack match"])
-        for cell in sc[4]:
-            cell.font = Font(bold=True, color="FFFFFF")
-            cell.fill = fill("1F3864")
+        sc_cols = ["Posted", "Found", "Company", "Score", "Title", "Location", "Region", "Level",
+                   "Stack match"]
+        sc.append(sc_cols)
+        header_row(sc)
+        cols = {n: i + 1 for i, n in enumerate(sc_cols)}
         for key in rep["keys"]:
             j = state["jobs"].get(key)
             if not j:
                 continue
+            score = scores.get(j["company"], ("", ""))[0]
             sc.append([to_local_naive(j.get("posted")), to_local_naive(j["found"]), j["company"],
-                       j["title"], "; ".join(dict.fromkeys(j["locations"])), j["region"], j["level"],
+                       int(score) if str(score).isdigit() else None, j["title"],
+                       "; ".join(dict.fromkeys(j["locations"])), j["region"], j["level"],
                        ", ".join(j["stack"])])
             r = sc.max_row
             sc.cell(r, 1).number_format = sc.cell(r, 2).number_format = "yyyy-mm-dd hh:mm"
-            if j.get("url"):
-                sc.cell(r, 4).hyperlink = j["url"]
-                sc.cell(r, 4).font = Font(color="0563C1", underline="single")
-            if region_colors.get(j["region"]):
-                sc.cell(r, 6).fill = fill(region_colors[j["region"]])
-            if LEVEL_COLORS.get(j["level"]):
-                sc.cell(r, 7).fill = fill(LEVEL_COLORS[j["level"]])
+            style_job_cells(sc, r, j, cols)
         if not rep["keys"]:
             sc.append(["Nothing new matched your filters in this window."])
-        for col, w in zip("ABCDEFGH", [17, 17, 18, 48, 36, 22, 12, 30]):
-            sc.column_dimensions[col].width = w
+        for i, w in enumerate([17, 17, 20, 7, 46, 34, 22, 12, 28], start=1):
+            sc.column_dimensions[chr(64 + i)].width = w
         sc.freeze_panes = "A5"
         wb.active = 0
 
     # Legend
     lg = wb.create_sheet("Legend")
     lg.append(["Colour", "Meaning"])
-    for cell in lg[1]:
-        cell.font = Font(bold=True, color="FFFFFF")
-        cell.fill = fill("1F3864")
+    header_row(lg)
     legend = [("C6EFCE", "Found column: discovered in the last 24 hours")]
+    legend += [(TIER_COLORS["A"], "Score 65+: tier A, strong signals"),
+               (TIER_COLORS["B"], "Score 50-64: tier B, mixed signals"),
+               (TIER_COLORS["C"], "Score under 50: tier C, weak signals or recent layoffs")]
     legend += [(r.get("color"), f"Region: {r['name']}") for r in cfg["regions"] if r.get("color")]
     legend += [(c, f"Level: {lvl}") for lvl, c in LEVEL_COLORS.items() if c]
     legend += [(bg, f"Status: {s}") for s, (bg, _) in STATUS_COLORS.items()]
@@ -564,24 +956,30 @@ def write_excel(path, state, cfg):
 
     # Companies
     cs = wb.create_sheet("Companies")
-    cs.append(["Priority", "Region", "Company", "Board", "Slug", "Result", "Open postings",
-               "Matches", "Last checked", "Error"])
-    for cell in cs[1]:
-        cell.font = Font(bold=True, color="FFFFFF")
-        cell.fill = fill("1F3864")
+    cs.append(["Priority", "Region", "Company", "Score", "Tier", "Board", "Slug", "Result",
+               "Open postings", "Matches", "Last checked", "Note"])
+    header_row(cs)
     ordered = sorted(state.get("companies", {}).items(),
                      key=lambda kv: (kv[1].get("priority", 9), kv[0].lower()))
+    result_colors = {"OK": "C6EFCE", "NOT FOUND": "F8CBAD", "MANUAL": "DDEBF7"}
     for name, c in ordered:
-        cs.append([c.get("priority", ""), c.get("region", ""), name, c.get("provider", ""),
+        score, tier = scores.get(name, ("", ""))
+        cs.append([c.get("priority", ""), c.get("region", ""), name,
+                   int(score) if str(score).isdigit() else None, tier, c.get("provider", ""),
                    c.get("slug", ""), c["result"], c.get("open", 0), c.get("matches", 0),
                    to_local_naive(c.get("checked")), c.get("error", "")])
         r = cs.max_row
-        cs.cell(r, 9).number_format = "yyyy-mm-dd hh:mm"
-        cs.cell(r, 6).fill = fill({"OK": "C6EFCE", "NOT FOUND": "F8CBAD"}.get(c["result"], "FFE699"))
-    for col, w in zip("ABCDEFGHIJ", [9, 24, 26, 12, 20, 12, 14, 10, 17, 60]):
+        cs.cell(r, 11).number_format = "yyyy-mm-dd hh:mm"
+        cs.cell(r, 8).fill = fill(result_colors.get(c["result"], "FFE699"))
+        if tier in TIER_COLORS:
+            cs.cell(r, 4).fill = cs.cell(r, 5).fill = fill(TIER_COLORS[tier])
+        if c.get("careers_url"):
+            cs.cell(r, 12).hyperlink = c["careers_url"]
+            cs.cell(r, 12).font = Font(color="0563C1", underline="single")
+    for col, w in zip("ABCDEFGHIJKL", [9, 20, 28, 7, 6, 15, 26, 12, 13, 9, 17, 60]):
         cs.column_dimensions[col].width = w
     cs.freeze_panes = "A2"
-    cs.auto_filter.ref = f"A1:J{max(cs.max_row, 2)}"
+    cs.auto_filter.ref = f"A1:L{max(cs.max_row, 2)}"
 
     tmp = path.with_name(path.stem + ".saving.xlsx")
     try:
@@ -618,12 +1016,15 @@ def check_window(cfg, state, now, since_check, hours):
     return now - dt.timedelta(hours=cfg.get("first_check_lookback_hours", 24))
 
 
-def run_once(cfg, since_check=False, hours=None, verify=False):
+def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False):
     now = dt.datetime.now(dt.timezone.utc)
+    SETTINGS["search_terms"] = cfg.get("search_terms") or SETTINGS["search_terms"]
+    SETTINGS["max_pages"] = int(cfg.get("max_pages_per_search", 10))
     rules = Rules(cfg)
     excel_path = BASE / cfg.get("excel_file", "job_tracker.xlsx")
     state = load_json(STATE_PATH, {"jobs": {}, "resolved": {}, "companies": {}})
-    state.setdefault("companies", {})
+    for k in ("jobs", "resolved", "companies", "rejected"):
+        state.setdefault(k, {})
     since_check = since_check or cfg.get("since_last_check_by_default", False)
     window_start = check_window(cfg, state, now, since_check, hours)
     if window_start:
@@ -636,6 +1037,10 @@ def run_once(cfg, since_check=False, hours=None, verify=False):
             state["jobs"][key].update(edit)
 
     all_rows = load_company_rows(cfg)
+    csv_dirty = refresh_metrics(cfg, all_rows, force=refresh)
+    csv_dirty = rescore(all_rows) or csv_dirty
+    scores = {r["company"]: (r.get("score", ""), r.get("tier", "")) for r in all_rows}
+
     rows = sorted((r for r in all_rows if is_enabled(r)),
                   key=lambda r: (priority_of(r), r["company"].lower()))
     names = {r["company"] for r in rows}
@@ -646,6 +1051,12 @@ def run_once(cfg, since_check=False, hours=None, verify=False):
     recheck = dt.timedelta(days=cfg.get("recheck_not_found_days", 14))
     todo, skipped = [], 0
     for r in rows:
+        base_rec = {"checked": now.isoformat(), "priority": priority_of(r), "region": r.get("region", ""),
+                    "careers_url": r.get("careers_url", "")}
+        if is_manual(r):
+            state["companies"][r["company"]] = {**base_rec, "result": "MANUAL",
+                                                "error": "Uses its own careers site; check it directly."}
+            continue
         prev = state["companies"].get(r["company"], {})
         missing = prev.get("result") == "NOT FOUND" or (not prev and r.get("status") == "not_found")
         last = parse_date(prev.get("checked")) or parse_date(r.get("verified"))
@@ -654,74 +1065,76 @@ def run_once(cfg, since_check=False, hours=None, verify=False):
             continue
         todo.append(r)
 
+    # Forget rejected postings after 60 days so a re-posted role gets a fresh look.
+    cutoff = now - dt.timedelta(days=60)
+    state["rejected"] = {k: v for k, v in state["rejected"].items() if (parse_date(v) or now) > cutoff}
+    known, rejected = set(state["jobs"]), set(state["rejected"])
     delay = cfg.get("request_delay_seconds", 1)
 
-    def fetch(row):
+    def work(row):
         try:
-            return row, load_company(entry_for(row), state), None
-        except Exception as exc:
-            return row, None, exc
+            return evaluate_company(row, state, rules, known, rejected, now, window_start)
         finally:
             time.sleep(delay)
 
     log.info("Checking %d company boards (%d skipped as not found recently)...", len(todo), skipped)
     with ThreadPoolExecutor(max_workers=max(1, int(cfg.get("parallel_requests", 8)))) as pool:
-        results = list(pool.map(fetch, todo))
+        results = list(pool.map(work, todo))
 
-    new_jobs, csv_dirty, today = [], False, now.astimezone().date().isoformat()
-    for row, loaded, exc in results:
+    new_jobs, today = [], now.astimezone().date().isoformat()
+    for out in results:
+        row = out["row"]
         company = row["company"]
         record = {"checked": now.isoformat(), "priority": priority_of(row),
-                  "region": row.get("region", "")}
-        if exc:
-            record.update(result="ERROR", error=str(exc)[:200])
+                  "region": row.get("region", ""), "careers_url": row.get("careers_url", "")}
+        if out.get("error"):
+            record.update(result="ERROR", error=str(out["error"])[:200])
             state["companies"][company] = record
-            log.warning("%s: %s", company, exc)
+            log.warning("%s: %s", company, out["error"])
             continue
-        if loaded is None:
+        if out.get("missing"):
             record.update(result="NOT FOUND",
-                          error="No Greenhouse, Ashby or Lever board found. The company may use "
-                                "another system; or copy the slug from its careers URL into companies.csv.")
+                          error="No supported job board found. Add the careers URL or slug in "
+                                "companies.csv, or set board to 'other'.")
             state["companies"][company] = record
             if row.get("status") != "not_found":
                 row.update(status="not_found", verified=today)
                 csv_dirty = True
             continue
 
-        provider, slug, jobs = loaded
+        provider, res = out["provider"], out["res"]
+        slug = res["slug"]
         if (row.get("board"), row.get("slug"), row.get("status")) != (provider, slug, "ok"):
             row.update(board=provider, slug=slug, status="ok", verified=today)
             csv_dirty = True
-        seen, matches = set(), 0
-        for job in jobs:
-            verdict = rules.evaluate(job)
-            if not verdict:
-                continue
-            region, stack = verdict
+        for key in out["rejects"]:
+            state["rejected"][key] = now.isoformat()
+        seen = set()
+        for job in out["matches"]:
             key = job["key"]
             seen.add(key)
-            matches += 1
             existing = state["jobs"].get(key)
+            if job.get("known") and existing:
+                existing.update(open=True, title=job["title"], company=company)
+                continue
             if existing is None:
-                if rules.max_age and job["posted"] and now - job["posted"] > rules.max_age:
-                    continue
-                if window_start and job["posted"] and job["posted"] < window_start:
-                    continue
                 existing = state["jobs"][key] = {
                     "key": key, "found": now.isoformat(), "status": "New", "notes": ""}
-                new_jobs.append(f"{company}: {job['title']} ({region})")
+                new_jobs.append(f"{company}: {job['title']} ({job['region']})")
             existing.update({
                 "company": company, "provider": provider, "title": job["title"],
-                "locations": job["locations"], "region": region, "stack": stack,
+                "locations": job["locations"], "region": job["region"], "stack": job["stack"],
                 "level": level_for(job["title"]), "url": job["url"],
-                "posted": job["posted"].isoformat() if job["posted"] else None, "open": True,
+                "posted": job["posted"].isoformat() if job.get("posted") else None, "open": True,
             })
-        prefix = f"{provider}:{slug}:"
-        for key, j in state["jobs"].items():
-            if key.startswith(prefix) and key not in seen and j.get("open"):
-                j["open"] = False
-                j["closed"] = now.isoformat()
-        record.update(result="OK", provider=provider, slug=slug, open=len(jobs), matches=matches)
+        if res.get("complete", True):  # partial searches cannot prove a posting was removed
+            prefix = f"{provider}:{slug}:"
+            for key, j in state["jobs"].items():
+                if key.startswith(prefix) and key not in seen and j.get("open"):
+                    j["open"] = False
+                    j["closed"] = now.isoformat()
+        record.update(result="OK", provider=provider, slug=slug, open=len(res["jobs"]),
+                      matches=len(out["matches"]))
         state["companies"][company] = record
 
     if csv_dirty:
@@ -731,10 +1144,10 @@ def run_once(cfg, since_check=False, hours=None, verify=False):
     if window_start:
         # Everything that appeared in the gap, including jobs a background run already picked up.
         # Uses the board's publish time when it has one, otherwise when this script first saw it.
-        already_reported = set() if hours else set((state.get("last_check_report") or {}).get("keys", []))
+        already = set() if hours else set((state.get("last_check_report") or {}).get("keys", []))
         for j in state["jobs"].values():
             appeared = parse_date(j.get("posted")) or parse_date(j["found"])
-            if j.get("open") and appeared >= window_start and j["key"] not in already_reported:
+            if j.get("open") and appeared >= window_start and j["key"] not in already:
                 report.append(j)
         report.sort(key=lambda j: j.get("posted") or j["found"], reverse=True)
         state["last_check_report"] = {"from": window_start.isoformat(), "to": now.isoformat(),
@@ -744,10 +1157,10 @@ def run_once(cfg, since_check=False, hours=None, verify=False):
     state["last_run"] = now.isoformat()
 
     save_json(STATE_PATH, state)
-    write_excel(excel_path, state, cfg)
+    write_excel(excel_path, state, cfg, scores)
 
     ok = sum(1 for c in state["companies"].values() if c["result"] == "OK")
-    missing = sum(1 for c in state["companies"].values() if c["result"] != "OK")
+    missing = sum(1 for c in state["companies"].values() if c["result"] in ("NOT FOUND", "ERROR"))
     open_total = sum(1 for j in state["jobs"].values() if j.get("open"))
     log.info("Checked %d boards (%d not found or errored). %d new matches, %d open matches total.",
              ok, missing, len(new_jobs), open_total)
@@ -775,6 +1188,8 @@ def main():
                              "(does not move your last-check timestamp)")
     parser.add_argument("--verify", action="store_true",
                         help="re-check every company in companies.csv, including ones marked not_found")
+    parser.add_argument("--refresh-metrics", action="store_true",
+                        help="refresh stock metrics and company scores now (needs yfinance)")
     args = parser.parse_args()
     if args.hours and not args.since_last_check:
         args.since_last_check = True
@@ -788,8 +1203,9 @@ def main():
         if cfg is None:
             sys.exit(f"Could not read {CONFIG_PATH.name}")
         try:
-            run_once(cfg, since_check=args.since_last_check, hours=args.hours, verify=args.verify)
-            args.verify = False  # only the first cycle of --loop forces a full re-check
+            run_once(cfg, since_check=args.since_last_check, hours=args.hours,
+                     verify=args.verify, refresh=args.refresh_metrics)
+            args.verify = args.refresh_metrics = False  # only the first cycle of --loop forces these
         except Exception:
             log.exception("Run failed")
         if not args.loop:
