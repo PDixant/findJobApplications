@@ -15,7 +15,7 @@
   "max_pages_per_search": 10,
   "metrics_refresh_days": 7,
   "metrics_delay_seconds": 0.5,
-  "max_posted_age_days": 30,
+  "max_posted_age_hours": 24,
   "require_stack_match": true,
   "desktop_notifications": true,
   "since_last_check_by_default": false,

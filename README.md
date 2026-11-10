@@ -2,6 +2,8 @@
 
 Checks company career sites on Greenhouse, Ashby, Lever, Workday, SmartRecruiters and Workable directly, filters by your titles, locations and stack, scores each company on stock, growth, layoff and funding signals, and keeps `job_tracker.xlsx` up to date.
 
+Only postings that went up in the last 24 hours are added. Anything older, or already in your tracker, is ignored.
+
 ## 1. Install (one time)
 
 1. Install Python 3.10 or newer from python.org (on Windows, tick "Add Python to PATH").
@@ -49,9 +51,10 @@ python job_watcher.py --since-last-check
 Each time you run this, the script saves a timestamp. The next time, it reports only postings that went up in between, including ones a background run already picked up. The first time you use it, it looks back 24 hours.
 
 - Results open on the **Since Last Check** tab, and are also written to `job_watcher.log` with `CHECK` and `SINCE` lines.
-- Running it again right away shows nothing, since nothing new appeared.
-- `--hours 6` looks back a fixed 6 hours instead, without moving your saved timestamp.
-- It uses the posting date from the job board. If a board does not give one, it uses the time the script first saw the posting.
+- A posting shown in one check is never shown again in a later check.
+- `--hours 72` looks back a fixed 72 hours instead, without moving your saved timestamp. It also raises the 24-hour limit for that run, which is useful if your computer was off for a few days.
+- It uses the posting date from the job board. Workday only reports whole days ("Posted Today", "Posted Yesterday"), so "Yesterday" counts as within 24 hours; "30+ Days Ago" is always treated as old.
+- A posting with no date is treated as already up the first time a company is checked, and as new if it appears on a later check.
 - Set `"since_last_check_by_default": true` in `config.json` to make every run behave this way.
 
 ## 5. Company scores ("worth applying")
@@ -126,7 +129,7 @@ Changes apply on the next run, no restart needed.
 | `stack_keywords` | Description must mention at least one (turn off with `require_stack_match: false`) |
 | `regions` | Location buckets, their match terms and their Excel colour |
 | `locations_exclude` | Locations ignored when deciding the region (India cities) |
-| `max_posted_age_days` | Ignore postings older than this when first found |
+| `max_posted_age_hours` | Only add postings that went up within this many hours (default 24) |
 | `search_terms` | What to search for on large Workday and SmartRecruiters sites |
 | `max_pages_per_search` | How deep to page through those searches |
 | `metrics_refresh_days` | How often stock metrics refresh (default 7) |

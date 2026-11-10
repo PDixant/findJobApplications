@@ -131,17 +131,24 @@ def parse_date(value):
 
 
 def parse_relative(text):
-    """Workday's 'Posted Today', 'Posted Yesterday', 'Posted 3 Days Ago', 'Posted 30+ Days Ago'."""
+    """Workday's 'Posted Today', 'Posted Yesterday', 'Posted 3 Days Ago', 'Posted 30+ Days Ago'.
+    Workday only reports whole days, so 'Yesterday' is placed just inside a 24-hour window,
+    and an open-ended '30+ Days' is treated as older than 30 days."""
     if not text:
         return None
     now = dt.datetime.now(dt.timezone.utc)
     t = text.lower()
-    if "today" in t:
+    if "today" in t or "just" in t:
         return now
+    m = re.search(r"(\d+)\+?\s*hour", t)
+    if m:
+        return now - dt.timedelta(hours=int(m.group(1)))
     if "yesterday" in t:
-        return now - dt.timedelta(days=1)
-    m = re.search(r"(\d+)\+?\s*day", t)
-    return now - dt.timedelta(days=int(m.group(1))) if m else None
+        return now - dt.timedelta(hours=23)
+    m = re.search(r"(\d+)(\+?)\s*day", t)
+    if m:
+        return now - dt.timedelta(days=int(m.group(1)) + (1 if m.group(2) else 0))
+    return None
 
 
 TAG_RE = re.compile(r"<[^>]+>")
@@ -218,7 +225,8 @@ def fetch_greenhouse(slug, host=None, auto=False):
         jobs.append({
             "key": f"greenhouse:{slug}:{j.get('id')}", "title": j.get("title", ""), "locations": locs,
             "url": j.get("absolute_url", ""),
-            "posted": parse_date(j.get("first_published") or j.get("updated_at")),
+            # updated_at changes on every edit, so it is not used as a posting date
+            "posted": parse_date(j.get("first_published")),
             "text": html_to_text(j.get("content", "")),
         })
     return result(slug, jobs)
@@ -695,8 +703,10 @@ class Rules:
         self.loc_out = compile_terms(cfg.get("locations_exclude", []))
         self.regions = [(r["name"], compile_terms(r["match"])) for r in cfg["regions"]]
         self.require_stack = cfg.get("require_stack_match", True)
-        days = cfg.get("max_posted_age_days")
-        self.max_age = dt.timedelta(days=days) if days else None
+        hours = cfg.get("max_posted_age_hours")
+        if hours is None and cfg.get("max_posted_age_days"):
+            hours = cfg["max_posted_age_days"] * 24
+        self.max_age = dt.timedelta(hours=hours if hours is not None else 24)
 
     def title_ok(self, title):
         return any_match(self.title_in, title) and not any_match(self.title_out, title)
@@ -720,9 +730,13 @@ def level_for(title):
     return "Unlabelled"
 
 
-def evaluate_company(row, state, rules, known, rejected, now, window_start):
+def evaluate_company(row, state, rules, known, rejected, now, window_start, max_age, first_check):
     """Runs in a worker thread: fetch one board and pick out matching postings.
-    Only reads shared state; the main thread applies the results."""
+    Only reads shared state; the main thread applies the results.
+
+    A posting is new only if it went up within max_age (default 24 hours). Postings with
+    no date are treated as already up the first time a board is checked, and as new after
+    that, since they were not there on the previous check."""
     try:
         loaded = load_company(entry_for(row), state)
     except Exception as exc:
@@ -730,7 +744,11 @@ def evaluate_company(row, state, rules, known, rejected, now, window_start):
     if loaded is None:
         return {"row": row, "missing": True}
     provider, res = loaded
-    matches, new_rejects = [], []
+    matches, new_rejects, still_rejected = [], [], []
+
+    def too_old(posted):
+        return now - posted > max_age or bool(window_start and posted < window_start)
+
     for job in res["jobs"]:
         if not rules.title_ok(job["title"]):
             continue
@@ -739,10 +757,13 @@ def evaluate_company(row, state, rules, known, rejected, now, window_start):
             matches.append({"key": key, "known": True, "title": job["title"], "url": job["url"]})
             continue
         if key in rejected:
+            still_rejected.append(key)
             continue
         posted = job.get("posted")
-        if posted and ((rules.max_age and now - posted > rules.max_age)
-                       or (window_start and posted < window_start)):
+        if posted is not None and too_old(posted):
+            continue
+        if posted is None and first_check and not job.get("load_detail"):
+            new_rejects.append(key)  # undated and already up when this board was first checked
             continue
         detail_loaded = False
 
@@ -759,7 +780,11 @@ def evaluate_company(row, state, rules, known, rejected, now, window_start):
                 job["locations"] = d["locations"]
             job["text"] = d.get("text") or job.get("text") or ""
             job["url"] = d.get("url") or job["url"]
-            job["posted"] = d.get("posted") or job.get("posted")
+            job["posted"] = job.get("posted") or d.get("posted")
+
+        def fails_age_after_detail():
+            p = job.get("posted")
+            return (p is not None and too_old(p)) or (p is None and first_check)
 
         region = rules.region_for(job["locations"])
         if region is None and job.get("ambiguous_location"):
@@ -771,6 +796,9 @@ def evaluate_company(row, state, rules, known, rejected, now, window_start):
             continue
         if job.get("text") is None:
             load()
+        if detail_loaded and fails_age_after_detail():
+            new_rejects.append(key)
+            continue
         stack = rules.stack_for(job["title"], job.get("text"))
         if rules.require_stack and not stack:
             if detail_loaded:
@@ -778,7 +806,8 @@ def evaluate_company(row, state, rules, known, rejected, now, window_start):
             continue
         job.update(region=region, stack=stack)
         matches.append(job)
-    return {"row": row, "provider": provider, "res": res, "matches": matches, "rejects": new_rejects}
+    return {"row": row, "provider": provider, "res": res, "matches": matches, "rejects": new_rejects,
+            "still_rejected": still_rejected}
 
 
 # ----------------------------------------------------------------- state
@@ -1036,6 +1065,26 @@ def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False):
         if key in state["jobs"]:
             state["jobs"][key].update(edit)
 
+    # How old a posting may be when first found. --hours widens it for that run only.
+    max_age = rules.max_age
+    if hours:
+        max_age = max(max_age, dt.timedelta(hours=hours))
+
+    # Clear out postings left over from older, looser settings: ones that were already
+    # older than the limit when found. Anything you have given a status or note is kept.
+    pruned = 0
+    for key, j in list(state["jobs"].items()):
+        posted, found = parse_date(j.get("posted")), parse_date(j.get("found"))
+        untouched = (j.get("status") or "New") == "New" and not j.get("notes")
+        if ("allowed_age_h" not in j and untouched and posted and found
+                and found - posted > rules.max_age + dt.timedelta(hours=1)):
+            del state["jobs"][key]
+            state["rejected"][key] = now.isoformat()
+            pruned += 1
+    if pruned:
+        log.info("Removed %d older postings that did not meet the %d-hour limit when found.",
+                 pruned, rules.max_age.total_seconds() // 3600)
+
     all_rows = load_company_rows(cfg)
     csv_dirty = refresh_metrics(cfg, all_rows, force=refresh)
     csv_dirty = rescore(all_rows) or csv_dirty
@@ -1071,9 +1120,12 @@ def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False):
     known, rejected = set(state["jobs"]), set(state["rejected"])
     delay = cfg.get("request_delay_seconds", 1)
 
+    checked_before = {name for name, c in state["companies"].items() if c.get("result") == "OK"}
+
     def work(row):
         try:
-            return evaluate_company(row, state, rules, known, rejected, now, window_start)
+            return evaluate_company(row, state, rules, known, rejected, now, window_start, max_age,
+                                    first_check=row["company"] not in checked_before)
         finally:
             time.sleep(delay)
 
@@ -1107,8 +1159,8 @@ def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False):
         if (row.get("board"), row.get("slug"), row.get("status")) != (provider, slug, "ok"):
             row.update(board=provider, slug=slug, status="ok", verified=today)
             csv_dirty = True
-        for key in out["rejects"]:
-            state["rejected"][key] = now.isoformat()
+        for key in out["rejects"] + out["still_rejected"]:
+            state["rejected"][key] = now.isoformat()  # refreshed while still posted
         seen = set()
         for job in out["matches"]:
             key = job["key"]
@@ -1119,7 +1171,8 @@ def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False):
                 continue
             if existing is None:
                 existing = state["jobs"][key] = {
-                    "key": key, "found": now.isoformat(), "status": "New", "notes": ""}
+                    "key": key, "found": now.isoformat(), "status": "New", "notes": "",
+                    "allowed_age_h": round(max_age.total_seconds() / 3600, 1)}
                 new_jobs.append(f"{company}: {job['title']} ({job['region']})")
             existing.update({
                 "company": company, "provider": provider, "title": job["title"],
@@ -1144,16 +1197,18 @@ def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False):
     if window_start:
         # Everything that appeared in the gap, including jobs a background run already picked up.
         # Uses the board's publish time when it has one, otherwise when this script first saw it.
-        already = set() if hours else set((state.get("last_check_report") or {}).get("keys", []))
+        # A posting shown in any earlier check is never shown again (except in an --hours look).
         for j in state["jobs"].values():
             appeared = parse_date(j.get("posted")) or parse_date(j["found"])
-            if j.get("open") and appeared >= window_start and j["key"] not in already:
+            if j.get("open") and appeared >= window_start and (hours or not j.get("reported")):
                 report.append(j)
         report.sort(key=lambda j: j.get("posted") or j["found"], reverse=True)
         state["last_check_report"] = {"from": window_start.isoformat(), "to": now.isoformat(),
                                       "keys": [j["key"] for j in report]}
         if not hours:
             state["last_check"] = now.isoformat()
+            for j in report:
+                j["reported"] = now.isoformat()
     state["last_run"] = now.isoformat()
 
     save_json(STATE_PATH, state)
