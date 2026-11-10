@@ -379,7 +379,7 @@
 5,Toronto / GTA,Docebo,,,public,DCBO,,,,ashby,Docebo,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Dye & Durham,,,public,DND.TO,,,,auto,dyedurham,,Toronto / GTA,yes,not_found,2026-11-09,,,,,,
 5,Toronto / GTA,ecobee,58,B,private,,Subsidiary,,,auto,,,Toronto / GTA,yes,,,,,,,,Owned by Generac
-5,Toronto / GTA,Enghouse,,,public,ENGH.TO,,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Enghouse,,,public,ENGH.TO,,,,workable,enghouse,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Enso Connect,50,B,private,,Series A,,,auto,ensoconnect,,Toronto / GTA,yes,,,,,,,,
 5,Toronto / GTA,EQ Bank,,,public,EQB.TO,,,,lever,eqbank,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Felix Health,50,B,private,,Series A,,,ashby,felix,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
@@ -390,7 +390,7 @@
 5,Toronto / GTA,HubSpot,,,public,HUBS,,,2026-10 (~660),auto,,,Toronto / GTA,yes,,,,,,,,
 5,Toronto / GTA,Index Exchange,64,B,private,,Late,,,auto,indexexchange,,Toronto / GTA,yes,,,,,,,,
 5,Toronto / GTA,Intact Financial,,,public,IFC.TO,,,,other,,https://careers.intactfc.com,Toronto / GTA; Rest of Canada,yes,,,,,,,,Uses its own careers site
-5,Toronto / GTA,Interac,64,B,private,,Late,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Interac,64,B,private,,Late,,,auto,,,Toronto / GTA,yes,not_found,2026-11-09,,,,,,
 5,Toronto / GTA,Jobber,68,A,private,,Unicorn,,,ashby,jobber,,Rest of Canada; Toronto / GTA,yes,ok,2026-11-09,,,,,,Edmonton
 5,Toronto / GTA,Kepler Communications,64,B,private,,Late,,,ashby,kepler,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Klarna,,,public,KLAR,,,,auto,,,Toronto / GTA,yes,,,,,,,,
@@ -401,27 +401,27 @@
 5,Toronto / GTA,Loopio,64,B,private,,Late,,,ashby,Loopio,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Manulife,,,public,MFC,,,,workday,manulife/wd3/MFCJH_Jobs,,Toronto / GTA; Rest of Canada,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Maple,64,B,private,,Late,,,lever,getmaple,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
-5,Toronto / GTA,Moneris,58,B,private,,Subsidiary,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Moneris,58,B,private,,Subsidiary,,,auto,,,Toronto / GTA,yes,not_found,2026-11-09,,,,,,
 5,Toronto / GTA,MongoDB,,,public,MDB,,,,greenhouse,mongodb,,Toronto / GTA; Remote / other US,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Nudge,55,B,private,,Series B,,,ashby,Nudge,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
-5,Toronto / GTA,ODAIA,55,B,private,,Series B,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,ODAIA,55,B,private,,Series B,,,auto,,,Toronto / GTA,yes,not_found,2026-11-09,,,,,,
 5,Toronto / GTA,OpenText,,,public,OTEX,,,,workday,opentext,,Toronto / GTA; Rest of Canada,yes,not_found,2026-11-09,,,,,,Waterloo HQ
-5,Toronto / GTA,PartnerStack,55,B,private,,Series B,,,auto,,,Toronto / GTA,yes,,,,,,,,
-5,Toronto / GTA,Pivotree,,,public,PVT.V,,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,PartnerStack,55,B,private,,Series B,,,auto,,,Toronto / GTA,yes,not_found,2026-11-09,,,,,,
+5,Toronto / GTA,Pivotree,,,public,PVT.V,,,,auto,,,Toronto / GTA,yes,not_found,2026-11-09,,,,,,
 5,Toronto / GTA,Plooto,55,B,private,,Series B,,,lever,plooto,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,PocketHealth,55,B,private,,Series B,,,lever,PocketHealth,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Points,58,B,private,,Subsidiary,,,auto,,,Toronto / GTA,yes,,,,,,,,Owned by Plusgrade
 5,Toronto / GTA,PolicyMe,55,B,private,,Series B,,,lever,policyme,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
-5,Toronto / GTA,Private AI,50,B,private,,Series A,,,auto,privateai,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Private AI,50,B,private,,Series A,,,auto,privateai,,Toronto / GTA,yes,not_found,2026-11-09,,,,,,
 5,Toronto / GTA,Prodigy Education,64,B,private,,Late,,,auto,prodigy,,Toronto / GTA,yes,,,,,,,,Oakville
 5,Toronto / GTA,Propel Holdings,,,public,PRL.TO,,,,ashby,propel,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Q4 Inc,64,B,private,,Late,,,auto,q4inc,,Toronto / GTA,yes,,,,,,,,
 5,Toronto / GTA,Questrade,64,B,private,,Late,,,lever,Questrade,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
-5,Toronto / GTA,Real Matters,,,public,REAL.TO,,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Real Matters,,,public,REAL.TO,,,,auto,,,Toronto / GTA,yes,not_found,2026-11-09,,,,,,
 5,Toronto / GTA,Ritual,64,B,private,,Late,,,greenhouse,Ritual,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Rogers,,,public,RCI,,,,workday,rogers,,Toronto / GTA,yes,not_found,2026-11-09,,,,,,
 5,Toronto / GTA,Rose Rocket,55,B,private,,Series B,,,ashby,Rose Rocket,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
-5,Toronto / GTA,Sangoma,,,public,SANG,,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Sangoma,,,public,SANG,,,,workable,sangoma,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Scotiabank,,,public,BNS,,,,other,,https://jobs.scotiabank.com,Toronto / GTA,yes,,,,,,,,Uses its own careers site
 5,Toronto / GTA,Spotify,,,public,SPOT,,,,lever,spotify,,Toronto / GTA,yes,ok,2026-11-09,,,,,,Toronto office
 5,Toronto / GTA,StackAdapt,64,B,private,,Late,,,greenhouse,StackAdapt,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
@@ -436,13 +436,13 @@
 5,Toronto / GTA,TouchBistro,64,B,private,,Late,,,greenhouse,TouchBistro,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,TribalScale,55,B,private,,Bootstrapped,,,greenhouse,TribalScale,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Tulip,64,B,private,,Late,,,auto,tulipretail,,Toronto / GTA,yes,,,,,,,,
-5,Toronto / GTA,Uberflip,64,B,private,,Late,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Uberflip,64,B,private,,Late,,,auto,,,Toronto / GTA,yes,not_found,2026-11-09,,,,,,
 5,Toronto / GTA,Ubisoft,,,public,UBI.PA,,,2026-06 (up to 380),smartrecruiters,Ubisoft2,Toronto and Montreal studios,Toronto / GTA; Rest of Canada,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Untether AI,58,B,private,,Subsidiary,,,auto,untether,,Toronto / GTA,yes,,,,,,,,Team joined AMD in 2025
 5,Toronto / GTA,Validere,55,B,private,,Series B,,,auto,,,Toronto / GTA; Rest of Canada,yes,,,,,,,,
-5,Toronto / GTA,Vector Institute,55,B,nonprofit,,Nonprofit,,,auto,,,Toronto / GTA,yes,,,,,,,,AI research institute
+5,Toronto / GTA,Vector Institute,55,B,nonprofit,,Nonprofit,,,workable,vectorinstitute,,Toronto / GTA,yes,ok,2026-11-09,,,,,,AI research institute
 5,Toronto / GTA,Vena Solutions,68,A,private,,Unicorn,,,auto,vena,,Toronto / GTA,yes,,,,,,,,
-5,Toronto / GTA,Voiceflow,55,B,private,,Series B,,,auto,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Voiceflow,55,B,private,,Series B,,,workable,voiceflow,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Waabi,55,B,private,,Series B,,,lever,waabi,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Wattpad,58,B,private,,Subsidiary,,,lever,wattpad,,Toronto / GTA,yes,ok,2026-11-09,,,,,,Owned by Naver
 5,Toronto / GTA,Wave,58,B,private,,Subsidiary,,,lever,waveapps,,Toronto / GTA,yes,ok,2026-11-09,,,,,,Owned by H&R Block
@@ -450,28 +450,28 @@
 5,Toronto / GTA,Xanadu,68,A,private,,Unicorn,,,auto,,,Toronto / GTA,yes,,,,,,,,Announced plans to go public
 6,Rest of Canada,7shifts,64,B,private,,Late,,,ashby,7shifts,,Rest of Canada,yes,ok,2026-11-09,,,,,,Saskatoon
 6,Rest of Canada,AltaML,50,B,private,,Series A,,,lever,altaml,,Rest of Canada,yes,ok,2026-11-09,,,,,,Edmonton
-6,Rest of Canada,Amii,55,B,nonprofit,,Nonprofit,,,auto,,,Rest of Canada,yes,,,,,,,,Edmonton AI institute
+6,Rest of Canada,Amii,55,B,nonprofit,,Nonprofit,,,auto,,,Rest of Canada,yes,not_found,2026-11-09,,,,,,Edmonton AI institute
 6,Rest of Canada,ApplyBoard,68,A,private,,Unicorn,,,auto,,,Rest of Canada,yes,,,,,,,,Kitchener
 6,Rest of Canada,Arctic Wolf,68,A,private,,Unicorn,,,auto,arcticwolf,,Rest of Canada,yes,,,,,,,,Waterloo
-6,Rest of Canada,Auvik,64,B,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Waterloo
+6,Rest of Canada,Auvik,64,B,private,,Late,,,auto,,,Rest of Canada,yes,not_found,2026-11-09,,,,,,Waterloo
 6,Rest of Canada,Axonify,64,B,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Waterloo
 6,Rest of Canada,Behaviour Interactive,64,B,private,,Late,,,auto,behaviour,,Rest of Canada,yes,not_found,2026-11-09,,,,,,"Montreal, games"
 6,Rest of Canada,Benevity,68,A,private,,Unicorn,,,ashby,Benevity,,Rest of Canada,yes,ok,2026-11-09,,,,,,Calgary
-6,Rest of Canada,Bold Commerce,64,B,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Winnipeg
-6,Rest of Canada,Botpress,55,B,private,,Series B,,,auto,,,Rest of Canada,yes,,,,,,,,"Montreal, AI"
+6,Rest of Canada,Bold Commerce,64,B,private,,Late,,,auto,,,Rest of Canada,yes,not_found,2026-11-09,,,,,,Winnipeg
+6,Rest of Canada,Botpress,55,B,private,,Series B,,,workable,botpress,,Rest of Canada,yes,ok,2026-11-09,,,,,,"Montreal, AI"
 6,Rest of Canada,Busbud,64,B,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal
 6,Rest of Canada,Coconut Software,64,B,private,,Late,,,greenhouse,coconutsoftware,,Rest of Canada,yes,ok,2026-11-09,,,,,,Saskatoon
 6,Rest of Canada,Coveo,,,public,CVO.TO,,,,auto,,,Rest of Canada,yes,,,,,,,,"Quebec City, Montreal"
 6,Rest of Canada,D2L,,,public,DTOL.TO,,,,greenhouse,d2l,,Rest of Canada,yes,ok,2026-11-09,,,,,,Kitchener
-6,Rest of Canada,Dejero,64,B,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Waterloo
+6,Rest of Canada,Dejero,64,B,private,,Late,,,auto,,,Rest of Canada,yes,not_found,2026-11-09,,,,,,Waterloo
 6,Rest of Canada,Dialogue,58,B,private,,Subsidiary,,,auto,,,Rest of Canada,yes,,,,,,,,"Montreal, owned by Sun Life"
-6,Rest of Canada,eSentire,64,B,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Waterloo
-6,Rest of Canada,Flare Systems,55,B,private,,Series B,,,auto,flare,,Rest of Canada,yes,,,,,,,,Montreal
+6,Rest of Canada,eSentire,64,B,private,,Late,,,auto,,,Rest of Canada,yes,not_found,2026-11-09,,,,,,Waterloo
+6,Rest of Canada,Flare Systems,55,B,private,,Series B,,,workable,flare,,Rest of Canada,yes,ok,2026-11-09,,,,,,Montreal
 6,Rest of Canada,Helcim,64,B,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Calgary
 6,Rest of Canada,Hopper,68,A,private,,Unicorn,,,ashby,Hopper,,Rest of Canada,yes,ok,2026-11-09,,,,,,Montreal
-6,Rest of Canada,Igloo Software,64,B,private,,Late,,,auto,igloo,,Rest of Canada,yes,,,,,,,,Kitchener
+6,Rest of Canada,Igloo Software,64,B,private,,Late,,,workable,igloo,,Rest of Canada,yes,ok,2026-11-09,,,,,,Kitchener
 6,Rest of Canada,Magnet Forensics,64,B,private,,Late,,,lever,magnetforensics,,Rest of Canada,yes,ok,2026-11-09,,,,,,Waterloo
-6,Rest of Canada,Mila,55,B,nonprofit,,Nonprofit,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal AI institute
+6,Rest of Canada,Mila,55,B,nonprofit,,Nonprofit,,,workable,mila,,Rest of Canada,yes,ok,2026-11-09,,,,,,Montreal AI institute
 6,Rest of Canada,Miovision,64,B,private,,Late,,,ashby,Miovision,,Rest of Canada,yes,ok,2026-11-09,,,,,,Kitchener
 6,Rest of Canada,Mirego,55,B,private,,Bootstrapped,,,lever,mirego,,Rest of Canada,yes,ok,2026-11-09,,,,,,Quebec City
 6,Rest of Canada,National Bank,,,public,NA.TO,,,,other,,https://jobs.nbc.ca,Rest of Canada,yes,,,,,,,,Montreal
@@ -479,20 +479,20 @@
 6,Rest of Canada,nesto,64,B,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal
 6,Rest of Canada,Nuvei,64,B,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,"Montreal, private since 2024"
 6,Rest of Canada,Paper,64,B,private,,Late,,,workable,paper,,Rest of Canada,yes,ok,2026-11-09,,,,,,"Montreal, education"
-6,Rest of Canada,Pason Systems,,,public,PSI.TO,,,,auto,pason,,Rest of Canada,yes,,,,,,,,Calgary
+6,Rest of Canada,Pason Systems,,,public,PSI.TO,,,,auto,pason,,Rest of Canada,yes,not_found,2026-11-09,,,,,,Calgary
 6,Rest of Canada,Plotly,60,B,private,,Series C,,,ashby,Plotly,,Rest of Canada,yes,ok,2026-11-09,,,,,,Montreal
-6,Rest of Canada,Plusgrade,64,B,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal
-6,Rest of Canada,Proposify,50,B,private,,Series A,,,auto,,,Rest of Canada,yes,,,,,,,,Halifax
-6,Rest of Canada,Showpass,50,B,private,,Series A,,,auto,,,Rest of Canada,yes,,,,,,,,Calgary
-6,Rest of Canada,SkipTheDishes,58,B,private,,Subsidiary,,,auto,,,Rest of Canada,yes,,,,,,,,Winnipeg
-6,Rest of Canada,SSENSE,64,B,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal
+6,Rest of Canada,Plusgrade,64,B,private,,Late,,,auto,,,Rest of Canada,yes,not_found,2026-11-09,,,,,,Montreal
+6,Rest of Canada,Proposify,50,B,private,,Series A,,,auto,,,Rest of Canada,yes,not_found,2026-11-09,,,,,,Halifax
+6,Rest of Canada,Showpass,50,B,private,,Series A,,,auto,,,Rest of Canada,yes,not_found,2026-11-09,,,,,,Calgary
+6,Rest of Canada,SkipTheDishes,58,B,private,,Subsidiary,,,workable,skipthedishes,,Rest of Canada,yes,ok,2026-11-09,,,,,,Winnipeg
+6,Rest of Canada,SSENSE,64,B,private,,Late,,,workable,ssense,,Rest of Canada,yes,ok,2026-11-09,,,,,,Montreal
 6,Rest of Canada,Symend,64,B,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Calgary
 6,Rest of Canada,Tecsys,,,public,TCS.TO,,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal
 6,Rest of Canada,Vendasta,64,B,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Saskatoon
 6,Rest of Canada,Vention,64,B,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Montreal
 6,Rest of Canada,Vidyard,64,B,private,,Late,,,auto,,,Rest of Canada,yes,,,,,,,,Kitchener
 6,Rest of Canada,Workleap,64,B,private,,Late,,,greenhouse,Workleap,,Rest of Canada,yes,ok,2026-11-09,,,,,,Montreal
-7,Remote / other US,37signals,55,B,private,,Bootstrapped,,,auto,,,Remote / other US,yes,,,,,,,,Makers of Basecamp
+7,Remote / other US,37signals,55,B,private,,Bootstrapped,,,workable,37signals,,Remote / other US,yes,ok,2026-11-09,,,,,,Makers of Basecamp
 7,Remote / other US,Articulate,68,A,private,,Unicorn,,,lever,articulate,,Remote / other US,yes,ok,2026-11-09,,,,,,
 7,Remote / other US,Automattic,64,B,private,,Late,,,other,,https://automattic.com/work-with-us/,Remote / other US,yes,,,,,,,,Uses its own careers site
 7,Remote / other US,Bitwarden,64,B,private,,Late,,,greenhouse,Bitwarden,,Remote / other US,yes,ok,2026-11-09,,,,,,

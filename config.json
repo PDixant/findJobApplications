@@ -13,6 +13,7 @@
     "web developer"
   ],
   "max_pages_per_search": 10,
+  "unsorted_scan_pages": 25,
   "metrics_refresh_days": 7,
   "metrics_delay_seconds": 0.5,
   "max_posted_age_hours": 24,

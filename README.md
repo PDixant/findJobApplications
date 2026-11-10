@@ -114,6 +114,8 @@ Most rows are set to `auto`: the script detects the board on the first run and w
 - `acme.wd5.myworkdayjobs.com/en-US/External` → board `workday`, slug: paste the whole URL
 - Not sure? Set board to `auto` and leave the slug blank.
 
+**How Workday sites are read:** Workday has no way to sort by date, and its keyword search ranks by relevance, which buries today's postings under older ones. So the script reads each company's full list newest first and stops at the first postings older than your window, usually after one to three pages. The Companies tab notes how each site was read. If a site turns out not to be in date order, the script reads further and adds keyword searches as a backup, and the note says so. Large SmartRecruiters employers are read the same way.
+
 For Workday, a slug with just the company name (like `amd`) makes the script try the most common site names. If the Companies tab shows NOT FOUND for a Workday company, open its careers page, click any job, and paste that URL into `slug`.
 
 Close `companies.csv` before a run if you want the script to save updates into it. If it is open, the update waits until the next run.
@@ -130,8 +132,9 @@ Changes apply on the next run, no restart needed.
 | `regions` | Location buckets, their match terms and their Excel colour |
 | `locations_exclude` | Locations ignored when deciding the region (India cities) |
 | `max_posted_age_hours` | Only add postings that went up within this many hours (default 24) |
-| `search_terms` | What to search for on large Workday and SmartRecruiters sites |
-| `max_pages_per_search` | How deep to page through those searches |
+| `search_terms` | Backup keyword searches, used only on Workday or SmartRecruiters sites that do not list newest first |
+| `max_pages_per_search` | How deep to page through those backup searches |
+| `unsorted_scan_pages` | How far to read a list that is not in date order (default 25 pages) |
 | `metrics_refresh_days` | How often stock metrics refresh (default 7) |
 | `interval_minutes` | Used only with `--loop` |
 | `parallel_requests` | How many boards are checked at once (default 8) |

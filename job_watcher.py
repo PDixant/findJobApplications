@@ -75,7 +75,7 @@ MANUAL_BOARDS = {"other", "manual", "own"}
 
 # Filled from config at the start of each run
 SETTINGS = {"search_terms": ["software engineer", "software developer", "frontend", "full stack"],
-            "max_pages": 10}
+            "max_pages": 10, "window_days": 1.0, "unsorted_pages": 25, "hard_max_pages": 100}
 
 log = logging.getLogger("job_watcher")
 _local = threading.local()
@@ -151,6 +151,19 @@ def parse_relative(text):
     return None
 
 
+def wd_age_days(text):
+    """Whole days since posting from Workday's label. '30+ Days Ago' counts as 31."""
+    if not text:
+        return None
+    t = text.lower()
+    if "today" in t or "just" in t or "hour" in t:
+        return 0
+    if "yesterday" in t:
+        return 1
+    m = re.search(r"(\d+)(\+?)\s*day", t)
+    return int(m.group(1)) + (1 if m.group(2) else 0) if m else None
+
+
 TAG_RE = re.compile(r"<[^>]+>")
 
 
@@ -199,8 +212,55 @@ def post_json(url, body, retries=2):
     return _request("POST", url, body=body, retries=retries)
 
 
-def result(slug, jobs, host=None, complete=True):
-    return {"slug": slug, "jobs": jobs, "host": host, "complete": complete}
+def result(slug, jobs, host=None, complete=True, note=""):
+    return {"slug": slug, "jobs": jobs, "host": host, "complete": complete, "note": note}
+
+
+def scan_recent(fetch_page, age_days, key_of, page_size, tolerance=0.05, max_pages=None):
+    """Page through a list that should be newest first, stopping once postings are older than
+    the look-back window. If the list turns out not to be in date order, keep reading up to
+    unsorted_pages so fresh postings further down are not missed.
+
+    fetch_page(offset) -> (batch, total) or None; age_days(item) -> days old or None.
+    Returns (items, complete, ordered, pages_read) or None if the first page fails."""
+    window = SETTINGS["window_days"]
+    limit = max_pages or SETTINGS["hard_max_pages"]
+    items, offset, total, oldest_so_far, ordered = {}, 0, 0, -1.0, True
+    for page in range(limit):
+        got = fetch_page(offset)
+        if got is None:
+            return None if page == 0 else (items, False, ordered, page)
+        batch, page_total = got
+        if page == 0:
+            total = page_total or 0
+        ages = []
+        for item in batch:
+            k = key_of(item)
+            if k:
+                items.setdefault(k, item)
+            a = age_days(item)
+            if a is not None:
+                if a < oldest_so_far - tolerance:  # clearly newer after older: not date-sorted
+                    ordered = False
+                oldest_so_far = max(oldest_so_far, a)
+                ages.append(a)
+        offset += page_size
+        if not batch or (total and offset >= total):
+            return items, True, ordered, page + 1
+        if ordered and ages and ages[-1] > window:
+            return items, False, ordered, page + 1  # everything after this is older still
+        if not ordered and page + 1 >= SETTINGS["unsorted_pages"]:
+            return items, False, ordered, page + 1
+    return items, False, ordered, limit
+
+
+def scan_note(pages, ordered, complete):
+    if complete:
+        return f"Read the full list ({pages} page{'s' if pages != 1 else ''})."
+    if ordered:
+        return f"Newest-first list: read {pages} page{'s' if pages != 1 else ''}, stopped at older postings."
+    return (f"List is not in date order: read {pages} pages plus keyword searches. "
+            "Very new postings further down could be missed.")
 
 
 # ----------------------------------------------------------------- job boards
@@ -315,28 +375,34 @@ def fetch_smartrecruiters(slug, host=None, auto=False):
     if auto and total == 0:
         return None  # the API answers for any name, so an empty result proves nothing
     postings = {}
+    now = dt.datetime.now(dt.timezone.utc)
 
-    def read_pages(extra):
-        offset = 0
-        for _ in range(SETTINGS["max_pages"]):
-            data = first if (not extra and offset == 0) else get_json(base, {**extra, "limit": 100,
-                                                                              "offset": offset})
-            if not isinstance(data, dict):
-                return False
-            batch = data.get("content") or []
-            for p in batch:
-                postings.setdefault(p.get("id"), p)
-            offset += 100
-            if not batch or offset >= (data.get("totalFound") or 0):
-                return True
-        return False
+    def page(extra, offset):
+        data = first if (not extra and offset == 0) else get_json(base, {**extra, "limit": 100,
+                                                                          "offset": offset})
+        return (data.get("content") or [], data.get("totalFound") or 0) if isinstance(data, dict) else None
 
-    if total <= 100 * SETTINGS["max_pages"]:
-        complete = read_pages({})
-    else:  # very large employer: search for your titles instead of reading everything
-        for term in SETTINGS["search_terms"]:
-            read_pages({"q": term})
+    def age(p):
+        d = parse_date(p.get("releasedDate"))
+        return (now - d).total_seconds() / 86400 if d else None
+
+    if total <= 100 * SETTINGS["max_pages"]:  # small enough to read everything
+        scan = scan_recent(lambda o: page({}, o), lambda p: None, lambda p: p.get("id"), 100)
+        items, complete, ordered, pages = scan
+        postings.update(items)
+        note = scan_note(pages, True, complete)
+    else:  # large employer: read newest first and stop once postings are older than the window
+        items, complete, ordered, pages = scan_recent(lambda o: page({}, o), age,
+                                                      lambda p: p.get("id"), 100)
+        postings.update(items)
+        if not ordered:
+            for term in SETTINGS["search_terms"]:
+                more = scan_recent(lambda o, t=term: page({"q": t}, o), lambda p: None,
+                                   lambda p: p.get("id"), 100, max_pages=SETTINGS["max_pages"])
+                if more:
+                    postings.update(more[0])
         complete = False
+        note = scan_note(pages, ordered, False)
 
     jobs = []
     for pid, p in postings.items():
@@ -356,7 +422,7 @@ def fetch_smartrecruiters(slug, host=None, auto=False):
             "posted": parse_date(p.get("releasedDate")), "text": None,
             "load_detail": partial(_sr_detail, slug, pid),
         })
-    return result(slug, jobs, complete=complete)
+    return result(slug, jobs, complete=complete, note=note)
 
 
 # --- Workable
@@ -448,26 +514,30 @@ def fetch_workday(slug, host=None, auto=False):
             return None
         shard, site = found
     base = f"https://{tenant}.{shard}.myworkdayjobs.com"
-    postings, complete = {}, True
-    for i, term in enumerate(SETTINGS["search_terms"]):
-        offset, total = 0, 0
-        for page in range(SETTINGS["max_pages"]):
-            data = _wd_list(tenant, shard, site, term, offset)
-            if not isinstance(data, dict) or "jobPostings" not in data:
-                if i == 0 and page == 0:
-                    return None
-                break
-            if page == 0:
-                total = data.get("total") or 0  # Workday only reports the total on the first page
-            batch = data.get("jobPostings") or []
-            for p in batch:
-                if p.get("externalPath"):
-                    postings.setdefault(p["externalPath"], p)
-            offset += 20
-            if not batch or offset >= total:
-                break
-        else:
-            complete = False
+
+    def page(term, offset):
+        data = _wd_list(tenant, shard, site, term, offset)
+        if not isinstance(data, dict) or "jobPostings" not in data:
+            return None
+        return data.get("jobPostings") or [], data.get("total") or 0  # total is only on page one
+
+    # Keyword searches come back ranked by relevance, which buries today's postings under
+    # older ones. The unsearched list is newest first, so read it from the top and stop at
+    # the first postings older than the look-back window.
+    # Labels are whole days and can disagree by one around midnight, hence tolerance=1.
+    scan = scan_recent(lambda o: page("", o), lambda p: wd_age_days(p.get("postedOn")),
+                       lambda p: p.get("externalPath"), 20, tolerance=1)
+    if scan is None:
+        return None
+    postings, complete, ordered, pages = scan
+    if not ordered:  # this site does not list newest first; add keyword searches as a backstop
+        for term in SETTINGS["search_terms"]:
+            more = scan_recent(lambda o, t=term: page(t, o), lambda p: None,
+                               lambda p: p.get("externalPath"), 20, max_pages=SETTINGS["max_pages"])
+            if more:
+                for k, v in more[0].items():
+                    postings.setdefault(k, v)
+    note = scan_note(pages, ordered, complete)
     canonical = f"{tenant}/{shard}/{site}"
     jobs = []
     for path, p in postings.items():
@@ -480,7 +550,7 @@ def fetch_workday(slug, host=None, auto=False):
             "text": None, "ambiguous_location": ambiguous or not loc,
             "load_detail": partial(_wd_detail, base, tenant, site, path),
         })
-    return result(canonical, jobs, complete=complete)
+    return result(canonical, jobs, complete=complete, note=note)
 
 
 FETCHERS = {"greenhouse": fetch_greenhouse, "ashby": fetch_ashby, "lever": fetch_lever,
@@ -1069,6 +1139,8 @@ def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False):
     max_age = rules.max_age
     if hours:
         max_age = max(max_age, dt.timedelta(hours=hours))
+    SETTINGS["window_days"] = max_age.total_seconds() / 86400
+    SETTINGS["unsorted_pages"] = int(cfg.get("unsorted_scan_pages", 25))
 
     # Clear out postings left over from older, looser settings: ones that were already
     # older than the limit when found. Anything you have given a status or note is kept.
@@ -1187,7 +1259,7 @@ def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False):
                     j["open"] = False
                     j["closed"] = now.isoformat()
         record.update(result="OK", provider=provider, slug=slug, open=len(res["jobs"]),
-                      matches=len(out["matches"]))
+                      matches=len(out["matches"]), error=res.get("note", ""))
         state["companies"][company] = record
 
     if csv_dirty:
