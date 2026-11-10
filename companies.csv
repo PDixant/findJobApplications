@@ -1,0 +1,319 @@
+﻿priority,region,company,board,slug,hubs,enabled,status,verified,notes
+1,Vancouver / BC,1QBit,auto,,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,Absolute Software,auto,absolute,Vancouver / BC; Ottawa,yes,not_found,2026-11-09,
+1,Vancouver / BC,ActiveState,auto,,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,AlgaeCal,auto,,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,Amazon Web Services,auto,aws,Vancouver / BC; Seattle; Toronto / GTA,yes,not_found,2026-11-09,Likely its own careers system
+1,Vancouver / BC,Article,auto,,Vancouver / BC,yes,not_found,2026-11-09,Furniture e-commerce
+1,Vancouver / BC,Asana,greenhouse,asana,Vancouver / BC; California,yes,ok,2026-11-09,Listed hiring in Vancouver
+1,Vancouver / BC,Astera Labs,greenhouse,asteralabs,Vancouver / BC; California,yes,ok,2026-11-09,
+1,Vancouver / BC,Boast.ai,auto,boast,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,Brex,greenhouse,brex,Vancouver / BC; California,yes,ok,2026-11-09,Listed hiring in Vancouver
+1,Vancouver / BC,Certn,auto,,Vancouver / BC,yes,not_found,2026-11-09,Victoria
+1,Vancouver / BC,Checkfront,auto,,Vancouver / BC,yes,not_found,2026-11-09,Victoria
+1,Vancouver / BC,Clio,auto,,Vancouver / BC; Toronto / GTA; Rest of Canada,yes,not_found,2026-11-09,"Legal tech, Burnaby HQ"
+1,Vancouver / BC,Copperleaf,auto,,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,D-Wave,auto,dwave,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,Dapper Labs,auto,dapperlabs,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,Dialpad,greenhouse,Dialpad,Vancouver / BC; California; Toronto / GTA,yes,ok,2026-11-09,Large Vancouver engineering office
+1,Vancouver / BC,Elastic Path,auto,elasticpath,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,FISPAN,auto,fispan,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,Fresh Prep,auto,freshprep,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,Grammarly,auto,,Vancouver / BC; California,yes,not_found,2026-11-09,Vancouver engineering hub
+1,Vancouver / BC,Hootsuite,greenhouse,Hootsuite,Vancouver / BC; Toronto / GTA,yes,ok,2026-11-09,
+1,Vancouver / BC,Jane App,auto,janeapp,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,Kabam,lever,kabam,Vancouver / BC,yes,ok,2026-11-09,Games
+1,Vancouver / BC,Klue,ashby,Klue,Vancouver / BC,yes,ok,2026-11-09,
+1,Vancouver / BC,Later,greenhouse,Later,Vancouver / BC,yes,ok,2026-11-09,
+1,Vancouver / BC,Lululemon,auto,,Vancouver / BC,yes,not_found,2026-11-09,"Vancouver HQ, digital team"
+1,Vancouver / BC,MistyWest,auto,,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,Mogo,auto,,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,Mojio,greenhouse,Mojio,Vancouver / BC,yes,ok,2026-11-09,
+1,Vancouver / BC,Mozilla,greenhouse,Mozilla,Vancouver / BC; Toronto / GTA; Remote / other US,yes,ok,2026-11-09,
+1,Vancouver / BC,Phoenix Labs,auto,phoenixlabs,Vancouver / BC,yes,not_found,2026-11-09,Games
+1,Vancouver / BC,Plurilock,auto,,Vancouver / BC,yes,not_found,2026-11-09,Victoria
+1,Vancouver / BC,PressReader,auto,,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,Procurify,ashby,Procurify,Vancouver / BC,yes,ok,2026-11-09,
+1,Vancouver / BC,Relic Entertainment,auto,relic,Vancouver / BC,yes,not_found,2026-11-09,Games
+1,Vancouver / BC,Rivian,auto,,Vancouver / BC; California,yes,not_found,2026-11-09,Vancouver software office
+1,Vancouver / BC,Routific,auto,,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,Sanctuary AI,ashby,sanctuary,Vancouver / BC,yes,ok,2026-11-09,
+1,Vancouver / BC,Semios,auto,,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,Shopify,auto,,Ottawa; Toronto / GTA; Vancouver / BC,yes,not_found,2026-11-09,Uses its own careers system; kept for completeness
+1,Vancouver / BC,SkyHive,auto,,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,Spare Labs,ashby,spare,Vancouver / BC,yes,ok,2026-11-09,
+1,Vancouver / BC,Thinkific,greenhouse,Thinkific,Vancouver / BC,yes,ok,2026-11-09,
+1,Vancouver / BC,Thrive Health,auto,thrivehealth,Vancouver / BC,yes,not_found,2026-11-09,
+1,Vancouver / BC,Trulioo,ashby,Trulioo,Vancouver / BC,yes,ok,2026-11-09,
+1,Vancouver / BC,Unbounce,greenhouse,Unbounce,Vancouver / BC,yes,ok,2026-11-09,
+1,Vancouver / BC,Unity,auto,,Vancouver / BC; Toronto / GTA; Rest of Canada,yes,not_found,2026-11-09,
+1,Vancouver / BC,Visier,ashby,Visier,Vancouver / BC; Toronto / GTA,yes,ok,2026-11-09,
+1,Vancouver / BC,Wishpond,lever,wishpond,Vancouver / BC,yes,ok,2026-11-09,
+2,Ottawa,Assent,auto,,Ottawa,yes,not_found,2026-11-09,
+2,Ottawa,BitHeads,auto,,Ottawa,yes,not_found,2026-11-09,
+2,Ottawa,Ciena,auto,,Ottawa,yes,not_found,2026-11-09,Likely its own careers system
+2,Ottawa,CIRA,auto,cira,Ottawa,yes,not_found,2026-11-09,Canadian Internet Registration Authority
+2,Ottawa,Clearwater Clinical,auto,,Ottawa,yes,not_found,2026-11-09,
+2,Ottawa,Crank Software,auto,crank,Ottawa,yes,not_found,2026-11-09,
+2,Ottawa,Evidence Partners,auto,evidencepartners,Ottawa,yes,not_found,2026-11-09,
+2,Ottawa,Field Effect,auto,fieldeffect,Ottawa,yes,not_found,2026-11-09,
+2,Ottawa,Foko Retail,auto,foko,Ottawa,yes,not_found,2026-11-09,
+2,Ottawa,Fullscript,lever,fullscript,Ottawa,yes,ok,2026-11-09,
+2,Ottawa,Kinaxis,auto,,Ottawa,yes,not_found,2026-11-09,
+2,Ottawa,Kivuto,auto,,Ottawa,yes,not_found,2026-11-09,
+2,Ottawa,Klipfolio,auto,,Ottawa,yes,not_found,2026-11-09,
+2,Ottawa,Lightspeed,ashby,Lightspeed,Ottawa; Rest of Canada,yes,ok,2026-11-09,"Montreal HQ, Ottawa office"
+2,Ottawa,Martello,auto,,Ottawa,yes,not_found,2026-11-09,
+2,Ottawa,MindBridge,auto,mindbridge,Ottawa,yes,not_found,2026-11-09,
+2,Ottawa,Mitel,auto,,Ottawa,yes,not_found,2026-11-09,
+2,Ottawa,Noibu,ashby,Noibu,Ottawa,yes,ok,2026-11-09,
+2,Ottawa,Rewind,ashby,Rewind,Ottawa,yes,ok,2026-11-09,
+2,Ottawa,Ross Video,auto,rossvideo,Ottawa,yes,not_found,2026-11-09,
+2,Ottawa,Solink,ashby,Solink,Ottawa,yes,ok,2026-11-09,
+2,Ottawa,Tehama,auto,,Ottawa,yes,not_found,2026-11-09,
+2,Ottawa,TrueContext,auto,,Ottawa,yes,not_found,2026-11-09,
+2,Ottawa,Veem,auto,,Ottawa; California,yes,not_found,2026-11-09,
+3,Seattle,Allen Institute for AI,auto,allenai,Seattle,yes,not_found,2026-11-09,
+3,Seattle,Amperity,greenhouse,Amperity,Seattle,yes,ok,2026-11-09,
+3,Seattle,Anduril,auto,,California; Seattle,yes,not_found,2026-11-09,
+3,Seattle,Anthropic,greenhouse,anthropic,California; Seattle,yes,ok,2026-11-09,
+3,Seattle,Auger,auto,,Seattle,yes,not_found,2026-11-09,AI startup
+3,Seattle,Aurora,auto,aurorainnovation,California; Seattle,yes,not_found,2026-11-09,
+3,Seattle,Avalara,auto,,Seattle,yes,not_found,2026-11-09,
+3,Seattle,Avante,greenhouse,Avante,Seattle,yes,ok,2026-11-09,AI startup
+3,Seattle,Blue Origin,lever,blueorigin,Seattle,yes,ok,2026-11-09,
+3,Seattle,Bungie,greenhouse,Bungie,Seattle,yes,ok,2026-11-09,"Bellevue, games"
+3,Seattle,Carta,greenhouse,Carta,California; Rest of Canada; Seattle,yes,ok,2026-11-09,Waterloo office
+3,Seattle,CopilotKit,lever,copilotkit,Seattle,yes,ok,2026-11-09,AI startup
+3,Seattle,DoorDash,auto,,California; Toronto / GTA; Seattle,yes,not_found,2026-11-09,
+3,Seattle,Dropzone AI,greenhouse,dropzoneai,Seattle,yes,ok,2026-11-09,AI startup
+3,Seattle,Glowforge,auto,,Seattle,yes,not_found,2026-11-09,
+3,Seattle,Gradial,greenhouse,Gradial,Seattle,yes,ok,2026-11-09,AI startup
+3,Seattle,Highspot,lever,highspot,Seattle,yes,ok,2026-11-09,
+3,Seattle,Howie,auto,,Seattle,yes,not_found,2026-11-09,AI startup
+3,Seattle,Icertis,auto,,Seattle,yes,not_found,2026-11-09,
+3,Seattle,MotherDuck,ashby,MotherDuck,Seattle,yes,ok,2026-11-09,
+3,Seattle,Niantic,ashby,Niantic,California; Seattle,yes,ok,2026-11-09,
+3,Seattle,OfferUp,greenhouse,OfferUp,Seattle,yes,ok,2026-11-09,
+3,Seattle,Oumi,ashby,Oumi,Seattle,yes,ok,2026-11-09,AI startup
+3,Seattle,Outreach,lever,outreach,Seattle,yes,ok,2026-11-09,
+3,Seattle,Payscale,ashby,Payscale,Seattle,yes,ok,2026-11-09,
+3,Seattle,Porch,auto,,Seattle,yes,not_found,2026-11-09,
+3,Seattle,Pulumi,auto,,Seattle; Remote / other US,yes,not_found,2026-11-09,
+3,Seattle,Qumulo,ashby,Qumulo,Seattle,yes,ok,2026-11-09,
+3,Seattle,Rec Room,auto,recroom,Seattle,yes,not_found,2026-11-09,
+3,Seattle,Redfin,auto,,Seattle,yes,not_found,2026-11-09,
+3,Seattle,Remitly,auto,,Seattle,yes,not_found,2026-11-09,
+3,Seattle,Rover,lever,rover,Seattle,yes,ok,2026-11-09,
+3,Seattle,SeekOut,greenhouse,SeekOut,Seattle,yes,ok,2026-11-09,
+3,Seattle,Seeq,auto,,Seattle,yes,not_found,2026-11-09,
+3,Seattle,Smartsheet,greenhouse,Smartsheet,Seattle,yes,ok,2026-11-09,
+3,Seattle,Snowflake,ashby,Snowflake,Toronto / GTA; Seattle; California,yes,ok,2026-11-09,Likely its own careers system
+3,Seattle,SpaceX,greenhouse,spacex,California; Seattle,yes,ok,2026-11-09,
+3,Seattle,Stackline,greenhouse,Stackline,Seattle,yes,ok,2026-11-09,
+3,Seattle,Statsig,auto,,Seattle,yes,not_found,2026-11-09,
+3,Seattle,Tanium,greenhouse,Tanium,Seattle,yes,ok,2026-11-09,Kirkland
+3,Seattle,Temporal,auto,temporaltechnologies,Seattle; Remote / other US,yes,not_found,2026-11-09,
+3,Seattle,Textio,greenhouse,Textio,Seattle,yes,ok,2026-11-09,
+3,Seattle,Truveta,greenhouse,Truveta,Seattle,yes,ok,2026-11-09,
+3,Seattle,XBOW,auto,,Seattle,yes,not_found,2026-11-09,AI startup
+3,Seattle,Yoodli,auto,,Seattle,yes,not_found,2026-11-09,AI startup
+3,Seattle,Zillow,auto,,Seattle,yes,not_found,2026-11-09,Likely its own careers system
+4,California,Affirm,greenhouse,affirm,California; Remote / other US,yes,ok,2026-11-09,
+4,California,Airbnb,greenhouse,airbnb,California,yes,ok,2026-11-09,
+4,California,Airbyte,ashby,Airbyte,California; Remote / other US,yes,ok,2026-11-09,
+4,California,Airtable,greenhouse,airtable,California,yes,ok,2026-11-09,
+4,California,Algolia,greenhouse,Algolia,California,yes,ok,2026-11-09,
+4,California,Amplitude,ashby,Amplitude,California,yes,ok,2026-11-09,
+4,California,Anyscale,ashby,Anyscale,California,yes,ok,2026-11-09,
+4,California,Anysphere (Cursor),auto,anysphere,California,yes,not_found,2026-11-09,
+4,California,Applied Intuition,auto,appliedintuition,California,yes,not_found,2026-11-09,
+4,California,Baseten,ashby,Baseten,California,yes,ok,2026-11-09,
+4,California,Benchling,ashby,Benchling,California,yes,ok,2026-11-09,
+4,California,Block,greenhouse,Block,California; Toronto / GTA,yes,ok,2026-11-09,
+4,California,Calm,greenhouse,Calm,California,yes,ok,2026-11-09,
+4,California,Cerebras,ashby,Cerebras,California; Toronto / GTA,yes,ok,2026-11-09,Toronto office
+4,California,Character.AI,ashby,character,California,yes,ok,2026-11-09,
+4,California,Checkr,greenhouse,Checkr,California,yes,ok,2026-11-09,
+4,California,Chime,greenhouse,Chime,California,yes,ok,2026-11-09,
+4,California,Clerk,ashby,Clerk,California; Remote / other US,yes,ok,2026-11-09,
+4,California,ClickUp,ashby,ClickUp,California,yes,ok,2026-11-09,San Diego
+4,California,Cloudflare,greenhouse,cloudflare,California; Remote / other US,yes,ok,2026-11-09,
+4,California,Cohere,ashby,Cohere,Toronto / GTA; California,yes,ok,2026-11-09,
+4,California,Coinbase,greenhouse,Coinbase,California; Remote / other US,yes,ok,2026-11-09,
+4,California,Databricks,greenhouse,databricks,California; Toronto / GTA,yes,ok,2026-11-09,
+4,California,dbt Labs,auto,dbtlabs,California; Remote / other US,yes,not_found,2026-11-09,
+4,California,Discord,greenhouse,discord,California,yes,ok,2026-11-09,
+4,California,Docker,ashby,Docker,California; Remote / other US,yes,ok,2026-11-09,
+4,California,Drata,ashby,Drata,California,yes,ok,2026-11-09,San Diego
+4,California,Dropbox,greenhouse,dropbox,California; Remote / other US,yes,ok,2026-11-09,Hires remote in Canada
+4,California,Eventbrite,auto,,California,yes,not_found,2026-11-09,
+4,California,Faire,greenhouse,faire,California; Toronto / GTA; Rest of Canada,yes,ok,2026-11-09,Large Kitchener-Waterloo and Toronto teams
+4,California,Figma,greenhouse,figma,California,yes,ok,2026-11-09,
+4,California,Fireworks AI,auto,fireworksai,California,yes,not_found,2026-11-09,
+4,California,Fivetran,greenhouse,Fivetran,California,yes,ok,2026-11-09,
+4,California,Flexport,greenhouse,Flexport,California,yes,ok,2026-11-09,
+4,California,Front,auto,,California,yes,not_found,2026-11-09,
+4,California,Glean,auto,,California,yes,not_found,2026-11-09,
+4,California,Gong,auto,,California,yes,not_found,2026-11-09,
+4,California,GoodRx,ashby,GoodRx,California,yes,ok,2026-11-09,
+4,California,Gusto,greenhouse,gusto,California; Toronto / GTA,yes,ok,2026-11-09,
+4,California,Harvey,ashby,Harvey,California,yes,ok,2026-11-09,
+4,California,Headspace,auto,,California,yes,not_found,2026-11-09,
+4,California,Hex,ashby,Hex,California,yes,ok,2026-11-09,
+4,California,Hightouch,ashby,Hightouch,California,yes,ok,2026-11-09,
+4,California,Hims & Hers,auto,hims,California,yes,not_found,2026-11-09,
+4,California,Instacart,greenhouse,instacart,California; Toronto / GTA,yes,ok,2026-11-09,
+4,California,Intercom,greenhouse,Intercom,California,yes,ok,2026-11-09,
+4,California,Lattice,greenhouse,Lattice,California,yes,ok,2026-11-09,
+4,California,LaunchDarkly,greenhouse,LaunchDarkly,California,yes,ok,2026-11-09,
+4,California,Linear,ashby,linear,California; Remote / other US,yes,ok,2026-11-09,
+4,California,Lyft,greenhouse,lyft,California; Toronto / GTA,yes,ok,2026-11-09,
+4,California,Marqeta,auto,,California,yes,not_found,2026-11-09,
+4,California,Mercury,greenhouse,Mercury,California; Remote / other US,yes,ok,2026-11-09,
+4,California,Mixpanel,greenhouse,Mixpanel,California,yes,ok,2026-11-09,
+4,California,Modal,ashby,Modal,California,yes,ok,2026-11-09,
+4,California,Moveworks,auto,,California; Toronto / GTA,yes,not_found,2026-11-09,
+4,California,Mux,ashby,Mux,California,yes,ok,2026-11-09,
+4,California,Navan,auto,,California,yes,not_found,2026-11-09,
+4,California,NerdWallet,ashby,NerdWallet,California,yes,ok,2026-11-09,
+4,California,Netlify,greenhouse,Netlify,California; Remote / other US,yes,ok,2026-11-09,
+4,California,Nextdoor,greenhouse,Nextdoor,California,yes,ok,2026-11-09,
+4,California,Notion,ashby,notion,California,yes,ok,2026-11-09,
+4,California,Nuro,greenhouse,Nuro,California,yes,ok,2026-11-09,
+4,California,Okta,greenhouse,okta,California; Toronto / GTA,yes,ok,2026-11-09,
+4,California,OpenAI,ashby,openai,California,yes,ok,2026-11-09,
+4,California,Opendoor,auto,,California,yes,not_found,2026-11-09,
+4,California,PagerDuty,greenhouse,PagerDuty,California; Toronto / GTA,yes,ok,2026-11-09,
+4,California,Patreon,ashby,Patreon,California,yes,ok,2026-11-09,
+4,California,Perplexity,ashby,Perplexity,California,yes,ok,2026-11-09,
+4,California,Pilot,auto,,California,yes,not_found,2026-11-09,
+4,California,Pinecone,ashby,Pinecone,California,yes,ok,2026-11-09,
+4,California,Pinterest,greenhouse,pinterest,California; Toronto / GTA,yes,ok,2026-11-09,
+4,California,Plaid,lever,plaid,California,yes,not_found,2026-11-09,
+4,California,Postman,auto,,California,yes,not_found,2026-11-09,
+4,California,Quora,ashby,Quora,California; Remote / other US,yes,ok,2026-11-09,
+4,California,Reddit,greenhouse,Reddit,California; Toronto / GTA,yes,ok,2026-11-09,
+4,California,Relativity Space,greenhouse,relativity,California,yes,ok,2026-11-09,
+4,California,Replit,ashby,Replit,California,yes,ok,2026-11-09,
+4,California,Retool,auto,,California,yes,not_found,2026-11-09,
+4,California,Ripple,greenhouse,Ripple,California; Toronto / GTA,yes,ok,2026-11-09,
+4,California,Rippling,auto,,California; Remote / other US,yes,not_found,2026-11-09,
+4,California,Robinhood,greenhouse,robinhood,California; Toronto / GTA,yes,ok,2026-11-09,
+4,California,Roblox,greenhouse,roblox,California,yes,ok,2026-11-09,
+4,California,Samsara,greenhouse,samsara,California,yes,ok,2026-11-09,
+4,California,Scale AI,greenhouse,scaleai,California,yes,ok,2026-11-09,
+4,California,Sentry,ashby,Sentry,California; Toronto / GTA,yes,ok,2026-11-09,Toronto office
+4,California,ServiceTitan,auto,,California,yes,not_found,2026-11-09,
+4,California,Snapdocs,ashby,Snapdocs,California,yes,ok,2026-11-09,
+4,California,Snorkel AI,greenhouse,snorkelai,California,yes,ok,2026-11-09,
+4,California,SoFi,greenhouse,SoFi,California,yes,ok,2026-11-09,
+4,California,Sourcegraph,auto,,California; Remote / other US,yes,not_found,2026-11-09,
+4,California,Stripe,greenhouse,stripe,California; Toronto / GTA,yes,ok,2026-11-09,
+4,California,Supabase,ashby,Supabase,California; Remote / other US,yes,ok,2026-11-09,
+4,California,Tenstorrent,greenhouse,Tenstorrent,Toronto / GTA; California,yes,ok,2026-11-09,
+4,California,Thumbtack,ashby,Thumbtack,California,yes,ok,2026-11-09,
+4,California,Together AI,greenhouse,togetherai,California,yes,ok,2026-11-09,
+4,California,Turo,auto,,California; Rest of Canada,yes,not_found,2026-11-09,Large Montreal team
+4,California,Twilio,greenhouse,twilio,California; Remote / other US,yes,ok,2026-11-09,
+4,California,Vanta,ashby,Vanta,California; Remote / other US,yes,ok,2026-11-09,
+4,California,Vercel,greenhouse,Vercel,California; Remote / other US,yes,ok,2026-11-09,
+4,California,Verkada,greenhouse,Verkada,California,yes,ok,2026-11-09,
+4,California,Waymo,greenhouse,Waymo,California,yes,ok,2026-11-09,
+4,California,Wealthfront,lever,wealthfront,California,yes,ok,2026-11-09,
+4,California,Webflow,greenhouse,Webflow,California; Remote / other US,yes,ok,2026-11-09,
+4,California,Weights & Biases,auto,wandb,California,yes,not_found,2026-11-09,
+4,California,Writer,ashby,Writer,California,yes,ok,2026-11-09,
+4,California,ZipRecruiter,greenhouse,ZipRecruiter,California,yes,ok,2026-11-09,
+4,California,Zoox,lever,zoox,California,yes,ok,2026-11-09,
+5,Toronto / GTA,1Password,ashby,1password,Toronto / GTA; Remote / other US,yes,ok,2026-11-09,"Remote-first, Toronto HQ"
+5,Toronto / GTA,Achievers,lever,achievers,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Ada,auto,ada,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,AlayaCare,greenhouse,AlayaCare,Toronto / GTA; Rest of Canada,yes,ok,2026-11-09,
+5,Toronto / GTA,Basetwo,auto,,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,BenchSci,ashby,BenchSci,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Borderless AI,auto,borderless,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,Borrowell,auto,,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,Clearco,ashby,Clearco,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Clutch,greenhouse,clutch,Toronto / GTA,yes,ok,2026-11-09,Online car retailer
+5,Toronto / GTA,Coinsquare,auto,,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,Datadog,greenhouse,datadog,Remote / other US; Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Docebo,ashby,Docebo,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,ecobee,auto,,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,Enso Connect,auto,ensoconnect,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,Float,auto,floatcard,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,FreshBooks,auto,,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,Geotab,greenhouse,Geotab,Toronto / GTA,yes,ok,2026-11-09,Oakville
+5,Toronto / GTA,HubSpot,auto,,Toronto / GTA,yes,not_found,2026-11-09,Likely its own careers system
+5,Toronto / GTA,Index Exchange,auto,indexexchange,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,Jobber,ashby,jobber,Rest of Canada; Toronto / GTA,yes,ok,2026-11-09,Edmonton
+5,Toronto / GTA,Kepler Communications,ashby,kepler,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Klarna,auto,,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,KOHO,ashby,koho,Toronto / GTA; Remote / other US,yes,ok,2026-11-09,
+5,Toronto / GTA,League,auto,,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,Ledn,auto,,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,Loopio,ashby,Loopio,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Maple,lever,getmaple,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,MongoDB,greenhouse,mongodb,Toronto / GTA; Remote / other US,yes,ok,2026-11-09,
+5,Toronto / GTA,Nudge,ashby,Nudge,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Plooto,lever,plooto,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Points,auto,,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,PolicyMe,lever,policyme,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Prodigy Education,auto,prodigy,Toronto / GTA,yes,not_found,2026-11-09,Oakville
+5,Toronto / GTA,Q4 Inc,auto,q4inc,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,Ritual,greenhouse,Ritual,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Rose Rocket,ashby,Rose Rocket,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Spotify,lever,spotify,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Super.com,greenhouse,super,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Swift Medical,auto,swiftmedical,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,Tailscale,greenhouse,Tailscale,Toronto / GTA; Remote / other US,yes,ok,2026-11-09,
+5,Toronto / GTA,Tealbook,lever,tealbook,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Top Hat,auto,tophat,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,TouchBistro,greenhouse,TouchBistro,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,TribalScale,greenhouse,TribalScale,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Tulip,auto,tulipretail,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,Untether AI,auto,untether,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,Validere,auto,,Toronto / GTA; Rest of Canada,yes,not_found,2026-11-09,
+5,Toronto / GTA,Vena Solutions,auto,vena,Toronto / GTA,yes,not_found,2026-11-09,
+5,Toronto / GTA,Waabi,lever,waabi,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Wattpad,lever,wattpad,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Wave,lever,waveapps,Toronto / GTA,yes,ok,2026-11-09,
+5,Toronto / GTA,Wealthsimple,ashby,Wealthsimple,Toronto / GTA; Remote / other US,yes,ok,2026-11-09,
+5,Toronto / GTA,Xanadu,auto,,Toronto / GTA,yes,not_found,2026-11-09,
+6,Rest of Canada,ApplyBoard,auto,,Rest of Canada,yes,not_found,2026-11-09,Kitchener
+6,Rest of Canada,Arctic Wolf,auto,arcticwolf,Rest of Canada,yes,not_found,2026-11-09,Waterloo
+6,Rest of Canada,Axonify,auto,,Rest of Canada,yes,not_found,2026-11-09,Waterloo
+6,Rest of Canada,Benevity,ashby,Benevity,Rest of Canada,yes,ok,2026-11-09,Calgary
+6,Rest of Canada,Busbud,auto,,Rest of Canada,yes,not_found,2026-11-09,Montreal
+6,Rest of Canada,Coconut Software,greenhouse,coconutsoftware,Rest of Canada,yes,ok,2026-11-09,Saskatoon
+6,Rest of Canada,Coveo,auto,,Rest of Canada,yes,not_found,2026-11-09,"Quebec City, Montreal"
+6,Rest of Canada,D2L,greenhouse,d2l,Rest of Canada,yes,ok,2026-11-09,Kitchener
+6,Rest of Canada,Dialogue,auto,,Rest of Canada,yes,not_found,2026-11-09,Montreal
+6,Rest of Canada,Helcim,auto,,Rest of Canada,yes,not_found,2026-11-09,Calgary
+6,Rest of Canada,Hopper,ashby,Hopper,Rest of Canada,yes,ok,2026-11-09,Montreal
+6,Rest of Canada,Magnet Forensics,lever,magnetforensics,Rest of Canada,yes,ok,2026-11-09,Waterloo
+6,Rest of Canada,Miovision,ashby,Miovision,Rest of Canada,yes,ok,2026-11-09,Kitchener
+6,Rest of Canada,Neo Financial,ashby,neofinancial,Rest of Canada,yes,ok,2026-11-09,"Calgary, Winnipeg"
+6,Rest of Canada,nesto,auto,,Rest of Canada,yes,not_found,2026-11-09,Montreal
+6,Rest of Canada,Nuvei,auto,,Rest of Canada,yes,not_found,2026-11-09,Montreal
+6,Rest of Canada,Plotly,ashby,Plotly,Rest of Canada,yes,ok,2026-11-09,Montreal
+6,Rest of Canada,Symend,auto,,Rest of Canada,yes,not_found,2026-11-09,Calgary
+6,Rest of Canada,Vendasta,auto,,Rest of Canada,yes,not_found,2026-11-09,Saskatoon
+6,Rest of Canada,Vention,auto,,Rest of Canada,yes,not_found,2026-11-09,Montreal
+6,Rest of Canada,Vidyard,auto,,Rest of Canada,yes,not_found,2026-11-09,Kitchener
+6,Rest of Canada,Workleap,greenhouse,Workleap,Rest of Canada,yes,ok,2026-11-09,Montreal
+7,Remote / other US,Bitwarden,greenhouse,Bitwarden,Remote / other US,yes,ok,2026-11-09,
+7,Remote / other US,Buffer,ashby,Buffer,Remote / other US,yes,ok,2026-11-09,
+7,Remote / other US,Canonical,greenhouse,Canonical,Remote / other US,yes,ok,2026-11-09,
+7,Remote / other US,Close,ashby,close,Remote / other US,yes,ok,2026-11-09,
+7,Remote / other US,Deel,ashby,Deel,Remote / other US,yes,ok,2026-11-09,
+7,Remote / other US,Doist,auto,,Remote / other US,yes,not_found,2026-11-09,
+7,Remote / other US,Elastic,greenhouse,Elastic,Remote / other US,yes,ok,2026-11-09,
+7,Remote / other US,GitLab,greenhouse,gitlab,Remote / other US,yes,ok,2026-11-09,"Remote, hires in Canada"
+7,Remote / other US,Grafana Labs,greenhouse,grafanalabs,Remote / other US,yes,ok,2026-11-09,
+7,Remote / other US,Hotjar,auto,,Remote / other US,yes,not_found,2026-11-09,
+7,Remote / other US,Kraken,lever,kraken,Remote / other US,yes,ok,2026-11-09,
+7,Remote / other US,PostHog,ashby,PostHog,Remote / other US,yes,ok,2026-11-09,
+7,Remote / other US,Ramp,ashby,ramp,Remote / other US,yes,ok,2026-11-09,New York
+7,Remote / other US,Remote,greenhouse,remote,Remote / other US,yes,ok,2026-11-09,
+7,Remote / other US,Zapier,ashby,Zapier,Remote / other US,yes,ok,2026-11-09,

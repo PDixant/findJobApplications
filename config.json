@@ -1,0 +1,58 @@
+{
+  "excel_file": "job_tracker.xlsx",
+  "interval_minutes": 30,
+  "request_delay_seconds": 1,
+  "max_posted_age_days": 30,
+  "require_stack_match": true,
+  "desktop_notifications": true,
+
+  "since_last_check_by_default": false,
+  "first_check_lookback_hours": 24,
+  "check_overlap_minutes": 15,
+
+  "titles_include": [
+    "Software Engineer", "Software Developer",
+    "Frontend", "Front End", "Front-End",
+    "Full Stack", "Full-Stack", "Fullstack",
+    "Web Developer", "UI Engineer", "Product Engineer",
+    "React", "JavaScript"
+  ],
+
+  "titles_exclude": [
+    "Staff", "Principal", "Intern", "Internship", "Co-op", "Coop",
+    "Junior", "Jr", "New Grad", "Graduate", "Entry Level",
+    "Manager", "Director", "Head of", "VP"
+  ],
+
+  "stack_keywords": [
+    "React", "React Native", "JavaScript", "TypeScript", "Node.js", "NodeJS", "Next.js"
+  ],
+
+  "locations_exclude": [
+    "India", "Bengaluru", "Bangalore", "Hyderabad", "Pune", "Chennai",
+    "Gurugram", "Gurgaon", "Noida", "Mumbai", "Delhi"
+  ],
+
+  "regions": [
+    {"name": "Canada - BC", "color": "C6EFCE",
+     "match": ["British Columbia", "BC", "Vancouver", "Burnaby", "Victoria", "Kelowna"]},
+    {"name": "Canada - Ontario", "color": "DDEBF7",
+     "match": ["Ontario", "ON", "Toronto", "Ottawa", "Waterloo", "Kitchener", "Mississauga", "Brampton", "Markham", "Guelph"]},
+    {"name": "Canada - Other/Remote", "color": "D9F2F2",
+     "match": ["Canada", "Canadian", "Montreal", "Montréal", "Calgary", "Edmonton", "Halifax", "Winnipeg", "Quebec"]},
+    {"name": "California", "color": "FCE4D6",
+     "match": ["California", "CA", "San Francisco", "SF", "Bay Area", "Los Angeles", "San Jose", "San Diego",
+               "Palo Alto", "Mountain View", "Menlo Park", "Sunnyvale", "Santa Clara", "Redwood City",
+               "Oakland", "Santa Monica", "Irvine", "Cupertino"]},
+    {"name": "Seattle", "color": "E4DFEC",
+     "match": ["Seattle", "Bellevue", "Redmond", "Kirkland"]},
+    {"name": "Remote - North America", "color": "FFF2CC",
+     "match": ["North America", "Americas"]}
+  ],
+
+  "companies_file": "companies.csv",
+  "parallel_requests": 8,
+  "recheck_not_found_days": 14,
+
+  "companies": []
+}

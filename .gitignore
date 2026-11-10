@@ -1,0 +1,7 @@
+job_watcher.log
+job_tracker.xlsx
+job_watcher_state.json
+*.saving.xlsx
+*.saving.csv
+*.tmp
+__pycache__/
