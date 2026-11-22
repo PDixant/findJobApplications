@@ -225,3 +225,64 @@ def test_events_reach_listeners():
         jw.off_event(listener)
     jw.emit("progress", done=2, total=2)
     assert seen == [("progress", {"done": 1, "total": 2})]
+
+
+def test_guesses_back_off_when_a_site_asks_to_slow_down(monkeypatch):
+    calls = []
+
+    def workable(slug, host=None, auto=False):
+        calls.append(("workable", slug))
+        jw.LIMITER.refused("workable.com")
+        raise jw.RateLimited("workable.com asked to slow down")
+
+    def lever(slug, host=None, auto=False):
+        calls.append(("lever", slug))
+        return None
+
+    for p in jw.AUTO_ORDER:
+        monkeypatch.setitem(jw.FETCHERS, p, lambda slug, host=None, auto=False: None)
+    monkeypatch.setitem(jw.FETCHERS, "workable", workable)
+    monkeypatch.setitem(jw.FETCHERS, "lever", lever)
+    jw.LIMITER.reset()
+    try:
+        # Guessing: the refusal skips Workable instead of pausing the company, and later guesses
+        # leave Workable alone for the rest of the run.
+        assert jw.load_company("Acme Robotics", {}) is None
+        assert jw.load_company("Other Co", {}) is None
+        assert [c for c in calls if c[0] == "workable"] == [("workable", "acmerobotics")]
+        # A company known to use Workable is still paused and retried next run.
+        with pytest.raises(jw.RateLimited):
+            jw.load_company("workable:realco", {})
+    finally:
+        jw.LIMITER.reset()
+
+
+def test_where_data_lives(tmp_path):
+    source = tmp_path / "src"
+    source.mkdir()
+    (source / "job_watcher.py").write_text("")
+    assert jw.find_home(env="", source=source, frozen=False) == source  # running from the folder
+    assert jw.find_home(env="", source=source, frozen=True) == jw.user_data_dir()  # the installed app
+    assert jw.find_home(env="", source=tmp_path / "site-packages", frozen=False) == jw.user_data_dir()
+    assert jw.find_home(env=str(tmp_path / "x"), source=source, frozen=False) == tmp_path / "x"
+
+
+def test_installed_app_starts_with_the_defaults(tmp_path, monkeypatch):
+    defaults = tmp_path / "defaults"
+    defaults.mkdir()
+    (defaults / "config.toml").write_text("[jobs]\nmax_age_hours = 12\n")
+    (defaults / "companies.csv").write_text("company\nAcme\n")
+    monkeypatch.setattr(jw.base, "defaults_dir", lambda: defaults)
+    home = tmp_path / "home" / "JobWatcher"
+    jw.set_up_home(home)
+    assert (home / "config.toml").read_text().startswith("[jobs]")
+    (home / "config.toml").write_text("# mine\n")
+    jw.set_up_home(home)  # never overwrites your settings
+    assert (home / "config.toml").read_text() == "# mine\n"
+
+
+def test_jobwatcher_folder_command(capsys, monkeypatch):
+    from jobwatcher import desktop
+    monkeypatch.setattr(desktop, "open_folder", lambda path: None)
+    desktop.main(["folder"])
+    assert capsys.readouterr().out.strip() == str(jw.BASE)

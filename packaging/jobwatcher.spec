@@ -1,0 +1,37 @@
+# PyInstaller build of Job Watcher, for people without Python. From the main folder:
+#     pip install -e ".[app]" pyinstaller
+#     pyinstaller --noconfirm packaging/jobwatcher.spec
+# Makes dist/JobWatcher/ with two programs sharing one set of files:
+#     "Job Watcher.exe"   the app, no terminal window (what the shortcuts open)
+#     "jobwatcher.exe"    the same for terminals: jobwatcher run, jobwatcher outreach, ...
+# Settings and data live in %APPDATA%\JobWatcher, set up with config.toml and companies.csv
+# from this folder the first time it opens.
+import sys
+from pathlib import Path
+
+from PyInstaller.utils.hooks import collect_submodules
+
+ROOT = Path(SPECPATH).parent
+ICON = str(ROOT / "jobwatcher" / "assets" / ("icon.ico" if sys.platform == "win32" else "icon.png"))
+
+datas = [
+    (str(ROOT / "jobwatcher" / "ui_dist"), "jobwatcher/ui_dist"),
+    (str(ROOT / "jobwatcher" / "assets"), "jobwatcher/assets"),
+]
+datas += [(str(ROOT / name), "defaults") for name in ("config.toml", "companies.csv", "about_me.example.md", ".env.example")]
+
+hidden = ["outreach", "job_watcher", "tomlkit"]
+hidden += collect_submodules("uvicorn") + collect_submodules("keyring.backends") + collect_submodules("jobwatcher")
+
+a = Analysis(
+    [str(ROOT / "packaging" / "launch.py")],
+    pathex=[str(ROOT)],
+    datas=datas,
+    hiddenimports=hidden,
+    # Stock metrics (yfinance and pandas) would triple the size; scores still use the other signals.
+    excludes=["tkinter", "yfinance", "pandas", "numpy", "matplotlib", "pytest"],
+)
+pyz = PYZ(a.pure)
+app = EXE(pyz, a.scripts, [], exclude_binaries=True, name="Job Watcher", console=False, icon=ICON)
+cli = EXE(pyz, a.scripts, [], exclude_binaries=True, name="jobwatcher", console=True, icon=ICON)
+COLLECT(app, cli, a.binaries, a.datas, name="JobWatcher")

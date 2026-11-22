@@ -326,3 +326,23 @@ def test_keys(client, monkeypatch):
             env.unlink(missing_ok=True)
         else:
             env.write_text(before)
+
+
+def test_second_launch_finds_the_open_app(client, monkeypatch):
+    from jobwatcher import desktop
+    focused = []
+    client.app.state.focus = lambda: focused.append(True)
+    port = int(str(client.base_url).rsplit(":", 1)[1])
+    marker = desktop.instance_file()
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text(json.dumps({"port": port, "token": TOKEN, "pid": 1}))
+    try:
+        assert desktop.running_instance() == (port, TOKEN)
+        assert client.post("/api/window/focus").json() == {"focused": True}
+        time.sleep(0.2)
+        assert focused
+        marker.write_text(json.dumps({"port": port, "token": "stale", "pid": 1}))
+        assert desktop.running_instance() is None  # a leftover file from a closed app is ignored
+    finally:
+        marker.unlink(missing_ok=True)
+        client.app.state.focus = None

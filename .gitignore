@@ -20,3 +20,8 @@ postings.db-wal
 postings.db-shm
 job_watcher_state.before-database.json
 *.saving.toml
+.venv/
+build/
+dist/
+packaging/Output/
+*.egg-info/

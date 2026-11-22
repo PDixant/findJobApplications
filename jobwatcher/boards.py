@@ -463,13 +463,32 @@ def load_company(entry, state, only=None):
                       for v in (variants if only or p not in ("workable", "smartrecruiters") else variants[:1])]
 
     for provider, slug, auto in candidates:
-        r = FETCHERS[provider](slug, None, auto)
+        if auto and guessing_paused(provider):
+            continue
+        try:
+            r = FETCHERS[provider](slug, None, auto)
+        except RateLimited:
+            if not auto:
+                raise  # a known board: pause the company and read it next run
+            continue  # a guess isn't worth waiting for; companies known to use this site keep its allowance
         if r is not None:
             if r.get("switch_to"):  # a careers website that is really a job board
                 provider = r["switch_to"][0]
             cache[entry] = {"provider": provider, "slug": r["slug"], "host": r.get("host")}
             return provider, r
     return None
+
+
+GUESS_SITES = {"greenhouse": "greenhouse.io", "lever": "lever.co", "ashby": "ashbyhq.com",
+               "workday": "myworkdayjobs.com", "smartrecruiters": "smartrecruiters.com", "workable": "workable.com"}
+
+
+def guessing_paused(provider):
+    """Board-name guesses stop for a site the moment it asks to slow down, so its remaining
+    allowance goes to companies known to use it. (Before this, guesses for unknown companies used
+    up Workable's allowance and paused 205 companies in one run.)"""
+    site = GUESS_SITES.get(provider)
+    return bool(site) and (site in LIMITER.blocked or LIMITER.strikes[site] > 0)
 
 
 def display_name(entry):

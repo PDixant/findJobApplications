@@ -322,6 +322,18 @@ def create_app(token, dev=False):
         return cfg
 
     # ------------------------------------------------------------- reading
+    @app.get("/api/ping")
+    def ping():
+        return {"app": "jobwatcher", "folder": str(BASE)}
+
+    @app.post("/api/window/focus")
+    def focus():
+        """Another launch of the app asks this one to come to the front instead of opening twice."""
+        bring = getattr(app.state, "focus", None)
+        if bring:
+            threading.Thread(target=bring, daemon=True).start()
+        return {"focused": bool(bring)}
+
     @app.get("/api/meta")
     def meta():
         cfg, problem = files.config()

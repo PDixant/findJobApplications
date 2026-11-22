@@ -1,0 +1,40 @@
+# Lets Job Watcher be installed as a command. "Install Job Watcher" does this for you; by hand:
+#     pip install -e ".[app]"
+# then `jobwatcher` works from any folder (see README, section 15).
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jobwatcher"
+version = "0.4.0"
+description = "Finds fresh software jobs on company job boards, tracks them, and helps you reach the people hiring."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "requests>=2.28",
+  "openpyxl>=3.1",
+  "tomli>=2.0; python_version < '3.11'",
+]
+
+[project.optional-dependencies]
+# The desktop app
+app = ["fastapi>=0.110", "uvicorn>=0.29", "pywebview>=5.0", "tomlkit>=0.12", "keyring>=24"]
+# Stock metrics for company scores, and desktop pop-ups
+extras = ["yfinance", "plyer"]
+dev = ["pytest>=8", "pyflakes", "httpx", "fastapi>=0.110", "uvicorn>=0.29", "tomlkit>=0.12"]
+
+[project.scripts]
+jobwatcher = "jobwatcher.desktop:main"
+
+[project.gui-scripts]
+# The same, without a terminal window: what the Start menu and Desktop shortcuts open
+jobwatcher-app = "jobwatcher.desktop:main"
+
+[tool.setuptools]
+packages = ["jobwatcher"]
+py-modules = ["job_watcher", "outreach", "app"]
+
+[tool.setuptools.package-data]
+jobwatcher = ["ui_dist/*", "ui_dist/assets/*", "assets/*"]

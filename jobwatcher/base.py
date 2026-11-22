@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import sqlite3
 import sys
 import threading
@@ -42,9 +43,51 @@ except ImportError:  # pragma: no cover
     except ImportError:
         tomllib = None
 
-# The folder that holds config.toml, companies.csv and the data files. JOBWATCHER_HOME
-# overrides it (the desktop app keeps its data in the user's app-data folder).
-BASE = Path(os.environ.get("JOBWATCHER_HOME") or Path(__file__).resolve().parent.parent)
+# The folder that holds config.toml, companies.csv and the data files:
+#   JOBWATCHER_HOME if set; otherwise the source folder when running from it (as always);
+#   otherwise, for the installed app, the user's app-data folder, set up with the defaults.
+SOURCE_DIR = Path(__file__).resolve().parent.parent
+DEFAULT_FILES = ("config.toml", "companies.csv", "about_me.example.md", ".env.example")
+
+
+def user_data_dir():
+    if sys.platform == "win32":
+        return Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming") / "JobWatcher"
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "Job Watcher"
+    return Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share") / "jobwatcher"
+
+
+def find_home(env=None, source=SOURCE_DIR, frozen=None):
+    env = os.environ.get("JOBWATCHER_HOME") if env is None else env
+    frozen = getattr(sys, "frozen", False) if frozen is None else frozen
+    if env:
+        return Path(env)
+    if not frozen and (source / "job_watcher.py").exists():
+        return source
+    return user_data_dir()
+
+
+def defaults_dir():
+    """Where the starting config.toml and companies list come from in an installed copy."""
+    bundled = getattr(sys, "_MEIPASS", None)
+    return Path(bundled) / "defaults" if bundled else SOURCE_DIR
+
+
+def set_up_home(home):
+    """Create the data folder and copy in the default settings and company list if missing."""
+    home.mkdir(parents=True, exist_ok=True)
+    source = defaults_dir()
+    if source.resolve() == home.resolve():
+        return
+    for name in DEFAULT_FILES:
+        if not (home / name).exists() and (source / name).exists():
+            shutil.copy2(source / name, home / name)
+
+
+BASE = find_home()
+if BASE != SOURCE_DIR and not os.environ.get("JOBWATCHER_HOME"):
+    set_up_home(BASE)  # the installed app: first launch gets the defaults
 CONFIG_PATH = BASE / "config.toml"
 LEGACY_CONFIG_PATH = BASE / "config.json"
 ENV_PATH = BASE / ".env"

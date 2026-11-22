@@ -21,7 +21,9 @@ Filtering happens on your computer against the saved list, so changing your rule
 
 | Command | What it does |
 |---|---|
-| `python app.py` | Open the desktop app (section 14); `--browser` opens it in your web browser instead |
+| Double-click **Install Job Watcher** | One time: Start menu and Desktop shortcuts, and the `jobwatcher` command for any terminal (section 15) |
+| `jobwatcher` | Open the desktop app from any folder (`python app.py` from this folder does the same; `--browser` opens it in your web browser) |
+| `jobwatcher run [options]` | The same as `python job_watcher.py [options]`, from any folder |
 | `python job_watcher.py` | One full run: search for new companies if due, read every board and careers page, update the tracker |
 | `python job_watcher.py --loop` | Keep running, every `check_every_minutes` |
 | `python job_watcher.py --since-last-check` | Report only postings that appeared since your last check (`--hours 72` for a fixed window) |
@@ -46,6 +48,9 @@ Filtering happens on your computer against the saved list, so changing your rule
 |---|---|---|
 | `job_watcher.py` | The watcher's command line | Yes |
 | `app.py` | Opens the desktop app (section 14) | Yes |
+| `Install Job Watcher.bat`, `Uninstall Job Watcher.bat`, `install.sh`, `install/` | One-click setup and removal (section 15) | Yes |
+| `pyproject.toml`, `packaging/` | Makes `jobwatcher` a command, and builds the Windows installer (section 15) | Yes |
+| `.venv/` | The private Python environment the installer makes | No |
 | `ui/` | The app's interface source (React and TypeScript) | Yes |
 | `jobwatcher/ui_dist/` | The app's built interface, so you don't need Node to run the app | Yes |
 | `.app_window/` | The app window's saved filters, last visit and spreadsheets waiting to be imported | No |
@@ -337,11 +342,7 @@ pip install -r requirements-app.txt
 ```
 This adds FastAPI, Uvicorn, pywebview, tomlkit (saving settings with their notes) and keyring (saving keys in Windows Credential Manager). On Windows the window uses Microsoft Edge WebView2, which Windows 10 and 11 already have.
 
-**Open it:**
-```
-python app.py
-```
-`python app.py --browser` opens it in your web browser instead, if the window won't start. Keep the terminal open while you use it.
+**Open it:** from the Start menu or Desktop shortcut once you've run the installer (section 15), or type `jobwatcher` in any terminal, or `python app.py` in this folder. `--browser` opens it in your web browser instead, if the window won't start. Opening it again while it's open brings the open window to the front.
 
 **What's in it:**
 
@@ -364,3 +365,32 @@ python app.py
 The Outreach screen (preparing and editing recruiter emails in the app) comes next.
 
 **Private by design.** The window talks to a server on your own computer (127.0.0.1) that only answers requests carrying a code the window gets at launch, so other programs and websites can't use it. Nothing leaves your computer except the job-board reads a run already makes.
+
+## 15. Open it with one click, or with `jobwatcher` from anywhere
+
+**On your own computer (Windows):** double-click **Install Job Watcher** in this folder. It:
+1. finds Python 3.10 or newer, or installs Python 3.12 for you through Windows' package manager,
+2. makes a private Python environment (`.venv`) here, so nothing else on your computer changes,
+3. adds **Job Watcher** to the Start menu and the Desktop, with its icon,
+4. adds the `jobwatcher` command, so any new terminal, in any folder, can run it.
+
+It takes a few minutes the first time. Run it again whenever you update, to refresh the environment. **Uninstall Job Watcher** removes the shortcuts, the command and `.venv`; your settings, companies and tracker stay. On a Mac or Linux, run `sh install.sh` (it adds the app to Applications or the app menu, and `jobwatcher` to `~/.local/bin`).
+
+**The command:**
+
+| Command | What it does |
+|---|---|
+| `jobwatcher` | Open the app (or bring it forward if it's open) |
+| `jobwatcher --browser` | Open it in your web browser |
+| `jobwatcher run [options]` | A run, with the same options as `python job_watcher.py`, for example `jobwatcher run --refilter` |
+| `jobwatcher outreach [options]` | The same as `python outreach.py` |
+| `jobwatcher folder` | Show and open the folder with your settings and data |
+
+Your scheduled task can call `jobwatcher run` instead of `python job_watcher.py`; both use the same folder.
+
+**For people without Python or this folder:** `packaging/` builds a normal Windows installer, `JobWatcherSetup.exe`. It needs no Python: it installs for the current user (no admin prompt), adds Start menu and Desktop shortcuts and, if ticked, the `jobwatcher` command. An installed copy keeps its settings and data in `%APPDATA%\JobWatcher`, starting from this repository's `config.toml` and `companies.csv`; uninstalling keeps them. To publish one, copy `packaging/release.yml` to `.github/workflows/`, then push a version tag:
+```
+git tag v0.4.0
+git push origin v0.4.0
+```
+GitHub builds the installer on Windows and attaches it to a Release that anyone can download. The installed copy leaves out stock metrics (yfinance) to stay small; company scores use the other signals. It isn't code-signed yet, so Windows SmartScreen shows "Windows protected your PC" the first time: click **More info**, then **Run anyway**.
