@@ -364,3 +364,7 @@ GitHub builds the installer and attaches it to a Release. It isn't code-signed y
   The server only answers on 127.0.0.1, refuses other host names, and needs the per-launch token on every `/api` call. API docs are at `/api/docs` in dev mode.
 
 </details>
+
+## License
+
+MIT, see [LICENSE](LICENSE): free to use, change and share. Job Watcher reads public job boards for your own job search; use it politely (it already spaces out requests and follows robots.txt) and review every email before you send it.
