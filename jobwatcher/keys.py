@@ -15,7 +15,8 @@ KEYS = {
     "SERPER_API_KEY": "Serper (web search)",
     "BRAVE_API_KEY": "Brave Search",
     "SERPAPI_API_KEY": "SerpApi",
-    "HUNTER_API_KEY": "Hunter (recruiter emails)",
+    "HUNTER_API_KEY": "Hunter (finds recruiters)",
+    "ANTHROPIC_API_KEY": "Anthropic (writes email drafts)",
     "GMAIL_ADDRESS": "Gmail address",
     "GMAIL_APP_PASSWORD": "Gmail app password",
 }
@@ -156,6 +157,12 @@ def test_key(name, cfg=None):
             searches = (data.get("requests") or {}).get("searches") or {}
             return True, (f"Works. {searches.get('used', 0)} of {searches.get('available', '?')} searches used this "
                           f"month{', resets ' + data['reset_date'] if data.get('reset_date') else ''}.")
+        if name == "ANTHROPIC_API_KEY":
+            r = requests.get("https://api.anthropic.com/v1/models", timeout=15,
+                             headers={"x-api-key": value, "anthropic-version": "2023-06-01"})
+            if r.status_code != 200:
+                return False, f"Anthropic refused the key ({r.status_code})."
+            return True, "Works. The check is free."
         if name == "SERPAPI_API_KEY":
             r = requests.get("https://serpapi.com/account", params={"api_key": value}, timeout=15)
             if r.status_code != 200:

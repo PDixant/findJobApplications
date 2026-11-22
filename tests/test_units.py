@@ -286,3 +286,17 @@ def test_jobwatcher_folder_command(capsys, monkeypatch):
     monkeypatch.setattr(desktop, "open_folder", lambda path: None)
     desktop.main(["folder"])
     assert capsys.readouterr().out.strip() == str(jw.BASE)
+
+
+def test_schedule_runs_owed_after_sleep_but_not_stale_ones():
+    from jobwatcher.scheduler import due_slot, next_slot
+    tz = dt.datetime.now().astimezone().tzinfo
+    at = lambda h, m=0, day=21: dt.datetime(2026, 11, day, h, m, tzinfo=tz)  # noqa: E731
+    times = ["08:00", "12:00", "16:00", "20:00"]
+    assert due_slot(times, at(8, 5), at(12, 1)) == at(12)  # the 12:00 run is owed
+    assert due_slot(times, at(12, 2), at(12, 30)) is None  # already done
+    assert due_slot(times, at(8, 5), at(13, 40)) == at(12)  # asleep at noon: catch up once
+    assert due_slot(times, None, at(12, 1)) is None  # never before your first run
+    assert due_slot(times, at(20, 1, day=19), at(9, 0)) == at(8)  # away for days: one catch-up only
+    assert next_slot(times, at(12, 1)) == at(16)
+    assert next_slot(times, at(21, 0)) == at(8, day=22)

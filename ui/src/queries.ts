@@ -53,8 +53,8 @@ export function savePrefs(key: string, value: object) {
 /** Save a job's Status, Notes or Outreach. The screen updates at once; a refusal undoes it. */
 export function useEditJob() {
   const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ key, changes }: { key: string; changes: JobEdit }) =>
+  const mutation = useMutation({
+    mutationFn: ({ key, changes }: { key: string; changes: JobEdit; quiet?: boolean }) =>
       send<JobEdit>(`jobs?key=${encodeURIComponent(key)}`, "PATCH", changes),
     onMutate: async ({ key, changes }) => {
       await client.cancelQueries({ queryKey: ["jobs"] });
@@ -66,6 +66,16 @@ export function useEditJob() {
       if (ctx?.before) client.setQueryData(["jobs"], ctx.before);
       toast(e instanceof Error ? e.message : "The change was not saved.", "bad");
     },
+    onSuccess: (_data, { key, changes, quiet }, ctx) => {
+      // Status and Outreach save on one click, so offer a way back.
+      const old = ctx?.before?.find((j) => j.key === key);
+      if (quiet || !old || !("status" in changes || "outreach" in changes)) return;
+      const what = "status" in changes ? `Status set to ${changes.status}` : `Outreach set to ${changes.outreach || "none"}`;
+      const back: JobEdit = "status" in changes ? { status: old.status } : { outreach: old.outreach };
+      toast(`${what} for ${old.title}.`, "info", { label: "Undo", run: () => undo({ key, changes: back, quiet: true }) });
+    },
     onSettled: () => client.invalidateQueries({ queryKey: ["summary"] }),
   });
+  const undo = mutation.mutate;
+  return mutation;
 }

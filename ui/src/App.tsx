@@ -1,6 +1,8 @@
-import { useEffect, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { TOKEN } from "./api";
+import { useEffect, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, TOKEN, type UpdateInfo } from "./api";
+import { External } from "./components/bits";
+import { Welcome } from "./components/Welcome";
 import { RunControls } from "./components/RunControls";
 import { n } from "./format";
 import { connect, dismissToast, setRun, useLive } from "./live";
@@ -10,6 +12,8 @@ import { Companies } from "./screens/Companies";
 import { Dashboard } from "./screens/Dashboard";
 import { Jobs, Postings } from "./screens/Jobs";
 import { Settings } from "./screens/Settings";
+import { Activity } from "./screens/Activity";
+import { Outreach, useOutreach } from "./screens/Outreach";
 
 export function App() {
   const route = useRoute();
@@ -18,6 +22,13 @@ export function App() {
   const summary = useSummary();
   const companies = useCompanies();
   const meta = useMeta();
+  const outreach = useOutreach();
+  const setup = useQuery({ queryKey: ["setup"], queryFn: () => api<{ needed: boolean; companies: number }>("setup") });
+  const update = useQuery({ queryKey: ["update"], queryFn: () => api<UpdateInfo>("update"), staleTime: Infinity });
+  const [dismissed, setDismissed] = useState(() => {
+    try { return localStorage.getItem("jw.updateDismissed") ?? ""; } catch { return ""; }
+  });
+  const [welcomed, setWelcomed] = useState(false);
 
   useEffect(() => {
     if (TOKEN) connect();
@@ -55,9 +66,13 @@ export function App() {
   const nav: { screen: Screen; label: string; count?: number; also?: Screen }[] = [
     { screen: "dashboard", label: "Dashboard" },
     { screen: "jobs", label: "Jobs", count: summary.data?.jobs.open, also: "postings" },
+    { screen: "outreach", label: "Outreach",
+      count: outreach.data?.companies.filter((c) => ["to_write", "follow_up", "drafts"].includes(c.stage)).length || undefined },
     { screen: "companies", label: "Companies", count: companies.data?.length },
+    { screen: "activity", label: "Activity" },
     { screen: "settings", label: "Settings" },
   ];
+  const u = update.data;
 
   return (
     <div className="shell">
@@ -85,6 +100,17 @@ export function App() {
       </aside>
 
       <main className="content">
+        {u?.newer && u.latest !== dismissed && (
+          <p className="banner update">
+            Job Watcher {u.latest} is out (you have {u.current}).{" "}
+            {u.url && <External href={u.url}>{u.installed ? "Download the installer" : "See what's new"}</External>}
+            {!u.installed && " Then update your folder (git pull) and run Install Job Watcher again."}{" "}
+            <button className="text-button" onClick={() => {
+              setDismissed(u.latest ?? "");
+              try { localStorage.setItem("jw.updateDismissed", u.latest ?? ""); } catch { /* storage unavailable */ }
+            }}>Not now</button>
+          </p>
+        )}
         {meta.data?.settings_problem && (
           <p className="banner">
             config.toml has a problem: {meta.data.settings_problem}{" "}
@@ -96,12 +122,22 @@ export function App() {
         {route.screen === "postings" && <Postings />}
         {route.screen === "companies" && <Companies />}
         {route.screen === "settings" && <Settings />}
+        {route.screen === "outreach" && <Outreach />}
+        {route.screen === "activity" && <Activity />}
       </main>
+      {setup.data?.needed && !welcomed && (
+        <Welcome companies={setup.data.companies} onDone={() => setWelcomed(true)} />
+      )}
 
       <div className="toasts" aria-live="polite">
         {live.toasts.map((t) => (
           <div key={t.id} className={`toast tone-${t.tone}`}>
             <span>{t.text}</span>
+            {t.action && (
+              <button className="toast-action" onClick={() => { t.action!.run(); dismissToast(t.id); }}>
+                {t.action.label}
+              </button>
+            )}
             <button className="icon-button" onClick={() => dismissToast(t.id)} aria-label="Dismiss">
               <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
                 <path d="M3.5 3.5l9 9m0-9l-9 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />

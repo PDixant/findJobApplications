@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 
-export type Screen = "dashboard" | "jobs" | "postings" | "companies" | "settings";
-const SCREENS: Screen[] = ["dashboard", "jobs", "postings", "companies", "settings"];
+export type Screen = "dashboard" | "jobs" | "postings" | "outreach" | "companies" | "activity" | "settings";
+const SCREENS: Screen[] = ["dashboard", "jobs", "postings", "outreach", "companies", "activity", "settings"];
 
 export type Route = { screen: Screen; params: URLSearchParams };
 

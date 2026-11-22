@@ -237,7 +237,9 @@ def looks_like_company_site(link, company):
 
 def find_career_pages(cfg, state, rows, now):
     """For companies with no job board found and no careers_url, search '"Company" careers'
-    and record the careers page (or the job board it points to). Returns True if rows changed."""
+    and record the careers page (or the job board it points to). Companies whose careers page
+    has nothing readable (it loads jobs with JavaScript) get a search for their job board
+    instead. Returns True if rows changed."""
     provider, key = _search_key(cfg)
     if not key:
         return False
@@ -251,8 +253,10 @@ def find_career_pages(cfg, state, rows, now):
         unresolved = (board in ("auto", "") or r.get("status") == "not_found"
                       or state["companies"].get(r["company"], {}).get("result") == "NOT FOUND")
         last = parse_date(tried.get(r["company"]))
-        if (is_enabled(r) and unresolved and not r.get("careers_url") and board not in MANUAL_BOARDS
-                and r.get("region") != "From config file" and not (last and now - last < dt.timedelta(days=60))):
+        unreadable = state["companies"].get(r["company"], {}).get("result") == "NO JOBS READ"
+        if (is_enabled(r) and ((unresolved and not r.get("careers_url")) or unreadable)
+                and board not in MANUAL_BOARDS and r.get("region") != "From config file"
+                and not (last and now - last < dt.timedelta(days=60))):
             todo.append(r)
     todo = todo[:max(0, min(limit, left))]
     if not todo:
@@ -261,9 +265,16 @@ def find_career_pages(cfg, state, rows, now):
     log.info("Looking up careers pages for %d companies with no job board found...", len(todo))
     changed, queries = False, 0
     for r in todo:
+        board_only = bool(r.get("careers_url"))  # it has a careers page; look for its job board
+        hint = (r.get("ats") or "").strip().lower()
+        if board_only and hint in SEARCH_SITES:
+            query = f'site:{SEARCH_SITES[hint]} "{r["company"]}"'
+        elif board_only:
+            query = f'"{r["company"]}" jobs (greenhouse OR lever OR ashby OR workday OR smartrecruiters)'
+        else:
+            query = f'"{r["company"]}" careers jobs'
         try:
-            results = search_page(provider, key, f'"{r["company"]}" careers jobs', 1, "any",
-                                  cfg["search"].get("country", ""))
+            results = search_page(provider, key, query, 1, "any", cfg["search"].get("country", ""))
         except SearchError as exc:
             log.warning("Career page lookup stopped: %s.", exc)
             break
@@ -275,7 +286,7 @@ def find_career_pages(cfg, state, rows, now):
             if b:
                 hit = ("board", b, link)
                 break
-            if looks_like_company_site(link, r["company"]):
+            if not board_only and looks_like_company_site(link, r["company"]):
                 hit = ("site", None, link)
                 break
         if hit is None:

@@ -7,6 +7,7 @@ import { ago, n, when } from "../format";
 import { useCompanies, useJobs, useSummary } from "../queries";
 import { useLive } from "../live";
 import { AddCompanies, CompanyForm } from "./CompanyEditing";
+import { useRunActions } from "../components/RunControls";
 import { go, useRoute } from "../router";
 
 function ResultBadge({ result }: { result: string }) {
@@ -56,6 +57,8 @@ export function Companies() {
   const summary = useSummary();
   const live = useLive();
   const locked = live.run?.status === "running" || Boolean(summary.data?.busy_elsewhere);
+  const actions = useRunActions();
+  const missing = (companies.data ?? []).filter((c) => c.enabled && ["NOT FOUND", "NO JOBS READ"].includes(c.result)).length;
   const [selected, setSelected] = useState<string | null>(picked);
   useEffect(() => setSelected(picked), [picked]);
 
@@ -82,7 +85,15 @@ export function Companies() {
       <div className="screen-main">
         <header className="screen-head">
           <h1>Companies</h1>
-          {!adding && <button className="button primary" onClick={() => setAdding(true)}>Add companies</button>}
+          <div className="head-actions">
+            {!adding && <button className="button primary" onClick={() => setAdding(true)}>Add companies</button>}
+            <button className="button" disabled={locked} onClick={() => actions.start("career_pages")}
+              title="Searches the web for the careers page or job board of companies with no board found or nothing readable (one search each), then reads them.">
+              Find careers pages{missing ? ` (${n(missing)})` : ""}
+            </button>
+            <button className="button" disabled={locked} onClick={() => actions.start("scores")}
+              title="Updates stock metrics and the 0 to 100 company scores.">Refresh scores</button>
+          </div>
           <p className="lede">Every company is checked on every run. This is what happened to each one last time.</p>
         </header>
         {adding && <AddCompanies disabled={locked} onClose={() => setAdding(false)} />}
@@ -122,6 +133,7 @@ export function Companies() {
 }
 
 function CompanyDetails({ c, locked }: { c: Company; locked: boolean }) {
+  const { start } = useRunActions();
   const jobs = useJobs();
   const theirs = (jobs.data ?? []).filter((j) => j.company === c.company);
   const info = resultInfo(c.result);
@@ -162,6 +174,11 @@ function CompanyDetails({ c, locked }: { c: Company; locked: boolean }) {
         </ul>
       ) : (
         <p className="quiet">No matches from this company yet.</p>
+      )}
+      {c.enabled && !c.from_config && (
+        <p className="actions">
+          <button className="button" disabled={locked} onClick={() => start("check", c.company)}>Check this company now</button>
+        </p>
       )}
       <CompanyForm c={c} locked={locked} />
     </div>

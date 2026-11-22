@@ -50,10 +50,16 @@ FIELDS = {
         ("verify_emails", "bool", "Check each address with Hunter before using it"),
         ("monthly_hunter_credit_limit", "number", "Never use more Hunter credits than this in a month"),
         ("follow_up_after_days", "number", "Days to wait before a follow-up"),
+        ("model", "text", "The Claude model that writes drafts"),
+    ],
+    "schedule": [
+        ("enabled", "bool", "Run automatically while Job Watcher is open or in the tray"),
+        ("times", "list", "When to run each day, as 24-hour times such as 08:00 or 17:30"),
     ],
 }
 SECTION_TITLES = {"jobs": "Which jobs", "places": "Where", "search": "Finding new companies",
-                  "career_sites": "Careers websites", "tracker": "Runs and alerts", "outreach": "Recruiter emails"}
+                  "career_sites": "Careers websites", "tracker": "Runs and alerts", "outreach": "Recruiter emails",
+                  "schedule": "Automatic runs"}
 
 
 def _value(cfg, section, key):

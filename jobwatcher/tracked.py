@@ -16,7 +16,7 @@ from .base import *  # noqa: F401,F403
 from .config import *  # noqa: F401,F403
 from .tracker import read_excel_edits, apply_excel_edits
 
-USER_FIELDS = ("status", "notes", "outreach", "outreach_sent")
+USER_FIELDS = ("status", "notes", "outreach", "outreach_sent", "applied", "outreach_prepared", "outreach_followup")
 BACKUP_NAME = "job_watcher_state.before-database.json"
 
 
@@ -34,7 +34,15 @@ def connect(cfg):
         CREATE TABLE IF NOT EXISTS jobs (key TEXT PRIMARY KEY, data TEXT NOT NULL, edited TEXT);
         CREATE TABLE IF NOT EXISTS meta (name TEXT PRIMARY KEY, value TEXT);
         CREATE TABLE IF NOT EXISTS company_edits (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, company TEXT NOT NULL, fields TEXT NOT NULL, at TEXT);""")
+            id INTEGER PRIMARY KEY AUTOINCREMENT, company TEXT NOT NULL, fields TEXT NOT NULL, at TEXT);
+        CREATE TABLE IF NOT EXISTS runs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, started TEXT, finished TEXT, label TEXT, source TEXT,
+            status TEXT, summary TEXT);
+        CREATE TABLE IF NOT EXISTS drafts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, company TEXT NOT NULL, job_keys TEXT, to_email TEXT,
+            to_name TEXT, position TEXT, kind TEXT, subject TEXT, body TEXT, linkedin_note TEXT,
+            attach TEXT, follow_up INTEGER DEFAULT 0, status TEXT DEFAULT 'draft', created TEXT,
+            updated TEXT, sent TEXT);""")
     return db
 
 
@@ -165,6 +173,8 @@ def edit_job(cfg, key, changes):
             if "status" in changes:
                 if changes["status"] not in STATUSES:
                     raise ValueError(f"Status must be one of {', '.join(STATUSES)}")
+                if changes["status"] == "Applied" and not job.get("applied"):
+                    job["applied"] = now  # when you applied, for follow-ups and stats
                 job["status"] = changes["status"]
             if "notes" in changes:
                 job["notes"] = str(changes["notes"] or "")[:5000]
@@ -175,6 +185,56 @@ def edit_job(cfg, key, changes):
                 if value == "Sent" and job.get("outreach") != "Sent" and not job.get("outreach_sent"):
                     job["outreach_sent"] = now  # starts the follow-up clock
                 job["outreach"] = value
+            db.execute("UPDATE jobs SET data=?, edited=? WHERE key=?", (json.dumps(job, default=str), now, key))
+        return job
+    finally:
+        db.close()
+
+
+# ----------------------------------------------------------------- run history
+def start_run_record(cfg, label, source):
+    db = connect(cfg)
+    try:
+        with db:
+            cur = db.execute("INSERT INTO runs (started, label, source, status) VALUES (?, ?, ?, 'running')",
+                             (dt.datetime.now(dt.timezone.utc).isoformat(), label, source))
+            return cur.lastrowid
+    finally:
+        db.close()
+
+
+def finish_run_record(cfg, run_id, status, summary):
+    db = connect(cfg)
+    try:
+        with db:
+            db.execute("UPDATE runs SET finished=?, status=?, summary=? WHERE id=?",
+                       (dt.datetime.now(dt.timezone.utc).isoformat(), status, json.dumps(summary, default=str), run_id))
+            db.execute("DELETE FROM runs WHERE id <= (SELECT MAX(id) - 200 FROM runs)")  # keep the last 200
+    finally:
+        db.close()
+
+
+def run_history(cfg, limit=50):
+    db = connect(cfg)
+    try:
+        return [{**dict(r), "summary": json.loads(r["summary"] or "{}")}
+                for r in db.execute("SELECT * FROM runs ORDER BY id DESC LIMIT ?", (limit,))]
+    finally:
+        db.close()
+
+
+def update_job(cfg, key, fields):
+    """Set fields on one tracked job (used by the Outreach screen). Counts as an app edit, so a run
+    that is going keeps it."""
+    now = dt.datetime.now(dt.timezone.utc).isoformat()
+    db = connect(cfg)
+    try:
+        with db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT data FROM jobs WHERE key=?", (key,)).fetchone()
+            if not row:
+                raise KeyError(key)
+            job = {**json.loads(row["data"]), **fields}
             db.execute("UPDATE jobs SET data=?, edited=? WHERE key=?", (json.dumps(job, default=str), now, key))
         return job
     finally:

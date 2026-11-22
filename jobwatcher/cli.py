@@ -59,11 +59,7 @@ def main():
         if cfg is None:
             sys.exit(1)
         try:
-            with RunLock():
-                rows = load_company_rows(cfg)
-                refresh_metrics(cfg, rows, force=True)
-                rescore(rows)
-                save_company_rows(cfg, rows)
+            refresh_scores(cfg, source="command line")
         except Busy as exc:
             log.error("%s", exc)
             sys.exit(1)

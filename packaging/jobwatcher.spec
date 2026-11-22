@@ -22,6 +22,7 @@ datas += [(str(ROOT / name), "defaults") for name in ("config.toml", "companies.
 
 hidden = ["outreach", "job_watcher", "tomlkit"]
 hidden += collect_submodules("uvicorn") + collect_submodules("keyring.backends") + collect_submodules("jobwatcher")
+hidden += collect_submodules("pystray")
 
 a = Analysis(
     [str(ROOT / "packaging" / "launch.py")],

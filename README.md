@@ -102,6 +102,8 @@ Workday and SmartRecruiters lists do not include job descriptions, so for those 
 
 ## 3. Run it in the background
 
+**With the desktop app (easiest):** it runs on its own at the times under Settings, Automatic runs (08:00, 12:00, 16:00 and 20:00 to start), and closing the window keeps it running by the clock on Windows. Tick **Start when you sign in** and you never have to open it. If you set up a Windows scheduled task as described below, the app finds it under Settings, Running in the background, and turns it off for you so runs don't double up. The rest of this section is for running without the app.
+
 **Windows (Task Scheduler, recommended)**
 1. Open Task Scheduler, choose Create Task.
 2. General: name it "Job Watcher", tick "Run only when user is logged on".
@@ -284,6 +286,8 @@ API keys never go in `config.toml`. Enter them in the app's Settings screen, whi
 
 ## 11. Recruiter emails (`outreach.py`)
 
+**In the app (Outreach screen):** set Outreach to Email on a job, open Outreach, press **Find people** (one Hunter credit, kept for 60 days), check who to write to (a recruiter and an engineering lead are ticked for you; executives are flagged and left out), and press **Write drafts with Claude**. Claude writes each email from your `about_me.md`, your resume and the job description, under the rules below, using your own Anthropic API key (Settings, Keys and accounts; a batch costs a few cents). Edit a draft right there, then **Open in mail app** to get it as a ready-to-send draft in Outlook or your default mail app, resume attached, or **Gmail draft**. Press **I sent it** after sending: the follow-up clock starts, and after `follow_up_after_days` the company moves to **Follow-ups due**, where Claude writes a short follow-up as a reply. **They replied** closes it. Without an Anthropic key, the Outreach screen makes the packet for your Claude agent and loads its `emails.json` back in. The command-line steps below still work.
+
 Applying and then writing to a recruiter or the hiring team usually gets more attention than applying alone. `outreach.py` does the legwork: it finds the right people at each company, gathers everything needed to write to them, and hands it to your Claude agent, which writes the emails and creates them as **drafts** in your mailbox. Nothing is ever sent: you read, edit and send each draft yourself.
 
 **Set up (one time):**
@@ -350,9 +354,11 @@ This adds FastAPI, Uvicorn, pywebview, tomlkit (saving settings with their notes
 |---|---|
 | Dashboard | New matches since you last looked; a map with one square per company, coloured by what happened on the last run, that fills in live as each board is read; this month's search and Hunter credits; the activity log |
 | Jobs | Your matches with filters for region, level, status and outreach; click one to read its description. A second tab searches all saved postings (every posting from every board, matched or not) |
-| Companies | Every company's last result (read, paused by a rate limit, nothing readable, no board found), why, its board, open postings and score |
+| Outreach | Companies to write to, follow-ups due, drafts to send and replies (section 11) |
+| Companies | Every company's last result (read, paused by a rate limit, nothing readable, no board found), why, its board, open postings and score. **Check this company now**, **Find careers pages** (for companies with no board, or a careers page with nothing readable) and **Refresh scores** |
+| Activity | Every run, from the app, the schedule or a terminal: how long it took, boards read, pauses, new matches, and the log |
 
-**Run now** reads every company. **Re-filter saved postings** re-applies your settings with no requests, like `--refilter`. **Run and list since last check** is `--since-last-check`. **Cancel run** finishes the boards being read at that moment, saves everything, and leaves the rest for the next run.
+**Run now** reads every company. **Re-filter saved postings** re-applies your settings with no requests, like `--refilter`. **Search the web, then run** is `--search`. **Run and list since last check** is `--since-last-check`. **Cancel run** finishes the boards being read at that moment, saves everything, and leaves the rest for the next run.
 
 **One run at a time.** If your scheduled task or a terminal is running, the app says so and waits; the scheduled task likewise skips its turn while the app is running. Closing the window during a run asks first, then saves before the app exits.
 
@@ -362,7 +368,13 @@ This adds FastAPI, Uvicorn, pywebview, tomlkit (saving settings with their notes
 - **Settings:** every section of `config.toml` as forms: titles and keywords as lists, a region editor, search, careers sites, runs and outreach. A plain-English summary updates as you type, and saving keeps the file's notes. After saving, **Re-filter saved postings** applies new filters right away with no requests.
 - **Keys and accounts:** paste your Serper, Hunter and Gmail details, test them (the Hunter check uses no credits; the Serper check uses one search), or remove them. They're saved in Windows Credential Manager and taken out of `.env`; the scheduled task and the command line read them from there too.
 
-The Outreach screen (preparing and editing recruiter emails in the app) comes next.
+**Automatic runs and the tray.** The app runs on its own at the times under Settings, Automatic runs. A run missed while the computer slept happens once when the app is next running (if it was within 12 hours). On Windows, closing the window keeps Job Watcher running by the clock; right-click that icon to open it, run now, pause automatic runs or quit. **Start when you sign in** (Settings, Running in the background) opens it quietly at sign-in. That section also finds a Windows scheduled task that runs `job_watcher.py` and turns it off, since the app's schedule replaces it.
+
+**Undo.** Changing a Status or Outreach shows a confirmation with **Undo**. Marking a job Applied records the date.
+
+**Welcome steps.** A new setup (no runs yet) opens with a few steps: job titles, places, skills, optional keys and when to run, then the first run.
+
+**Updates.** The app checks GitHub for a newer release twice a day and shows a note with a link when there is one.
 
 **Private by design.** The window talks to a server on your own computer (127.0.0.1) that only answers requests carrying a code the window gets at launch, so other programs and websites can't use it. Nothing leaves your computer except the job-board reads a run already makes.
 

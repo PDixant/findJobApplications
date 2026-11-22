@@ -1,11 +1,13 @@
 """The desktop app's local server: its guard, what it reads, and runs started, watched and
 cancelled through it. Runs against a real server on localhost with fake job boards."""
 import csv
+import re
 import os
 import json
 import shutil
 import socket
 import threading
+from pathlib import Path
 import time
 
 import pytest
@@ -57,6 +59,8 @@ def client():
         w.writeheader()
         w.writerows(rows)
     patch = pytest.MonkeyPatch()
+    for provider in list(jw.FETCHERS):  # no real job sites from these tests
+        patch.setitem(jw.FETCHERS, provider, lambda slug, host=None, auto=False: None)
     patch.setitem(jw.FETCHERS, "greenhouse", fake_greenhouse)
     for key in ("SERPER_API_KEY", "BRAVE_API_KEY", "SERPAPI_API_KEY"):
         patch.delenv(key, raising=False)  # no web search from these tests
@@ -346,3 +350,133 @@ def test_second_launch_finds_the_open_app(client, monkeypatch):
     finally:
         marker.unlink(missing_ok=True)
         client.app.state.focus = None
+
+
+# ----------------------------------------------------------------- Phases 3 and 4
+def test_run_history_and_targeted_runs(client):
+    assert client.post("/api/runs", json={"mode": "check"}).status_code == 400  # which company?
+    assert client.post("/api/runs", json={"mode": "check", "company": "Maple Co"}).status_code == 202
+    run = wait_for_run(client)
+    assert run["status"] == "finished" and run["total"] == 1  # read just that company
+    history = client.get("/api/runs").json()
+    assert history[0]["label"] == "Checked Maple Co" and history[0]["source"] == "app"
+    assert history[0]["summary"]["boards_read"] == 1 and history[0]["summary"]["companies"] == ["Maple Co"]
+    assert any(h["status"] == "cancelled" for h in history)  # earlier runs are kept
+
+    client.post("/api/runs", json={"mode": "career_pages"})
+    run = wait_for_run(client)
+    assert run["status"] == "finished" and (run["total"] or 0) < 25  # only companies with no board
+    from jobwatcher import runner
+    real = runner.refresh_metrics
+    runner.refresh_metrics = lambda cfg, rows, force=False: True
+    try:
+        client.post("/api/runs", json={"mode": "scores"})
+        assert wait_for_run(client)["status"] == "finished"
+    finally:
+        runner.refresh_metrics = real
+    assert client.get("/api/runs").json()[0]["label"] == "Refreshed company scores"
+
+
+def test_applied_date_is_stamped(client):
+    key = client.get("/api/jobs").json()[0]["key"]
+    client.patch("/api/jobs", params={"key": key}, json={"status": "New"})
+    client.patch("/api/jobs", params={"key": key}, json={"status": "Applied"})
+    assert client.get("/api/jobs").json()[0]["applied"]
+
+
+def test_outreach_from_contacts_to_follow_up(client, monkeypatch):
+    import outreach
+    from jobwatcher import outreach_app
+    (HOME / "about_me.md").write_text("# About me\nName: Sam Lee\nSignature: Sam Lee\nBuilt React apps.\n")
+    monkeypatch.setenv("HUNTER_API_KEY", "h-key")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "a-key")
+    found = {"emails": [
+        {"value": "ceo@maple.example", "first_name": "Ada", "last_name": "Boss", "position": "Chief Executive Officer",
+         "type": "personal", "confidence": 99, "verification": {"status": "valid"}},
+        {"value": "rita@maple.example", "first_name": "Rita", "last_name": "Recruit", "position": "Technical Recruiter",
+         "type": "personal", "confidence": 90, "verification": {"status": "valid"}},
+        {"value": "eli@maple.example", "first_name": "Eli", "last_name": "Lead", "position": "Engineering Manager",
+         "type": "personal", "confidence": 80, "verification": {"status": "valid"}}], "domain": "maple.example"}
+    monkeypatch.setattr(outreach.Hunter, "domain_search", lambda self, **kw: (self._spend(1), found)[1])
+    prompts = []
+
+    def fake_claude(key, payload):
+        prompts.append(payload)
+        text = payload["messages"][0]["content"][-1]["text"]
+        people = re.findall(r"<([^>]+)>", text)
+        return [{"to": p, "subject": "Senior Frontend Developer (0) - Sam Lee", "body": f"Hi — about the role. {p}",
+                 "linkedin_note": "Hi!"} for p in people]
+    monkeypatch.setattr(outreach_app, "_call_claude", fake_claude)
+
+    key = client.get("/api/jobs").json()[0]["key"]
+    client.patch("/api/jobs", params={"key": key}, json={"outreach": "Email"})
+    item = next(c for c in client.get("/api/outreach").json()["companies"] if c["company"] == "Maple Co")
+    assert item["stage"] == "to_write" and item["contacts"] is None
+
+    assert client.post("/api/outreach/contacts", json={"company": "Maple Co"}).json() == {"ok": True}
+    item = next(c for c in client.get("/api/outreach").json()["companies"] if c["company"] == "Maple Co")
+    people = {p["email"]: p for p in item["contacts"]["people"]}
+    assert people["ceo@maple.example"]["executive"] and not people["rita@maple.example"]["executive"]
+    assert "ceo@maple.example" not in item["contacts"]["suggested"]  # executives are not picked for you
+
+    made = client.post("/api/outreach/write", json={"company": "Maple Co",
+                                                     "emails": ["rita@maple.example", "eli@maple.example"]}).json()
+    assert [d["to_email"] for d in made] == ["rita@maple.example", "eli@maple.example"]
+    assert "—" not in made[0]["body"]  # no em dashes
+    assert "## Rules for the emails" in prompts[0]["system"] and "Never invent" in prompts[0]["system"]
+    assert client.get("/api/jobs").json()[0]["outreach"] == "Prepared"
+
+    d = made[0]
+    edited = client.patch(f"/api/outreach/drafts/{d['id']}", json={"subject": "New subject"}).json()
+    assert edited["subject"] == "New subject"
+    monkeypatch.setattr(outreach_app.subprocess, "Popen", lambda *a, **k: None)
+    path = Path(client.post(f"/api/outreach/drafts/{d['id']}/open").json()["path"])
+    assert path.exists() and path.read_bytes().startswith(b"X-Unsent: 1")
+    client.delete(f"/api/outreach/drafts/{made[1]['id']}")
+
+    sent = client.post(f"/api/outreach/drafts/{d['id']}/sent").json()
+    assert sent["status"] == "sent" and client.get("/api/jobs").json()[0]["outreach"] == "Sent"
+    # Five days later a follow-up is due, written as a reply to the original.
+    from jobwatcher import tracked
+    tracked.update_job(jw.load_config(), key, {"outreach_sent": (FRESH - jw.dt.timedelta(days=6)).isoformat()})
+    item = next(c for c in client.get("/api/outreach").json()["companies"] if c["company"] == "Maple Co")
+    assert item["stage"] == "follow_up"
+    follow = client.post("/api/outreach/write", json={"company": "Maple Co", "emails": ["rita@maple.example"],
+                                                       "follow_up": True}).json()
+    assert follow[0]["subject"] == "Re: New subject" and follow[0]["follow_up"] == 1
+    assert "Original email" in prompts[-1]["messages"][0]["content"][-1]["text"]
+    client.post(f"/api/outreach/drafts/{follow[0]['id']}/sent")
+    assert client.get("/api/jobs").json()[0]["outreach"] == "Follow-up"
+    client.post("/api/outreach/replied", json={"company": "Maple Co"})
+    assert client.get("/api/jobs").json()[0]["outreach"] == "Replied"
+
+    monkeypatch.delenv("ANTHROPIC_API_KEY")
+    r = client.post("/api/outreach/write", json={"company": "Maple Co", "emails": ["eli@maple.example"]})
+    assert r.status_code == 400 and "Anthropic API key" in r.json()["detail"]
+
+
+def test_schedule_setup_and_updates(client, monkeypatch, tmp_path):
+    from jobwatcher import updates
+    s = client.get("/api/schedule").json()
+    assert s["enabled"] and s["times"] == ["08:00", "12:00", "16:00", "20:00"] and s["next"]
+    assert client.post("/api/schedule/pause", json={"paused": True}).json()["paused"] is True
+    assert client.app.state.scheduler.tick() is False  # paused
+    client.post("/api/schedule/pause", json={"paused": False})
+    assert client.get("/api/setup").json()["needed"] is False  # runs have happened
+    assert client.post("/api/setup/done").json() == {"needed": False}
+
+    class Reply:
+        status_code = 200
+
+        def json(self):
+            return {"tag_name": "v9.0.0", "html_url": "https://github.com/x/releases/v9.0.0"}
+    monkeypatch.setattr(updates.requests, "get", lambda *a, **k: Reply())
+    u = client.get("/api/update", params={"force": True}).json()
+    assert u["newer"] is True and u["latest"] == "v9.0.0" and u["current"] == jw.__version__
+
+    if jw.sys.platform.startswith("linux"):
+        monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+        assert client.post("/api/startup", json={"on": True}).json() == {"startup": True}
+        assert "--tray" in (tmp_path / "autostart" / "jobwatcher.desktop").read_text()
+        assert client.post("/api/startup", json={"on": False}).json() == {"startup": False}
+    assert client.get("/api/system/old-tasks").json()["tasks"] == []

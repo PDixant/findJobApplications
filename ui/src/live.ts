@@ -2,7 +2,7 @@
 import { useSyncExternalStore } from "react";
 import { api, eventsUrl, type Run } from "./api";
 
-type Toast = { id: number; text: string; tone: "good" | "bad" | "info" };
+type Toast = { id: number; text: string; tone: "good" | "bad" | "info"; action?: { label: string; run: () => void } };
 
 type LiveState = {
   connected: boolean;
@@ -32,9 +32,9 @@ export function useLive(): LiveState {
   );
 }
 
-export function toast(text: string, tone: Toast["tone"] = "info") {
+export function toast(text: string, tone: Toast["tone"] = "info", action?: Toast["action"]) {
   const id = ++toastId;
-  set({ toasts: [...state.toasts, { id, text, tone }] });
+  set({ toasts: [...state.toasts, { id, text, tone, action }] });
   window.setTimeout(() => set({ toasts: state.toasts.filter((t) => t.id !== id) }), 7000);
 }
 
@@ -83,6 +83,10 @@ function handle(m: Message) {
       break;
     case "run_started":
       set({ boards: {} });
+      break;
+    case "schedule_changed":
+    case "job_changed":
+      set({ version: state.version + 1 });
       break;
     case "phase":
       if (run) set({ run: { ...run, phase: String(m.name) } });

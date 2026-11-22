@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  api, send, type Changes, type KeysData, type KeyStatus, type RegionValue, type SettingField, type SettingsData,
+  api, send, type Changes, type KeysData, type KeyStatus, type RegionValue, type ScheduleStatus, type SettingField,
+  type SettingsData,
 } from "../api";
 import { useRunActions } from "../components/RunControls";
 import { ErrorNote } from "../components/bits";
@@ -18,6 +19,7 @@ const LABELS: Record<string, string> = {
   retry_board_search_hours: "Board guessing every (hours)", check_every_minutes: "Minutes between checks (--loop)",
   resume: "Resume file", about_me: "About-me file", contacts_per_company: "Contacts per company", departments: "Hunter departments",
   verify_emails: "Verify addresses", monthly_hunter_credit_limit: "Monthly Hunter limit", follow_up_after_days: "Follow up after (days)",
+  model: "Claude model", times: "Run at",
 };
 const SWATCHES = ["C6EFCE", "DDEBF7", "D9F2F2", "FCE4D6", "E4DFEC", "FFF2CC", "F8CBAD", "EDEDED"];
 
@@ -113,6 +115,7 @@ export function Settings() {
               ))}
             </section>
           ))}
+          <Background />
           <Keys />
         </div>
         <aside className="panel explain">
@@ -168,7 +171,7 @@ function Field({ field, value, changed, onChange }: {
 }
 
 /** A list of words: type and press Enter (or a comma) to add; click a word's x to remove it. */
-function Chips({ value, onChange, label }: { value: string[]; onChange: (v: string[]) => void; label: string }) {
+export function Chips({ value, onChange, label }: { value: string[]; onChange: (v: string[]) => void; label: string }) {
   const [text, setText] = useState("");
   function add(raw: string) {
     const words = raw.split(",").map((w) => w.trim()).filter((w) => w && !value.includes(w));
@@ -197,7 +200,7 @@ function Chips({ value, onChange, label }: { value: string[]; onChange: (v: stri
   );
 }
 
-function Regions({ value, onChange }: { value: RegionValue[]; onChange: (v: RegionValue[]) => void }) {
+export function Regions({ value, onChange }: { value: RegionValue[]; onChange: (v: RegionValue[]) => void }) {
   const update = (i: number, patch: Partial<RegionValue>) => onChange(value.map((r, j) => (j === i ? { ...r, ...patch } : r)));
   const move = (i: number, by: number) => {
     const next = [...value];
@@ -246,7 +249,7 @@ function Keys() {
   const keys = useQuery({ queryKey: ["keys"], queryFn: () => api<KeysData>("keys") });
   const data = keys.data;
   const searchKey = { serper: "SERPER_API_KEY", brave: "BRAVE_API_KEY", serpapi: "SERPAPI_API_KEY" }[data?.search_provider ?? "serper"];
-  const shown = data?.keys.filter((k) => !k.name.endsWith("_API_KEY") || k.name === "HUNTER_API_KEY" || k.name === searchKey || k.set);
+  const shown = data?.keys.filter((k) => !k.name.endsWith("_API_KEY") || ["HUNTER_API_KEY", "ANTHROPIC_API_KEY", searchKey].includes(k.name) || k.set);
   return (
     <section className="panel settings-section" aria-labelledby="sec-keys">
       <h2 id="sec-keys">Keys and accounts</h2>
@@ -262,7 +265,7 @@ function Keys() {
   );
 }
 
-function KeyRow({ k }: { k: KeyStatus }) {
+export function KeyRow({ k }: { k: KeyStatus }) {
   const client = useQueryClient();
   const [value, setValue] = useState("");
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
@@ -313,5 +316,66 @@ function KeyRow({ k }: { k: KeyStatus }) {
       </form>
       {result && <p className={result.ok ? "key-result ok" : "key-result bad"}>{result.message}</p>}
     </div>
+  );
+}
+
+// ------------------------------------------------------------------ running in the background
+
+function Background() {
+  const client = useQueryClient();
+  const schedule = useQuery({ queryKey: ["schedule"], queryFn: () => api<ScheduleStatus>("schedule") });
+  const tasks = useQuery({ queryKey: ["old-tasks"], queryFn: () => api<{ tasks: { name: string; path: string; state: string }[] }>("system/old-tasks") });
+  const s = schedule.data;
+  const live = tasks.data?.tasks.filter((t) => t.state !== "Disabled") ?? [];
+  async function act(fn: () => Promise<unknown>, done: string) {
+    try {
+      await fn();
+      toast(done, "good");
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "That did not work.", "bad");
+    }
+    client.invalidateQueries({ queryKey: ["schedule"] });
+    client.invalidateQueries({ queryKey: ["old-tasks"] });
+  }
+  if (!s) return null;
+  return (
+    <section className="panel settings-section" aria-labelledby="sec-background">
+      <h2 id="sec-background">Running in the background</h2>
+      <p className="hint">
+        {s.tray
+          ? "Closing the window keeps Job Watcher running by the clock, so automatic runs happen. Quit it from that icon."
+          : "Automatic runs happen while Job Watcher is open."}
+      </p>
+      {s.startup_supported && (
+        <div className="field">
+          <div className="field-label"><span>Start when you sign in</span>
+            <small>Opens quietly by the clock, so automatic runs happen without you opening it</small></div>
+          <div className="field-control">
+            <label className="switch"><input type="checkbox" checked={s.startup}
+              onChange={(e) => act(() => send("startup", "POST", { on: e.target.checked }), e.target.checked ? "Job Watcher starts when you sign in." : "Job Watcher no longer starts on its own.")} />
+              <span>{s.startup ? "Yes" : "No"}</span></label>
+          </div>
+        </div>
+      )}
+      <div className="field">
+        <div className="field-label"><span>Pause automatic runs</span><small>Until you turn this off again</small></div>
+        <div className="field-control">
+          <label className="switch"><input type="checkbox" checked={s.paused}
+            onChange={(e) => act(() => send("schedule/pause", "POST", { paused: e.target.checked }), e.target.checked ? "Automatic runs paused." : "Automatic runs back on.")} />
+            <span>{s.paused ? "Paused" : "No"}</span></label>
+        </div>
+      </div>
+      {live.length > 0 && (
+        <div className="old-tasks">
+          <p><strong>Your old Windows scheduled task still runs Job Watcher.</strong> Now that the app runs on its own schedule, turn it off so runs don't double up. You can turn it back on in Task Scheduler.</p>
+          {live.map((t) => (
+            <div key={t.path + t.name} className="old-task">
+              <span>{t.name} <span className="quiet">({t.state})</span></span>
+              <button className="button" onClick={() => act(() => send("system/old-tasks/disable", "POST", { name: t.name, path: t.path }), `Turned off ${t.name}.`)}>Turn it off</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

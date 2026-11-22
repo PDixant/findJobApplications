@@ -62,8 +62,10 @@ DEFAULTS = {
         "resume": "resume.pdf", "tailored_resumes_folder": "", "about_me": "about_me.md",
         "contacts_per_company": 2, "departments": ["hr", "it", "management", "executive"],
         "verify_emails": True, "monthly_hunter_credit_limit": 50, "follow_up_after_days": 5,
-        "imap_server": "imap.gmail.com", "drafts_folder": "[Gmail]/Drafts",
+        "imap_server": "imap.gmail.com", "drafts_folder": "[Gmail]/Drafts", "model": "claude-sonnet-5-5",
     },
+    # 8. Automatic runs while the desktop app is open (or in the tray)
+    "schedule": {"enabled": True, "times": ["08:00", "12:00", "16:00", "20:00"]},
     # 6. Advanced
     "postings_db": "postings.db",
     "all_postings_csv": "all_postings.csv",
@@ -100,6 +102,7 @@ CONFIG_LAYOUT = {
                 "check_all_companies_every_run": "check_all_every_run",
                 "retry_board_search_hours": "retry_board_search_hours"},
     "outreach": {k: ("outreach", k) for k in DEFAULTS["outreach"]},
+    "schedule": {k: ("schedule", k) for k in DEFAULTS["schedule"]},
     "advanced": {"parallel_requests": "parallel_requests",
                  "recheck_not_found_days": "recheck_not_found_days",
                  "max_detections_per_run": "max_detections_per_run",
@@ -256,6 +259,10 @@ def _checked(cfg):
         raise ConfigError(f"look_back in [search] should be day, week or month, not {s['look_back']!r}")
     if s["new_companies"] not in ("watch", "review"):
         raise ConfigError("new_companies in [search] should be \"watch\" or \"review\"")
+    bad_times = [t for t in cfg["schedule"]["times"] if not re.fullmatch(r"([01]?\d|2[0-3]):[0-5]\d", str(t).strip())]
+    if bad_times:
+        raise ConfigError(f"times in [schedule] should look like 08:00 or 17:30, not {', '.join(map(str, bad_times))}")
+    cfg["schedule"]["times"] = sorted({f"{int(t.split(':')[0]):02d}:{t.split(':')[1]}" for t in cfg["schedule"]["times"]})
     bad_sites = [x for x in s["sites"] if x.lower() not in SEARCH_SITES]
     if bad_sites:
         raise ConfigError(f"sites in [search] can only use {', '.join(SEARCH_SITES)}; "

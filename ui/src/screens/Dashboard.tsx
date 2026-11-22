@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { api, type Job, type Meta } from "../api";
+import { api, type Job, type Meta, type ScheduleStatus } from "../api";
 import { BoardMap } from "../components/BoardMap";
 import { Chip, ErrorNote, External, Meter } from "../components/bits";
 import { phaseText } from "../components/RunControls";
 import { ago, minutes, n, plural, when } from "../format";
-import { replaceLog, seedLog, useLive } from "../live";
+import { useLive } from "../live";
 import { PREVIOUS_VISIT, useCompanies, useJobs, useMeta, useSummary } from "../queries";
 import { go } from "../router";
 
@@ -19,17 +19,6 @@ export function Dashboard() {
   const running = run?.status === "running";
   const busyElsewhere = Boolean(summary.data?.busy_elsewhere);
 
-  const logQuery = useQuery({
-    queryKey: ["log"],
-    queryFn: () => api<{ lines: string[] }>("log?lines=300"),
-    refetchInterval: busyElsewhere ? 10_000 : false,
-  });
-  useEffect(() => {
-    if (!logQuery.data) return;
-    if (busyElsewhere) replaceLog(logQuery.data.lines);
-    else seedLog(logQuery.data.lines);
-  }, [logQuery.data, busyElsewhere]);
-
   const since = PREVIOUS_VISIT ?? new Date(Date.now() - 24 * 3600 * 1000).toISOString();
   const { fresh, latest } = useMemo(() => {
     const open = (jobs.data ?? []).filter((j) => j.open);
@@ -37,9 +26,13 @@ export function Dashboard() {
     return { fresh: byFound.filter((j) => (j.found ?? "") > since), latest: byFound.slice(0, 8) };
   }, [jobs.data, since]);
 
+  const schedule = useQuery({ queryKey: ["schedule", live.version], queryFn: () => api<ScheduleStatus>("schedule") });
   const s = summary.data;
+  const sch = schedule.data;
+  const nextLine = sch?.enabled && !sch.paused && sch.next ? ` Next automatic run ${when(sch.next)}.`
+    : sch?.paused ? " Automatic runs are paused." : "";
   const lastRunLine = s?.last_run
-    ? `Last run started ${when(s.last_run)}. ${plural(s.jobs.open, "open match", "open matches")} in your tracker.`
+    ? `Last run started ${when(s.last_run)}. ${plural(s.jobs.open, "open match", "open matches")} in your tracker.${nextLine}`
     : "No runs yet. Press Run now to read every company's job board.";
 
   let headline: string;
@@ -116,7 +109,7 @@ export function Dashboard() {
                 </div>
                 {s.schedule.runs_per_day ? (
                   <div>
-                    <dt>Scheduled runs</dt>
+                    <dt>Web searches for new companies</dt>
                     <dd>{s.schedule.runs_per_day === 1 ? "Once a day" : `${s.schedule.runs_per_day} a day`}</dd>
                   </div>
                 ) : null}
@@ -126,7 +119,6 @@ export function Dashboard() {
         </section>
       </div>
 
-      <LogPanel lines={live.log} />
     </div>
   );
 }
@@ -192,21 +184,5 @@ function MatchList({ jobs, meta }: { jobs: Job[]; meta?: Meta }) {
         </li>
       ))}
     </ul>
-  );
-}
-
-function LogPanel({ lines }: { lines: string[] }) {
-  const box = useRef<HTMLPreElement>(null);
-  useEffect(() => {
-    const el = box.current;
-    if (el && el.scrollHeight - el.scrollTop - el.clientHeight < 80) el.scrollTop = el.scrollHeight;
-  }, [lines]);
-  return (
-    <details className="log-panel">
-      <summary>Activity log</summary>
-      <pre ref={box} className="log-lines" tabIndex={0}>
-        {lines.length ? lines.join("\n") : "Nothing logged yet."}
-      </pre>
-    </details>
   );
 }

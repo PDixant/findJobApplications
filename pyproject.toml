@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jobwatcher"
-version = "0.4.0"
+version = "0.5.0"
 description = "Finds fresh software jobs on company job boards, tracks them, and helps you reach the people hiring."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -20,7 +20,7 @@ dependencies = [
 
 [project.optional-dependencies]
 # The desktop app
-app = ["fastapi>=0.110", "uvicorn>=0.29", "pywebview>=5.0", "tomlkit>=0.12", "keyring>=24"]
+app = ["fastapi>=0.110", "uvicorn>=0.29", "pywebview>=5.0", "tomlkit>=0.12", "keyring>=24", "pystray>=0.19", "Pillow>=10"]
 # Stock metrics for company scores, and desktop pop-ups
 extras = ["yfinance", "plyer"]
 dev = ["pytest>=8", "pyflakes", "httpx", "fastapi>=0.110", "uvicorn>=0.29", "tomlkit>=0.12"]

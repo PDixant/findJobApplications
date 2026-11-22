@@ -73,7 +73,7 @@ export type Meta = {
   settings_problem: string | null;
 };
 
-export type RunMode = "full" | "refilter" | "since";
+export type RunMode = "full" | "refilter" | "since" | "search" | "career_pages" | "check" | "scores";
 
 export type Run = {
   id: string;
@@ -130,6 +130,7 @@ export type Job = {
   outreach: string;
   score: string;
   tier: string;
+  applied: string | null;
 };
 
 export type Company = {
@@ -236,3 +237,55 @@ export const send = <T,>(path: string, method: string, body?: unknown) =>
 export async function upload<T>(path: string, file: File): Promise<T> {
   return api<T>(path, { method: "POST", body: file, headers: { "Content-Type": "application/octet-stream" } });
 }
+
+// ------------------------------------------------------------------ Phases 3 and 4
+
+export type Person = {
+  name: string; position: string; email: string; kind: string; executive: boolean;
+  confidence: number; verification: string; linkedin: string;
+};
+
+export type Draft = {
+  id: number; company: string; job_keys: string[]; to_email: string; to_name: string; position: string; kind: string;
+  subject: string; body: string; linkedin_note: string; attach: string; follow_up: number;
+  status: "draft" | "opened" | "sent" | "replied"; created: string; updated: string; sent: string | null;
+};
+
+export type OutreachCompany = {
+  company: string;
+  stage: "follow_up" | "to_write" | "drafts" | "sent" | "replied";
+  domain: string | null;
+  contacts: { people: Person[]; suggested: string[]; domain: string | null; pattern: string | null;
+              fetched: string; error: string | null } | null;
+  linkedin: string[];
+  jobs: { key: string; title: string; url: string; status: string; outreach: string; posted: string | null;
+          region: string; outreach_sent: string | null; applied: string | null }[];
+  drafts: Draft[];
+  follow_up_due: string[];
+};
+
+export type OutreachData = {
+  companies: OutreachCompany[];
+  hunter: { used: number; limit: number; key_set: boolean };
+  writer: { key_set: boolean; model: string };
+  gmail: boolean;
+  follow_up_after_days: number;
+  packets: { folder: string; has_emails: boolean; name: string }[];
+};
+
+export type RunRecord = {
+  id: number; started: string; finished: string | null; label: string; source: string;
+  status: "running" | "finished" | "cancelled" | "failed";
+  summary: {
+    minutes?: number; boards_read?: number; boards_paused?: number; requests?: number;
+    by_site?: Record<string, number>; new_postings?: number; new_matches?: string[]; open_matches?: number;
+    offline?: boolean; companies?: string[] | null; error?: string;
+  };
+};
+
+export type ScheduleStatus = {
+  enabled: boolean; times: string[]; paused: boolean; next: string | null; running_in_app: boolean;
+  startup_supported: boolean; startup: boolean; tray: boolean;
+};
+
+export type UpdateInfo = { current: string; latest: string | null; url: string | null; newer: boolean; installed: boolean };

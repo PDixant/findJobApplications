@@ -26,7 +26,10 @@ from .companies import *  # noqa: F401,F403
 from .tracker import *  # noqa: F401,F403
 from .tracked import *  # noqa: F401,F403
 from .discovery import add_company, import_companies
-from .runner import run_once
+from .runner import run_once, refresh_scores
+from .scheduler import Scheduler
+from . import outreach_app, system, updates
+from . import __version__
 from . import keys as keystore
 from . import settings as settings_module
 
@@ -36,6 +39,10 @@ RUN_MODES = {
     "full": "Check every company",
     "refilter": "Re-filter saved postings",
     "since": "Since your last check",
+    "search": "Search the web, then check every company",
+    "career_pages": "Find careers pages for companies with no board",
+    "check": "Check one company",
+    "scores": "Refresh company scores",
 }
 
 
@@ -183,7 +190,7 @@ class Runs:
         self.lock = threading.Lock()
         self.thread = None
         self.current = None
-        self.history = []  # runs started from this window since it opened
+        self.notify = None  # set by the desktop app when it has a tray icon
         on_event(self._on_event)
 
     def active(self):
@@ -198,9 +205,11 @@ class Runs:
                     "requests", {})
         return run
 
-    def start(self, mode, search=None):
+    def start(self, mode, search=None, company=None, source="app"):
         if mode not in RUN_MODES:
             raise HTTPException(400, f"Unknown run mode {mode!r}. Use one of: {', '.join(RUN_MODES)}.")
+        if mode == "check" and not company:
+            raise HTTPException(400, "Say which company to check.")
         with self.lock:
             if self.active():
                 raise HTTPException(409, "A run is already going in this window.")
@@ -208,12 +217,14 @@ class Runs:
                 raise HTTPException(409, "A run is going in a terminal or the scheduled task. "
                                          "Try again when it finishes.")
             self.current = {
-                "id": uuid.uuid4().hex[:8], "mode": mode, "label": RUN_MODES[mode], "status": "running",
+                "id": uuid.uuid4().hex[:8], "mode": mode, "source": source,
+                "label": f"Check {company}" if mode == "check" else RUN_MODES[mode], "status": "running",
                 "phase": "starting", "started": dt.datetime.now(dt.timezone.utc).isoformat(), "finished": None,
                 "done": 0, "total": None, "last_company": "", "failed_boards": 0, "new": [],
                 "rate_limited": [], "error": "", "cancelled": False}
             # Not a daemon: closing the window waits for a run to save before the app exits.
-            self.thread = threading.Thread(target=self._work, args=(mode, search), name="jobwatcher-run")
+            self.thread = threading.Thread(target=self._work, args=(mode, search, company, source),
+                                           name="jobwatcher-run")
             self.thread.start()
             return dict(self.current)
 
@@ -231,16 +242,30 @@ class Runs:
         if self.thread:
             self.thread.join(timeout)
 
-    def _work(self, mode, search):
+    def _work(self, mode, search, company, source):
         try:
             cfg = load_config()
         except ConfigError as exc:
             emit("run_failed", error=f"Settings problem: {exc}")
             return
         SETTINGS["career_sites"] = bool(cfg["career_sites"]["enabled"])
+        if self.notify:
+            cfg["desktop_notifications"] = False  # the tray says it instead
         try:
-            run_once(cfg, offline=(mode == "refilter"), since_check=(mode == "since"),
-                     search=False if mode == "refilter" else search)
+            if mode == "scores":
+                refresh_scores(cfg, source=source)
+                return
+            found = run_once(
+                cfg, offline=(mode == "refilter"), since_check=(mode == "since"),
+                search=True if mode == "search" else False if mode in ("refilter", "check", "career_pages") else search,
+                find_pages=(mode == "career_pages"), verify=(mode == "check"),
+                only=[company] if mode == "check" else "missing" if mode == "career_pages" else None,
+                label=f"Checked {company}" if mode == "check" else None, source=source)
+            if found and self.notify:
+                self.notify(f"{len(found)} new {'match' if len(found) == 1 else 'matches'}",
+                            "\n".join(f"{m['company']}: {m['title']}" if isinstance(m, dict) else str(m) for m in found[:4]))
+        except Busy:
+            pass
         except Exception:
             log.exception("Run failed")
 
@@ -269,13 +294,11 @@ class Runs:
                                    "Another run was going, so this one did not start."
                                    if kind == "run_skipped" else ""),
                                requests=dict(LIMITER.counts.most_common(6)))
-                    self.history.insert(0, {k: v for k, v in run.items() if k != "new"} | {"new": len(run["new"])})
-                    del self.history[20:]
         self.hub.publish(kind, data)
 
 
 # ----------------------------------------------------------------- the app
-def create_app(token, dev=False):
+def create_app(token, dev=False, schedule=False):
     hub, files, companies_file = EventHub(), Files(), CompaniesFile()
     runs = Runs(hub)
     imports = {}  # spreadsheet previews waiting for confirmation
@@ -300,6 +323,10 @@ def create_app(token, dev=False):
     app = FastAPI(title="Job Watcher", docs_url="/api/docs" if dev else None, redoc_url=None,
                   openapi_url="/api/openapi.json" if dev else None, lifespan=lifespan)
     app.state.runs, app.state.hub, app.state.files, app.state.detach = runs, hub, files, detach
+    scheduler = Scheduler(runs, lambda: not runs.active() and not lock_held_elsewhere())
+    app.state.scheduler = scheduler
+    if schedule:
+        scheduler.start()
 
     @app.middleware("http")
     async def guard(request: Request, call_next):
@@ -324,7 +351,7 @@ def create_app(token, dev=False):
     # ------------------------------------------------------------- reading
     @app.get("/api/ping")
     def ping():
-        return {"app": "jobwatcher", "folder": str(BASE)}
+        return {"app": "jobwatcher", "folder": str(BASE), "version": __version__}
 
     @app.post("/api/window/focus")
     def focus():
@@ -400,7 +427,7 @@ def create_app(token, dev=False):
                 "level": j.get("level", ""), "stack": j.get("stack") or [], "provider": j.get("provider", ""),
                 "found": j.get("found"), "posted": j.get("posted"), "open": bool(j.get("open")),
                 "closed": j.get("closed"), "status": j.get("status") or "New", "notes": j.get("notes") or "",
-                "outreach": j.get("outreach") or "", "score": score, "tier": tier})
+                "outreach": j.get("outreach") or "", "score": score, "tier": tier, "applied": j.get("applied")})
         out.sort(key=lambda j: (j["open"], j["found"] or "", j["posted"] or ""), reverse=True)
         return out
 
@@ -654,15 +681,15 @@ def create_app(token, dev=False):
     # ------------------------------------------------------------- runs
     @app.post("/api/runs", status_code=202)
     def start_run(body: dict = Body(default={})):
-        return runs.start(body.get("mode", "full"), body.get("search"))
+        return runs.start(body.get("mode", "full"), body.get("search"), body.get("company"))
 
     @app.get("/api/runs/current")
     def current_run():
         return runs.snapshot()
 
     @app.get("/api/runs")
-    def run_history():
-        return runs.history
+    def past_runs(limit: int = 50):
+        return run_history(config_or_fail(), max(1, min(limit, 200)))
 
     @app.delete("/api/runs/current")
     def cancel_run():
@@ -688,6 +715,151 @@ def create_app(token, dev=False):
                 hub.remove(loop, queue)
         return StreamingResponse(stream(), media_type="text/event-stream",
                                  headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+    # ------------------------------------------------------------- outreach
+    def problem(fn, *args):
+        try:
+            return fn(*args)
+        except outreach_app.OutreachProblem as exc:
+            raise HTTPException(400, str(exc)) from None
+        except KeyError:
+            raise HTTPException(404, "That draft no longer exists.") from None
+
+    @app.get("/api/outreach")
+    def outreach_overview():
+        cfg = config_or_fail()
+        month = dt.datetime.now().strftime("%Y-%m")
+        used = files.state().get("hunter", {}).get("credits_by_month", {}).get(month, 0)
+        return {"companies": problem(outreach_app.overview, cfg),
+                "hunter": {"used": used, "limit": cfg["outreach"]["monthly_hunter_credit_limit"],
+                           "key_set": bool(os.environ.get("HUNTER_API_KEY"))},
+                "writer": {"key_set": bool(os.environ.get("ANTHROPIC_API_KEY")), "model": cfg["outreach"]["model"]},
+                "gmail": bool(os.environ.get("GMAIL_ADDRESS") and os.environ.get("GMAIL_APP_PASSWORD")),
+                "follow_up_after_days": cfg["outreach"]["follow_up_after_days"],
+                "packets": outreach_app.packets(cfg)}
+
+    @app.post("/api/outreach/contacts")
+    def outreach_contacts(body: dict = Body(...)):
+        problem(outreach_app.find_contacts, config_or_fail(), str(body.get("company") or ""))
+        files.forget("state")
+        return {"ok": True}
+
+    @app.post("/api/outreach/write")
+    def outreach_write(body: dict = Body(...)):
+        cfg = config_or_fail()
+        return problem(outreach_app.write_drafts, cfg, str(body.get("company") or ""),
+                       [str(e) for e in body.get("emails") or []], bool(body.get("follow_up")))
+
+    @app.patch("/api/outreach/drafts/{draft_id}")
+    def outreach_edit(draft_id: int, body: dict = Body(...)):
+        return problem(outreach_app.edit_draft, config_or_fail(), draft_id, body)
+
+    @app.delete("/api/outreach/drafts/{draft_id}")
+    def outreach_delete(draft_id: int):
+        problem(outreach_app.delete_draft, config_or_fail(), draft_id)
+        return {"deleted": draft_id}
+
+    @app.post("/api/outreach/drafts/{draft_id}/open")
+    def outreach_open(draft_id: int):
+        path = problem(outreach_app.open_in_mail_app, config_or_fail(), draft_id)
+        return {"path": str(path)}
+
+    @app.post("/api/outreach/drafts/{draft_id}/gmail")
+    def outreach_gmail(draft_id: int):
+        return {"mailbox": problem(outreach_app.gmail_draft, config_or_fail(), draft_id)}
+
+    @app.post("/api/outreach/drafts/{draft_id}/sent")
+    def outreach_sent(draft_id: int):
+        return problem(outreach_app.mark_sent, config_or_fail(), draft_id)
+
+    @app.post("/api/outreach/replied")
+    def outreach_replied(body: dict = Body(...)):
+        problem(outreach_app.mark_replied, config_or_fail(), str(body.get("company") or ""))
+        return {"ok": True}
+
+    @app.post("/api/outreach/packet")
+    def outreach_packet():
+        """Without an Anthropic key: the packet for your Claude agent, like `python outreach.py`."""
+        import outreach
+        cfg = config_or_fail()
+        held = RunLock()
+        if not held.acquire():
+            raise HTTPException(409, "A run is going. Make the packet when it finishes.")
+        try:
+            folder = outreach.prepare(cfg)
+        except outreach.OutreachError as exc:
+            raise HTTPException(400, str(exc)) from None
+        finally:
+            held.release()
+        if not folder:
+            raise HTTPException(400, "Nothing to prepare: set Outreach to Email on the jobs you want first.")
+        return {"folder": Path(folder).relative_to(BASE).as_posix()}
+
+    @app.post("/api/outreach/import")
+    def outreach_import(body: dict = Body(...)):
+        return {"imported": problem(outreach_app.import_packet, config_or_fail(), str(body.get("folder") or ""))}
+
+    # ------------------------------------------------------------- schedule, startup, setup, updates
+    @app.get("/api/schedule")
+    def schedule_status():
+        cfg = config_or_fail()
+        return {**scheduler.status(cfg), "startup_supported": system.startup_supported(),
+                "startup": system.startup_enabled(), "tray": bool(getattr(app.state, "tray", False))}
+
+    @app.post("/api/schedule/pause")
+    def schedule_pause(body: dict = Body(...)):
+        cfg = config_or_fail()
+        scheduler.set_paused(cfg, bool(body.get("paused")))
+        hub.publish("schedule_changed", {})
+        return scheduler.status(cfg)
+
+    @app.post("/api/startup")
+    def startup(body: dict = Body(...)):
+        try:
+            return {"startup": system.set_startup(bool(body.get("on")))}
+        except (RuntimeError, OSError) as exc:
+            raise HTTPException(400, str(exc)) from None
+
+    @app.get("/api/system/old-tasks")
+    def old_tasks():
+        try:
+            return {"tasks": system.old_tasks()}
+        except Exception as exc:  # PowerShell missing or blocked
+            return {"tasks": [], "error": str(exc)}
+
+    @app.post("/api/system/old-tasks/disable")
+    def disable_old_task(body: dict = Body(...)):
+        try:
+            system.disable_task(str(body.get("name") or ""), str(body.get("path") or "\\"))
+        except (RuntimeError, OSError) as exc:
+            raise HTTPException(400, f"Could not turn it off: {exc}") from None
+        return {"tasks": system.old_tasks()}
+
+    @app.get("/api/setup")
+    def setup_status():
+        cfg = config_or_fail()
+        db = connect(cfg)
+        try:
+            done = get_meta(db, "setup_done")
+        finally:
+            db.close()
+        never_run = not files.state().get("last_run")
+        return {"needed": not done and never_run, "companies": len(files.company_rows(cfg))}
+
+    @app.post("/api/setup/done")
+    def setup_done():
+        cfg = config_or_fail()
+        db = connect(cfg)
+        try:
+            with db:
+                set_meta(db, "setup_done", dt.datetime.now(dt.timezone.utc).isoformat())
+        finally:
+            db.close()
+        return {"needed": False}
+
+    @app.get("/api/update")
+    def update(force: bool = False):
+        return updates.check(__version__, force=force)
 
     @app.api_route("/api/{rest:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
     def unknown(rest: str):

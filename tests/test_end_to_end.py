@@ -222,7 +222,8 @@ def test_cancel_leaves_boards_for_next_run():
 
 def test_refresh_metrics_only(monkeypatch):
     called = []
-    monkeypatch.setattr(cli, "refresh_metrics", lambda cfg, rows, force=False: called.append(force) or True)
+    from jobwatcher import runner
+    monkeypatch.setattr(runner, "refresh_metrics", lambda cfg, rows, force=False: called.append(force) or True)
     monkeypatch.setattr(cli, "run_once", lambda *a, **k: pytest.fail("--refresh-metrics must not start a run"))
     monkeypatch.setattr(sys, "argv", ["job_watcher.py", "--refresh-metrics"])
     cli.main()

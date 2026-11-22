@@ -242,10 +242,17 @@ def fetch_all(cfg, state, store, rows, rules, now, max_age, window_start, verify
     return csv_dirty, stats
 
 
+RUN_LABELS = {"full": "Checked every company", "refilter": "Re-filtered saved postings",
+              "since": "Checked every company, listed since last check", "search": "Searched the web, checked every company",
+              "career_pages": "Looked up careers pages", "check": "Checked one company", "scores": "Refreshed company scores"}
+
+
 def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, offline=False,
-             search=None, look_back=None, find_pages=False):
+             search=None, look_back=None, find_pages=False, only=None, label=None, source="command line"):
     """search: True runs the web search now, False skips it, None runs it when it is due.
-    Only one run happens at a time across the app, terminals and the scheduled task."""
+    only: read just these companies (names), or "missing" for the ones with no board or nothing
+    readable. Only one run happens at a time across the app, terminals and the scheduled task.
+    Every run is recorded for the app's Activity screen."""
     lock = RunLock()
     if not lock.acquire():
         log.warning("Another Job Watcher run is in progress (the app, a terminal or the scheduled "
@@ -253,12 +260,58 @@ def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, of
         emit("run_skipped", reason="busy")
         return []
     CANCEL.clear()
-    emit("run_started", offline=offline)
+    label = label or (RUN_LABELS["refilter"] if offline else RUN_LABELS["search"] if search
+                      else RUN_LABELS["since"] if since_check else RUN_LABELS["full"])
+    record = _try(start_run_record, cfg, label, source)
+    emit("run_started", offline=offline, label=label)
+    summary = {}
     try:
-        found = _run_once(cfg, since_check, hours, verify, refresh, offline, search, look_back, find_pages)
+        found = _run_once(cfg, since_check, hours, verify, refresh, offline, search, look_back, find_pages,
+                          only, summary)
+        status = "cancelled" if CANCEL.is_set() else "finished"
+        if record:
+            _try(finish_run_record, cfg, record, status, summary)
         emit("run_finished", new=len(found))
         return found
     except Exception as exc:
+        if record:
+            _try(finish_run_record, cfg, record, "failed", {**summary, "error": str(exc)})
+        emit("run_failed", error=str(exc))
+        raise
+    finally:
+        lock.release()
+
+
+def _try(fn, *args):
+    """Run history is a convenience: never let it stop a run."""
+    try:
+        return fn(*args)
+    except Exception as exc:
+        log.debug("Could not record the run: %s", exc)
+        return None
+
+
+def refresh_scores(cfg, source="app"):
+    """Refresh stock metrics and company scores now (the app's Refresh scores, --refresh-metrics)."""
+    lock = RunLock()
+    if not lock.acquire():
+        emit("run_skipped", reason="busy")
+        raise Busy("Another Job Watcher run is in progress. Try again when it finishes.")
+    CANCEL.clear()
+    record = _try(start_run_record, cfg, RUN_LABELS["scores"], source)
+    emit("run_started", offline=True, label=RUN_LABELS["scores"])
+    try:
+        emit("phase", name="metrics")
+        rows = load_company_rows(cfg)
+        refresh_metrics(cfg, rows, force=True)
+        rescore(rows)
+        save_company_rows(cfg, rows)
+        if record:
+            _try(finish_run_record, cfg, record, "finished", {"companies": len(rows)})
+        emit("run_finished", new=0)
+    except Exception as exc:
+        if record:
+            _try(finish_run_record, cfg, record, "failed", {"error": str(exc)})
         emit("run_failed", error=str(exc))
         raise
     finally:
@@ -266,7 +319,7 @@ def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, of
 
 
 def _run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, offline=False,
-              search=None, look_back=None, find_pages=False):
+              search=None, look_back=None, find_pages=False, only=None, summary=None):
     now = dt.datetime.now(dt.timezone.utc)
     started = time.monotonic()
     SETTINGS["search_terms"] = cfg.get("search_terms") or SETTINGS["search_terms"]
@@ -319,6 +372,12 @@ def _run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, o
 
     all_rows = load_company_rows(cfg)
     found_dirty = False
+    summary = {} if summary is None else summary
+    targeted = only is not None and only != "missing"
+    if targeted:
+        search = False  # checking one company: no web search, no metrics refresh
+    if only is not None:
+        SETTINGS["guess_every"] = None  # asked for by name: guess board names now, not once a day
     if not offline:  # step 0: look for companies you are not watching yet
         if search is True or (search is None and search_due(cfg, state, now)):
             emit("phase", name="search")
@@ -327,7 +386,7 @@ def _run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, o
             emit("phase", name="career_pages")
             found_dirty = find_career_pages(cfg, state, all_rows, now) or found_dirty
         emit("phase", name="metrics")
-    csv_dirty = False if offline else refresh_metrics(cfg, all_rows, force=refresh)
+    csv_dirty = False if offline or only is not None else refresh_metrics(cfg, all_rows, force=refresh)
     csv_dirty = csv_dirty or found_dirty
     csv_dirty = rescore(all_rows) or csv_dirty
     scores = {r["company"]: (r.get("score", ""), r.get("tier", "")) for r in all_rows}
@@ -336,6 +395,11 @@ def _run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, o
     names = {r["company"] for r in rows}
     for stale in [e for e in state["companies"] if e not in names]:
         del state["companies"][stale]
+    if only == "missing":  # just the companies with no board found or nothing readable
+        rows = [r for r in rows if state["companies"].get(r["company"], {}).get("result")
+                in (None, "NOT FOUND", "NO JOBS READ", "PENDING", "RETRY") or r.get("status") in ("", "not_found")]
+    elif targeted:
+        rows = [r for r in rows if r["company"] in set(only)]
 
     store = PostingStore(BASE / cfg.get("postings_db", "postings.db"))
     try:
@@ -401,6 +465,12 @@ def _run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, o
         log.info("All postings: %d open saved locally, %d new this run, %d descriptions downloaded.",
                  saved_open, stats["new_postings"], stats["details"])
     open_total = sum(1 for j in state["jobs"].values() if j.get("open"))
+    summary.update(
+        minutes=round((time.monotonic() - started) / 60, 1), boards_read=stats["fetched"],
+        boards_paused=stats["deferred"], requests=sum(LIMITER.counts.values()),
+        by_site=dict(LIMITER.counts.most_common(8)), new_postings=stats["new_postings"],
+        new_matches=new_jobs, open_matches=open_total, saved_open=saved_open, offline=offline,
+        companies=sorted(only) if only is not None and only != "missing" else None)
     log.info("%d new matches, %d open matches in your tracker. Run took %.1f minutes.",
              len(new_jobs), open_total, (time.monotonic() - started) / 60)
     for line in new_jobs:

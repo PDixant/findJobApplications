@@ -21,10 +21,10 @@ export function phaseText(run: Run) {
 
 export function useRunActions() {
   const [busy, setBusy] = useState(false);
-  async function start(mode: RunMode) {
+  async function start(mode: RunMode, company?: string) {
     setBusy(true);
     try {
-      setRun(await api<Run>("runs", { method: "POST", body: JSON.stringify({ mode }) }));
+      setRun(await api<Run>("runs", { method: "POST", body: JSON.stringify({ mode, company }) }));
     } catch (e) {
       toast(e instanceof Error ? e.message : "The run did not start.", "bad");
     } finally {
@@ -83,6 +83,14 @@ export function RunControls({ lastRun, busyElsewhere }: { lastRun: string | null
         title="Applies your current settings to the postings already saved. Makes no requests."
       >
         Re-filter saved postings
+      </button>
+      <button
+        className="link-on-dark"
+        onClick={() => start("search")}
+        disabled={busy || busyElsewhere}
+        title="Searches the web for companies you don't watch yet, then reads every company."
+      >
+        Search the web, then run
       </button>
       <button
         className="link-on-dark"
