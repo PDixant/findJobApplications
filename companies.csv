@@ -81,7 +81,7 @@
 1,Vancouver / BC,General Fusion,,,,,,,,website,,https://generalfusion.com/careers,,,Richmond,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Fusion Energy; Onsite; Python, C++"
 1,Vancouver / BC,Giftbit,,,,,,,,website,,https://www.giftbit.com/careers,,,Victoria,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Rewards API; Remote-first; Java, React"
 1,Vancouver / BC,Global Relay,,,,,,,,greenhouse,globalrelay,https://www.globalrelay.com/careers,,,Vancouver,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Compliance / Archiving; Onsite; Java, C#, React"
-1,Vancouver / BC,Goldcorp / Newmont Vancouver,,,,,,,,auto,,https://jobs.newmont.com,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: Mining / Digital; Hybrid; Python, .NET"
+1,Vancouver / BC,Goldcorp / Newmont Vancouver,,,,,,,,website,,https://jobs.newmont.com,,,Vancouver,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Mining / Digital; Hybrid; Python, .NET"
 1,Vancouver / BC,Grammarly (Superhuman),68,A,private,,Unicorn,,,workable,grammarly,https://www.grammarly.com/jobs,,greenhouse,Vancouver / BC; California,yes,ok,2026-11-09,,,,,,Vancouver engineering hub
 1,Vancouver / BC,Great Canadian Entertainment,,,,,,,,website,,https://www.gcgaming.com/careers,,,Richmond,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Gaming / Hospitality; Hybrid; C#, .NET"
 1,Vancouver / BC,Habanero Consulting,,,,,,,,website,,https://www.habaneroconsulting.com/careers,,,Vancouver,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Digital Agency; Remote-first; C#, .NET, React"
@@ -94,17 +94,17 @@
 1,Vancouver / BC,Indochino,64,B,private,,Late,,,auto,,,,,Vancouver / BC,yes,not_found,2026-11-09,,,,,,Menswear e-commerce
 1,Vancouver / BC,Industrial Light & Magic,,,,,,,,website,,https://www.ilm.com/careers,,,Vancouver,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: VFX; Hybrid; C++, Python"
 1,Vancouver / BC,Instant Domains,,,,,,,,website,,https://instantdomains.com,,,Vancouver,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Domain Search; Remote-first; TS, React"
-1,Vancouver / BC,Inverted AI,,,,,,,,auto,,https://www.inverted.ai/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: AI / Simulation; Hybrid; Python, TS"
-1,Vancouver / BC,Iugo Mobile Entertainment,,,,,,,,auto,,https://www.iugome.com/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: Mobile Gaming; Hybrid; C#, Unity"
+1,Vancouver / BC,Inverted AI,,,,,,,,auto,,https://www.inverted.ai/careers,,,Vancouver,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: AI / Simulation; Hybrid; Python, TS"
+1,Vancouver / BC,Iugo Mobile Entertainment,,,,,,,,website,,https://www.iugome.com/careers,,,Vancouver,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Mobile Gaming; Hybrid; C#, Unity"
 1,Vancouver / BC,Jane App,64,B,private,,Late,,,ashby,jane,https://jane.app/careers,,,Vancouver / BC,yes,ok,2026-11-21,,,,,,
 1,Vancouver / BC,Kabam,58,B,private,,Subsidiary,,,lever,kabam,https://www.kabam.com/careers,,,Vancouver / BC,yes,ok,2026-11-09,,,,,,"Games, owned by Netmarble"
 1,Vancouver / BC,Kardium,64,B,private,,Late,,,website,,https://www.kardium.com/careers,,,Vancouver / BC,yes,ok,2026-11-21,,,,,,"Medical devices, Burnaby"
-1,Vancouver / BC,Kits Eyecare,,,,,,,,auto,,https://www.kits.ca/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: E-commerce / Optical; Hybrid; Node, React"
-1,Vancouver / BC,Klei Entertainment,,,,,,,,auto,,https://www.klei.com/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: Gaming; Hybrid; C++, Lua"
+1,Vancouver / BC,Kits Eyecare,,,,,,,,auto,,https://www.kits.ca/careers,,,Vancouver,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: E-commerce / Optical; Hybrid; Node, React"
+1,Vancouver / BC,Klei Entertainment,,,,,,,,website,,https://www.klei.com/careers,,,Vancouver,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Gaming; Hybrid; C++, Lua"
 1,Vancouver / BC,Klue,55,B,private,,Series B,,,ashby,Klue,https://klue.com/careers,,,Vancouver / BC,yes,ok,2026-11-09,,,,,,
 1,Vancouver / BC,Kyndryl Canada,,,,,,,,workday,kyndryl/wd5/KyndrylProfessionalCareers,https://www.kyndryl.com/ca/en/careers,,,Vancouver,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: IT Services; Remote-first; Java, .NET"
 1,Vancouver / BC,Later,64,B,private,,Late,,,greenhouse,Later,https://later.com/careers,,,Vancouver / BC,yes,ok,2026-11-09,,,,,,
-1,Vancouver / BC,Latitude Technologies,,,,,,,,auto,,https://www.latitudetech.com,,,Victoria,yes,,,,,,,,"Imported 2026-11-21: Aviation Telematics; Onsite; C#, .NET"
+1,Vancouver / BC,Latitude Technologies,,,,,,,,website,,https://www.latitudetech.com,,,Victoria,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Aviation Telematics; Onsite; C#, .NET"
 1,Vancouver / BC,Lighthouse Labs,,,,,,,,auto,,https://www.lighthouselabs.ca/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: EdTech / Bootcamp; Remote-first; Node, React"
 1,Vancouver / BC,LlamaZOO,,,,,,,,auto,,https://www.llamazoo.com/careers,,,Victoria,yes,,,,,,,,"Imported 2026-11-21: Industrial Visualization; Hybrid; C#, Unity, TS"
 1,Vancouver / BC,London Drugs,,,,,,,,auto,,https://www.londondrugs.com/careers,,,Richmond,yes,,,,,,,,"Imported 2026-11-21: Retail Tech; Hybrid; C#, .NET, React"
@@ -962,8 +962,10 @@
 7,Remote / other US,Zed,55,B,private,,Series B,,,auto,zedindustries,,,,Remote / other US,yes,not_found,2026-11-09,,,,,,
 7,Remote / other US,Zocdoc,,,,,,,,greenhouse,zocdoc,https://www.zocdoc.com/about/careers,,greenhouse,"New York, NY",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Health Marketplace; Hybrid; US only; .NET, C#, React"
 8,Found by search,Alpaca,,,,,,,,greenhouse,alpaca,,,,,yes,ok,2026-11-21,,,,,,Found by search 2026-11-21: Senior Software Engineer – Developer Platform
+8,Found by search,Capco,,,,,,,,greenhouse,capco,,,,,yes,,,,,,,,"Found by search 2026-11-22: Software Engineer, Implementation & Support"
 8,Found by search,Geocomply 2,,,,,,,,lever,geocomply-2,,,,,yes,ok,2026-11-21,,,,,,Found by search 2026-11-21: Software Engineer Intern (Infrastructure & Platform)
 8,Found by search,Going,,,,,,,,ashby,going,,,,,yes,ok,2026-11-21,,,,,,Found by search 2026-11-21: Senior Full Stack Software Engineer @ Going
 8,Found by search,Jobgether,,,,,,,,lever,jobgether,,,,,yes,ok,2026-11-21,,,,,,"Found by search 2026-11-21: Jobgether - Senior Software Engineer, Data Solutions"
 8,Found by search,Rivianvw.Tech,,,,,,,,ashby,rivianvw.tech,,,,,yes,ok,2026-11-21,,,,,,"Found by search 2026-11-21: Staff Software Engineer, Vehicle Access Cloud"
 8,Found by search,SalesJack,,,,,,,,ashby,salesjack,,,,,yes,ok,2026-11-21,,,,,,Found by search 2026-11-21: Software Engineer @ SalesJack
+8,Found by search,True Talent Solutions Partners,,,,,,,,ashby,true-talent-solutions-partners,,,,,yes,,,,,,,,"Found by search 2026-11-22: Senior Software Engineer, Infrastructure"

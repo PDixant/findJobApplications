@@ -8,12 +8,15 @@ type LiveState = {
   connected: boolean;
   run: Run | null;
   boards: Record<string, boolean>; // company -> read OK, for the run in progress
+  boardsStartedAt: number | null; // when this window saw board reading start, for "min left"
   log: string[];
   toasts: Toast[];
   version: number; // bumps when a run ends, so screens refetch
 };
 
-let state: LiveState = { connected: false, run: null, boards: {}, log: [], toasts: [], version: 0 };
+let state: LiveState = {
+  connected: false, run: null, boards: {}, boardsStartedAt: null, log: [], toasts: [], version: 0,
+};
 const listeners = new Set<() => void>();
 let toastId = 0;
 
@@ -64,6 +67,15 @@ function refreshRun() {
     .catch(() => undefined);
 }
 
+/** Progress for a run this window doesn't know about yet (it opened mid-run): ask for it, at most
+ *  every few seconds. */
+let lastCatchUp = 0;
+function catchUp() {
+  if (state.run?.status === "running" || Date.now() - lastCatchUp < 3000) return;
+  lastCatchUp = Date.now();
+  refreshRun();
+}
+
 type Message = { kind: string; [key: string]: unknown };
 
 function finish(status: Run["status"], error = "") {
@@ -81,20 +93,34 @@ function handle(m: Message) {
     case "log":
       set({ log: [...state.log, String(m.line)].slice(-600) });
       break;
-    case "run_started":
-      set({ boards: {} });
+    case "run_started": {
+      set({ boards: {}, boardsStartedAt: null });
+      const started = (m.run as Run | null | undefined) ?? null;
+      if (!started) {
+        refreshRun();
+      } else {
+        setRun(started);
+        if (started.source === "schedule") {
+          toast("Your scheduled run started: reading your job boards. Progress is at the top of the window.");
+        }
+      }
       break;
+    }
     case "schedule_changed":
     case "job_changed":
       set({ version: state.version + 1 });
       break;
     case "phase":
       if (run) set({ run: { ...run, phase: String(m.name) } });
+      catchUp();
       break;
     case "boards_started":
+      set({ boardsStartedAt: Date.now() });
       if (run) set({ run: { ...run, phase: "boards", total: Number(m.total), done: 0 } });
+      catchUp();
       break;
     case "board_done":
+      catchUp();
       set({
         boards: { ...state.boards, [String(m.company)]: Boolean(m.ok) },
         run: run

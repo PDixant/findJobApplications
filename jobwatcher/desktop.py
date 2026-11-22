@@ -33,6 +33,42 @@ def free_port():
         return s.getsockname()[1]
 
 
+# The .exe the Desktop and Start menu shortcuts open has no terminal: stdout and stderr are None.
+CONSOLE = sys.stdout is not None
+
+
+def no_console_streams():
+    """Without a terminal, libraries that write to stdout or ask whether it is a terminal crash
+    before the app can show anything (uvicorn's logging setup calls sys.stdout.isatty()), so the
+    shortcut seemed to do nothing. Point stdout at nowhere and stderr at job_watcher_errors.log."""
+    if sys.stdout is None:
+        sys.stdout = open(os.devnull, "w", encoding="utf-8")  # noqa: SIM115 (open for the app's lifetime)
+    if sys.stderr is None:
+        sys.stderr = errors_file()
+
+
+def errors_file():
+    """job_watcher_errors.log in the data folder: what a terminal would have shown. On Windows the
+    process's own error handle points there too, so a crash of the window itself (the .NET runtime
+    prints it to stderr, then the app closes) is written down instead of lost."""
+    try:
+        from .base import BASE
+        path = BASE / "job_watcher_errors.log"
+        if path.exists() and path.stat().st_size > 1_000_000:
+            path.unlink()  # keep it small: only recent starts matter
+        stream = open(path, "a", encoding="utf-8", buffering=1)  # noqa: SIM115 (open for the app's lifetime)
+        stream.write(f"\n{time.strftime('%Y-%m-%d %H:%M:%S')}  Opened without a terminal (process {os.getpid()}).\n")
+        stream.flush()
+        if sys.platform == "win32":
+            import ctypes
+            import msvcrt
+            os.dup2(stream.fileno(), 2)
+            ctypes.windll.kernel32.SetStdHandle(-12, msvcrt.get_osfhandle(2))  # STD_ERROR_HANDLE
+        return stream
+    except Exception:
+        return open(os.devnull, "w", encoding="utf-8")  # noqa: SIM115
+
+
 def instance_file():
     from .base import BASE
     return BASE / ".app_window" / "instance.json"
@@ -72,7 +108,13 @@ def main(argv=None):
         print(BASE)
         open_folder(BASE)
         return None
-    return open_app(argv)
+    no_console_streams()
+    try:
+        return open_app(argv)
+    except Exception as exc:  # without a terminal, an error here would otherwise close it without a word
+        logging.getLogger("job_watcher").exception("Job Watcher could not start.")
+        return fail(f"Job Watcher could not start: {exc}\n\n"
+                    "The details are at the end of job_watcher.log in the Job Watcher folder.")
 
 
 def open_folder(path):
@@ -109,7 +151,7 @@ def open_app(argv):
                     "or double-click \"Install Job Watcher\".")
 
     handlers = [logging.FileHandler(LOG_PATH, encoding="utf-8")]
-    if sys.stdout:  # None when started without a console (the Start menu shortcut)
+    if CONSOLE:  # no terminal behind the Desktop and Start menu shortcuts
         handlers.append(logging.StreamHandler(sys.stdout))
     logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(message)s", datefmt="%Y-%m-%d %H:%M",
                         handlers=handlers)
@@ -133,8 +175,7 @@ def open_app(argv):
     token = secrets.token_urlsafe(24)
     app = create_app(token, dev=args.dev, schedule=not args.dev)
     port = args.port or (DEV_PORT if args.dev else free_port())
-    server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning",
-                                           access_log=False, lifespan="on"))
+    server = uvicorn.Server(server_config(uvicorn, app, port))
     threading.Thread(target=server.run, name="jobwatcher-server", daemon=True).start()
     for _ in range(200):
         if server.started:
@@ -177,14 +218,21 @@ def open_app(argv):
     return None
 
 
+def server_config(uvicorn, app, port):
+    """log_config=None: uvicorn's own console logging setup is skipped (it fails with no terminal),
+    and its warnings go to job_watcher.log through ours."""
+    return uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning", access_log=False,
+                          lifespan="on", log_config=None)
+
+
 def say(text):
-    if sys.stdout:
+    if CONSOLE:
         print(text)
 
 
 def fail(text):
     """Show a problem: in the terminal, or in a message box when there is no terminal."""
-    if sys.stdout:
+    if CONSOLE:
         print(text)
     elif sys.platform == "win32":
         import ctypes
@@ -242,7 +290,7 @@ def open_window(url, app, runs, base, start_hidden=False):
     window.events.closing += on_closing
     if tray:
         tray.start(bring_forward, window)
-    icon = Path(__file__).resolve().parent / "assets" / "icon.png"
+    icon = window_icon()
     try:
         # Not private: the window remembers your filters and when you last looked at new matches.
         webview.start(private_mode=False, storage_path=str(base / ".app_window"),
@@ -250,6 +298,14 @@ def open_window(url, app, runs, base, start_hidden=False):
     finally:
         if tray:
             tray.stop()
+
+
+def window_icon(platform: str = sys.platform) -> Path:
+    """The window's icon. Windows needs the .ico: pywebview hands the file to .NET's Icon class,
+    which throws "Argument 'picture' must be a picture that can be used as a Icon" for a .png and
+    closes the app. The .ico keeps its small sizes as plain bitmaps for the same reason."""
+    assets = Path(__file__).resolve().parent / "assets"
+    return assets / ("icon.ico" if platform == "win32" else "icon.png")
 
 
 def keep_in_tray():

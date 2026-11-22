@@ -42,12 +42,14 @@ On a Mac or Linux, run `sh install.sh` instead. Prefer a terminal? `pip install 
 
 ## Open it with one click, or one command
 
-Once **Install Job Watcher** has run (step 2 above), you never need this folder or Python again:
+Once **Install Job Watcher** has run (step 2 above), you don't need to open this folder or type `python` again:
 
 | Do this | From where |
 |---|---|
 | **Click Job Watcher** | The Desktop shortcut or the Start menu |
 | **Type `jobwatcher`** | Any terminal, in any folder. Open a *new* terminal after installing so it picks up the command |
+
+**Where is the .exe?** There isn't one at the top of this folder. The installer builds the app inside it, at `.venv\Scripts\jobwatcher-app.exe` (the Desktop and Start menu shortcuts open this one, with no terminal window) and `.venv\Scripts\jobwatcher.exe` (the terminal version behind the `jobwatcher` command). Keep the folder where it is: if you move or rename it, double-click **Install Job Watcher** again so the shortcuts follow.
 
 If it's already open, clicking or typing `jobwatcher` again just brings the window to the front. Closing the window quits Job Watcher: nothing keeps running in the background unless you ask it to (see *Running in the background* below). More from the same command:
 

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, TOKEN, type UpdateInfo } from "./api";
 import { External } from "./components/bits";
 import { Welcome } from "./components/Welcome";
+import { RunBanner } from "./components/RunBanner";
 import { RunControls } from "./components/RunControls";
 import { n } from "./format";
 import { connect, dismissToast, setRun, useLive } from "./live";
@@ -103,6 +104,8 @@ export function App() {
       </aside>
 
       <main className="content">
+        {/* The Dashboard shows the run in full itself */}
+        {route.screen !== "dashboard" && <RunBanner busyElsewhere={busyElsewhere} />}
         {u?.newer && u.latest !== dismissed && (
           <p className="banner update">
             Job Watcher {u.latest} is out (you have {u.current}).{" "}

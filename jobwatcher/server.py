@@ -311,6 +311,10 @@ class Runs:
                                    "Another run was going, so this one did not start."
                                    if kind == "run_skipped" else ""),
                                requests=dict(LIMITER.counts.most_common(6)))
+        if kind == "run_started":
+            # The window only knows about runs it started itself; send the rest (the scheduler's)
+            # so their progress shows too.
+            data = {**data, "run": self.snapshot()}
         self.hub.publish(kind, data)
 
 

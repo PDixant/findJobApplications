@@ -300,3 +300,55 @@ def test_schedule_runs_owed_after_sleep_but_not_stale_ones():
     assert due_slot(times, at(20, 1, day=19), at(9, 0)) == at(8)  # away for days: one catch-up only
     assert next_slot(times, at(12, 1)) == at(16)
     assert next_slot(times, at(21, 0)) == at(8, day=22)
+
+
+def test_window_icon_is_an_ico_on_windows():
+    """pywebview on Windows loads the window icon with .NET's Icon class, which rejects a .png
+    (and PNG-compressed small frames) and closes the app at start."""
+    import struct
+
+    from jobwatcher.desktop import window_icon
+
+    ico = window_icon("win32")
+    assert ico.suffix == ".ico" and ico.exists()
+    assert window_icon("darwin").suffix == ".png" and window_icon("linux").suffix == ".png"
+    data = ico.read_bytes()
+    reserved, kind, count = struct.unpack("<HHH", data[:6])
+    assert (reserved, kind) == (0, 1) and count > 0
+    for i in range(count):
+        width, _h, _c, _r, _p, _bits, size, offset = struct.unpack("<BBBBHHII", data[6 + 16 * i:22 + 16 * i])
+        if width != 0:  # every size under 256px must be a plain bitmap, not PNG
+            assert data[offset:offset + 8] != b"\x89PNG\r\n\x1a\n", f"{width}px frame is PNG"
+
+
+def test_app_starts_without_a_terminal(monkeypatch):
+    """The .exe behind the Desktop and Start menu shortcuts has no stdout or stderr. uvicorn's
+    console logging setup crashed on that before anything was logged, so clicking did nothing."""
+    import sys
+
+    import uvicorn
+
+    from jobwatcher import desktop
+
+    monkeypatch.setattr(sys, "stdout", None)
+    monkeypatch.setattr(sys, "stderr", None)
+    desktop.no_console_streams()
+    assert sys.stdout is not None and sys.stderr is not None
+    config = desktop.server_config(uvicorn, lambda scope, receive, send: None, 1)
+    assert config.log_config is None
+    # What a terminal would have shown is kept in job_watcher_errors.log instead of lost.
+    print("a problem worth reading", file=sys.stderr)
+    sys.stderr.flush()
+    from jobwatcher.base import BASE
+    text = (BASE / "job_watcher_errors.log").read_text(encoding="utf-8")
+    assert "Opened without a terminal" in text and "a problem worth reading" in text
+
+
+def test_a_failed_start_is_shown_not_silent(monkeypatch):
+    from jobwatcher import desktop
+
+    shown = []
+    monkeypatch.setattr(desktop, "open_app", lambda argv: (_ for _ in ()).throw(RuntimeError("boom")))
+    monkeypatch.setattr(desktop, "fail", lambda text: shown.append(text))
+    desktop.main([])
+    assert shown and "boom" in shown[0] and "job_watcher.log" in shown[0]

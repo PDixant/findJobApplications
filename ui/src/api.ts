@@ -79,6 +79,7 @@ export type Run = {
   id: string;
   mode: RunMode;
   label: string;
+  source?: string; // "app" (a button here) or "schedule" (Settings, Automatic runs)
   status: "running" | "finished" | "cancelled" | "failed" | "skipped";
   phase: string;
   started: string;

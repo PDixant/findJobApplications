@@ -136,13 +136,16 @@ def test_full_run_and_reads(client):
 
 
 def test_events_stream_a_refilter(client):
-    seen = []
+    seen, started = [], []
 
     def listen():
         with httpx.stream("GET", f"{client.base_url}/api/events", params={"token": TOKEN}, timeout=20) as r:
             for line in r.iter_lines():
                 if line.startswith("data: "):
-                    seen.append(json.loads(line[6:])["kind"])
+                    message = json.loads(line[6:])
+                    seen.append(message["kind"])
+                    if message["kind"] == "run_started":
+                        started.append(message.get("run"))
                     if seen[-1] == "run_finished":
                         return
 
@@ -155,6 +158,8 @@ def test_events_stream_a_refilter(client):
     t.join(20)
     assert seen[0] == "hello" and "run_started" in seen and "log" in seen and seen[-1] == "run_finished"
     assert "board_done" not in seen  # re-filtering makes no requests
+    # run_started carries the run, so a window learns about runs it didn't start (the scheduler's)
+    assert started and started[0]["status"] == "running" and started[0]["mode"] == "refilter"
     assert wait_for_run(client)["status"] == "finished"
 
 
