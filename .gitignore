@@ -8,3 +8,8 @@ all_postings.csv
 *.saving.csv
 *.tmp
 __pycache__/
+.env
+about_me.md
+outreach/
+resume.pdf
+resumes/

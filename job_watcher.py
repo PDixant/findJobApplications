@@ -3,25 +3,39 @@
 Job Watcher
 
 Checks company career sites on Greenhouse, Ashby, Lever, Workday, SmartRecruiters and
-Workable directly through their public JSON feeds, filters postings by title, location
-and tech stack, scores each company on stock, growth, layoff and funding signals, and
-keeps a colour-coded Excel tracker up to date.
+Workable directly through their public JSON feeds, plus companies' own careers websites,
+filters postings by title, location and tech stack, scores each company on stock, growth,
+layoff and funding signals, and keeps a colour-coded Excel tracker up to date. A web search
+step finds companies you are not watching yet and adds them to companies.csv.
+
+Settings live in config.toml (plain-English notes inside). API keys go in .env.
 
 Usage:
   python job_watcher.py                 run once
-  python job_watcher.py --loop          keep running, checking every interval_minutes
+  python job_watcher.py --loop          keep running, checking every check_every_minutes
   python job_watcher.py --since-last-check
                                         only report postings that appeared since the last
                                         time you ran with this flag (first time: past 24h)
   python job_watcher.py --since-last-check --hours 6
                                         same, but look back a fixed 6 hours this time
+  python job_watcher.py --show-config   explain your current settings in plain English
+  python job_watcher.py --search        run the new-company web search now
+  python job_watcher.py --search --look-back week
+                                        search a wider window once (day, week or month)
+  python job_watcher.py --add URL       watch a company from any job or careers page link
+  python job_watcher.py --import companies.xlsx
+                                        add every company in a spreadsheet (needs a Company
+                                        column; a careers page column is used when present)
+  python job_watcher.py --find-career-pages
+                                        use web search to find careers pages for companies
+                                        with no job board found yet
   python job_watcher.py --verify        re-check every company in companies.csv,
                                         including ones previously marked not_found
   python job_watcher.py --refresh-metrics
                                         refresh stock metrics and scores now
                                         (needs: pip install yfinance)
   python job_watcher.py --refilter      re-run your filters on the saved postings only,
-                                        e.g. after editing config.json; makes no requests
+                                        e.g. after editing config.toml; makes no requests
 
 Every run keeps two lists: postings.db / all_postings.csv hold every open posting from
 every board, and job_tracker.xlsx holds the ones that pass your filters.
@@ -35,6 +49,8 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
+import gzip
+import hashlib
 import html
 import json
 import logging
@@ -48,8 +64,10 @@ import zlib
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import quote, urlparse
+from urllib.parse import parse_qs, quote, unquote, urljoin, urlparse
+from urllib.robotparser import RobotFileParser
 
 try:
     import requests
@@ -60,12 +78,26 @@ try:
 except ImportError as exc:  # pragma: no cover
     sys.exit(f"Missing dependency: {exc.name}\nRun: pip install requests openpyxl")
 
+try:
+    import tomllib  # Python 3.11+
+except ImportError:  # pragma: no cover
+    try:
+        import tomli as tomllib
+    except ImportError:
+        tomllib = None
+
 BASE = Path(__file__).resolve().parent
-CONFIG_PATH = BASE / "config.json"
+CONFIG_PATH = BASE / "config.toml"
+LEGACY_CONFIG_PATH = BASE / "config.json"
+ENV_PATH = BASE / ".env"
 STATE_PATH = BASE / "job_watcher_state.json"
 LOG_PATH = BASE / "job_watcher.log"
 
 STATUSES = ["New", "Applied", "Interviewing", "Offer", "Rejected", "Skipped"]
+# Outreach column: you pick Email (and later Sent / Replied); outreach.py sets the others.
+OUTREACH = ["Email", "Prepared", "No contact", "Sent", "Follow-up", "Replied"]
+OUTREACH_COLORS = {"Email": "FFF2CC", "Prepared": "DDEBF7", "No contact": "EDEDED", "Sent": "E4DFEC",
+                   "Follow-up": "FCE4D6", "Replied": "C6EFCE"}
 STATUS_COLORS = {
     "New": ("FFF2CC", "7F6000"),
     "Applied": ("DDEBF7", "1F4E79"),
@@ -80,14 +112,22 @@ LEVER_HOSTS = ["https://api.lever.co", "https://api.eu.lever.co", "https://api.c
 WORKDAY_SHARDS = ["wd1", "wd3", "wd5", "wd12", "wd10", "wd103", "wd108"]
 COUNTRY_NAMES = {"CA": "Canada", "US": "United States", "IN": "India", "GB": "United Kingdom"}
 MANUAL_BOARDS = {"other", "manual", "own"}
+USER_AGENT = "job-watcher/2.0 (personal job search)"
 
 # Filled from config at the start of each run
-SETTINGS = {"search_terms": ["software engineer", "software developer", "frontend", "full stack"],
+SETTINGS = {"search_terms": ["software engineer", "software developer", "frontend", "full stack",
+                             "web developer"],
             "max_pages": 10, "window_days": 1.0, "unsorted_pages": 25, "hard_max_pages": 100,
             "backoff": 30,
             # Minimum seconds between requests to the same site, shared by all worker threads.
             "host_intervals": {"workable.com": 2.0, "smartrecruiters.com": 0.5, "myworkdayjobs.com": 0.5,
-                               "lever.co": 0.3, "ashbyhq.com": 0.3, "greenhouse.io": 0.2, "default": 0.3}}
+                               "lever.co": 0.3, "ashbyhq.com": 0.3, "greenhouse.io": 0.2,
+                               "api.search.brave.com": 1.1, "default": 0.3},
+            # Companies' own careers websites get more room than the job-board APIs.
+            "website_interval": 1.0,
+            "career_sites": True, "site_pages_per_run": 15, "rules": None,
+            # How often to re-guess board names for a company with no board found (None = always).
+            "guess_every": None}
 
 log = logging.getLogger("job_watcher")
 _local = threading.local()
@@ -97,10 +137,327 @@ def session():
     """One HTTP session per worker thread."""
     if not hasattr(_local, "s"):
         s = requests.Session()
-        s.headers.update({"User-Agent": "job-watcher/2.0 (personal job search)",
+        s.headers.update({"User-Agent": USER_AGENT,
                           "Accept": "application/json", "Accept-Language": "en-US"})
         _local.s = s
     return _local.s
+
+
+# ----------------------------------------------------------------- settings
+# The defaults below are the settings the project ships with. Anything config.toml leaves
+# out falls back to these, so a config file only needs the lines someone wants to change.
+DEFAULTS = {
+    # 1. Which jobs
+    "titles_include": ["Software Engineer", "Software Developer", "Web Developer", "Frontend",
+                       "Front End", "Front-End", "Full Stack", "Full-Stack", "Fullstack",
+                       "UI Engineer", "Product Engineer", "React", "JavaScript"],
+    "titles_exclude": ["Staff", "Principal", "Intern", "Internship", "Co-op", "Coop", "Junior", "Jr",
+                       "New Grad", "Graduate", "Entry Level", "Manager", "Director", "Head of", "VP"],
+    "stack_keywords": ["React", "React Native", "JavaScript", "TypeScript", "Node.js", "NodeJS",
+                       "Next.js"],
+    "require_stack_match": True,
+    "max_posted_age_hours": 24,
+    # 2. Where
+    "locations_exclude": ["India", "Bengaluru", "Bangalore", "Hyderabad", "Pune", "Chennai",
+                          "Gurugram", "Gurgaon", "Noida", "Mumbai", "Delhi"],
+    "regions": [
+        {"name": "Canada - BC", "color": "C6EFCE",
+         "match": ["British Columbia", "BC", "Vancouver", "Burnaby", "Victoria", "Kelowna"]},
+        {"name": "Canada - Ontario", "color": "DDEBF7",
+         "match": ["Ontario", "ON", "Toronto", "Ottawa", "Waterloo", "Kitchener", "Mississauga",
+                   "Brampton", "Markham", "Guelph"]},
+        {"name": "Canada - Other/Remote", "color": "D9F2F2",
+         "match": ["Canada", "Canadian", "Montreal", "Montréal", "Calgary", "Edmonton", "Halifax",
+                   "Winnipeg", "Quebec"]},
+        {"name": "California", "color": "FCE4D6",
+         "match": ["California", "CA", "San Francisco", "SF", "Bay Area", "Los Angeles", "San Jose",
+                   "San Diego", "Palo Alto", "Mountain View", "Menlo Park", "Sunnyvale",
+                   "Santa Clara", "Redwood City", "Oakland", "Santa Monica", "Irvine", "Cupertino"]},
+        {"name": "Seattle", "color": "E4DFEC", "match": ["Seattle", "Bellevue", "Redmond", "Kirkland"]},
+        {"name": "Remote - North America", "color": "FFF2CC", "match": ["North America", "Americas"]},
+    ],
+    # 3. Web search for new companies
+    "search": {
+        "enabled": True, "provider": "serper", "runs_per_day": 2, "look_back": "day",
+        "sites": ["ashby", "greenhouse", "lever"],
+        "titles": ["Software Engineer", "Software Developer", "Web Developer"],
+        "places": ["Toronto", "Vancouver", "Ottawa", "Canada"],
+        "skip_words": ["India"],
+        "pages_per_query": 3, "monthly_query_limit": 1000, "new_companies": "watch",
+        "country": "", "career_page_lookups_per_run": 50,
+    },
+    # 4. Companies' own careers websites
+    "career_sites": {"enabled": True, "max_new_pages_per_site": 15},
+    # 5. Tracker and timing
+    "excel_file": "job_tracker.xlsx",
+    "companies_file": "companies.csv",
+    "desktop_notifications": True,
+    "since_last_check_by_default": False,
+    "interval_minutes": 30,
+    "check_all_every_run": True,
+    "retry_board_search_hours": 24,
+    # 7. Recruiter outreach (outreach.py)
+    "outreach": {
+        "resume": "resume.pdf", "tailored_resumes_folder": "", "about_me": "about_me.md",
+        "contacts_per_company": 2, "departments": ["hr", "it", "management", "executive"],
+        "verify_emails": True, "monthly_hunter_credit_limit": 50, "follow_up_after_days": 5,
+        "imap_server": "imap.gmail.com", "drafts_folder": "[Gmail]/Drafts",
+    },
+    # 6. Advanced
+    "postings_db": "postings.db",
+    "all_postings_csv": "all_postings.csv",
+    "request_delay_seconds": 0,
+    "host_min_interval_seconds": {},
+    "website_seconds_between_requests": 1.0,
+    "rate_limit_backoff_seconds": 30,
+    "parallel_requests": 8,
+    "recheck_not_found_days": 14,
+    "max_detections_per_run": 40,
+    "max_detail_requests_per_board": 25,
+    "search_terms": ["software engineer", "software developer", "frontend", "full stack", "web developer"],
+    "max_pages_per_search": 10,
+    "unsorted_scan_pages": 25,
+    "metrics_refresh_days": 7,
+    "metrics_delay_seconds": 0.5,
+    "first_check_lookback_hours": 24,
+    "check_overlap_minutes": 15,
+    "companies": [],
+}
+
+# Where each config.toml setting lands. A tuple means a setting inside a group.
+CONFIG_LAYOUT = {
+    "jobs": {"titles": "titles_include", "skip_titles": "titles_exclude",
+             "must_mention": "stack_keywords", "max_age_hours": "max_posted_age_hours"},
+    "places": {"skip": "locations_exclude", "region": "regions"},
+    "search": {k: ("search", k) for k in DEFAULTS["search"]},
+    "career_sites": {"enabled": ("career_sites", "enabled"),
+                     "new_pages_per_site_per_run": ("career_sites", "max_new_pages_per_site")},
+    "tracker": {"tracker_file": "excel_file", "companies_file": "companies_file",
+                "desktop_notifications": "desktop_notifications",
+                "since_last_check_by_default": "since_last_check_by_default",
+                "check_every_minutes": "interval_minutes",
+                "check_all_companies_every_run": "check_all_every_run",
+                "retry_board_search_hours": "retry_board_search_hours"},
+    "outreach": {k: ("outreach", k) for k in DEFAULTS["outreach"]},
+    "advanced": {"parallel_requests": "parallel_requests",
+                 "recheck_not_found_days": "recheck_not_found_days",
+                 "max_detections_per_run": "max_detections_per_run",
+                 "max_detail_requests_per_board": "max_detail_requests_per_board",
+                 "rate_limit_backoff_seconds": "rate_limit_backoff_seconds",
+                 "metrics_refresh_days": "metrics_refresh_days",
+                 "metrics_delay_seconds": "metrics_delay_seconds",
+                 "first_check_lookback_hours": "first_check_lookback_hours",
+                 "check_overlap_minutes": "check_overlap_minutes",
+                 "workday_search_terms": "search_terms",
+                 "max_pages_per_search": "max_pages_per_search",
+                 "unsorted_scan_pages": "unsorted_scan_pages",
+                 "extra_companies": "companies",
+                 "request_delay_seconds": "request_delay_seconds",
+                 "site_seconds_between_requests": "host_min_interval_seconds",
+                 "website_seconds_between_requests": "website_seconds_between_requests",
+                 "postings_db": "postings_db", "all_postings_csv": "all_postings_csv"},
+}
+
+
+class ConfigError(Exception):
+    """A setting the script cannot use. The message says what to fix."""
+
+
+def _coerce(value, default, where):
+    """Accept the forgiving forms people type: a single word where a list is expected,
+    "yes"/"no" for true/false, "24" for 24."""
+    if isinstance(default, bool):
+        if isinstance(value, bool):
+            return value
+        if str(value).strip().lower() in ("yes", "y", "true", "on", "1"):
+            return True
+        if str(value).strip().lower() in ("no", "n", "false", "off", "0"):
+            return False
+        raise ConfigError(f"{where} should be true or false, not {value!r}")
+    if isinstance(default, (int, float)) and not isinstance(default, bool):
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            raise ConfigError(f"{where} should be a number, not {value!r}") from None
+        return int(number) if isinstance(default, int) and number.is_integer() else number
+    if isinstance(default, list):
+        if isinstance(value, str):
+            value = [value]
+        if not isinstance(value, list):
+            raise ConfigError(f"{where} should be a list in [square brackets]")
+        return value
+    if isinstance(default, str):
+        return str(value)
+    return value
+
+
+def _check_regions(regions, where):
+    out = []
+    for i, r in enumerate(regions, start=1):
+        if not isinstance(r, dict) or not r.get("name") or not r.get("match"):
+            raise ConfigError(f"{where} entry {i} needs a name and a match list")
+        match = r["match"] if isinstance(r["match"], list) else [r["match"]]
+        out.append({"name": str(r["name"]), "color": str(r.get("color") or "").lstrip("#") or None,
+                    "match": [str(m) for m in match]})
+    return out
+
+
+def _from_toml(doc):
+    """Turn the friendly config.toml layout into the settings the script uses."""
+    cfg = json.loads(json.dumps(DEFAULTS))  # deep copy
+    unknown = []
+    for section, values in doc.items():
+        layout = CONFIG_LAYOUT.get(section)
+        if layout is None or not isinstance(values, dict):
+            unknown.append(f"[{section}]")
+            continue
+        for key, value in values.items():
+            target = layout.get(key)
+            if target is None:
+                unknown.append(f"{key} in [{section}]")
+                continue
+            where = f"{key} in [{section}]"
+            if isinstance(target, tuple):
+                group, name = target
+                cfg[group][name] = _coerce(value, DEFAULTS[group][name], where)
+            elif target == "regions":
+                cfg["regions"] = _check_regions(value if isinstance(value, list) else [value],
+                                                "[[places.region]]")
+            elif target == "host_min_interval_seconds":
+                if not isinstance(value, dict):
+                    raise ConfigError(f"{where} should look like {{ \"workable.com\" = 2.0 }}")
+                cfg[target] = value
+            else:
+                cfg[target] = _coerce(value, DEFAULTS[target], where)
+    if "must_mention" in (doc.get("jobs") or {}):
+        cfg["require_stack_match"] = bool(cfg["stack_keywords"])
+    return cfg, unknown
+
+
+def _from_json(doc):
+    """The older flat config.json still works."""
+    cfg = json.loads(json.dumps(DEFAULTS))
+    for key, value in doc.items():
+        if key in ("search", "career_sites", "outreach") and isinstance(value, dict):
+            cfg[key].update(value)
+        else:
+            cfg[key] = value
+    cfg["regions"] = _check_regions(cfg["regions"], "regions")
+    return cfg
+
+
+_config_notice_shown = False
+
+
+def load_config():
+    """Read config.toml (or the older config.json). Raises ConfigError with a readable reason."""
+    global _config_notice_shown
+    if CONFIG_PATH.exists():
+        if tomllib is None:
+            raise ConfigError("config.toml needs Python 3.11 or newer, or run: pip install tomli")
+        try:
+            doc = tomllib.loads(CONFIG_PATH.read_text(encoding="utf-8-sig"))
+        except tomllib.TOMLDecodeError as exc:
+            raise ConfigError(f"config.toml has a typo: {exc}. Check that text is in \"quotes\" "
+                              "and list items are separated by commas.") from None
+        cfg, unknown = _from_toml(doc)
+        for item in unknown:
+            log.warning("config.toml: ignored unknown setting %s (check the spelling).", item)
+        if LEGACY_CONFIG_PATH.exists() and not _config_notice_shown:
+            log.info("Using config.toml. config.json is no longer read and can be deleted.")
+        _config_notice_shown = True
+    elif LEGACY_CONFIG_PATH.exists():
+        try:
+            cfg = _from_json(json.loads(LEGACY_CONFIG_PATH.read_text(encoding="utf-8-sig")))
+        except json.JSONDecodeError as exc:
+            raise ConfigError(f"config.json is not valid JSON: {exc}") from None
+    else:
+        log.info("No config.toml found; using the built-in defaults.")
+        cfg = json.loads(json.dumps(DEFAULTS))
+    s = cfg["search"]
+    s["provider"] = s["provider"].strip().lower()
+    s["look_back"] = s["look_back"].strip().lower()
+    s["new_companies"] = s["new_companies"].strip().lower()
+    if s["provider"] not in SEARCH_KEYS:
+        raise ConfigError(f"provider in [search] should be one of {', '.join(SEARCH_KEYS)}, "
+                          f"not {s['provider']!r}")
+    if s["look_back"] not in LOOK_BACK:
+        raise ConfigError(f"look_back in [search] should be day, week or month, not {s['look_back']!r}")
+    if s["new_companies"] not in ("watch", "review"):
+        raise ConfigError("new_companies in [search] should be \"watch\" or \"review\"")
+    bad_sites = [x for x in s["sites"] if x.lower() not in SEARCH_SITES]
+    if bad_sites:
+        raise ConfigError(f"sites in [search] can only use {', '.join(SEARCH_SITES)}; "
+                          f"not {', '.join(bad_sites)}")
+    return cfg
+
+
+def load_env(path=ENV_PATH):
+    """Read KEY=value lines from .env into the environment (real environment variables win).
+    Also accepts the .env.txt name Notepad tends to save, and UTF-16 files from PowerShell."""
+    if not path.exists() and path.with_name(path.name + ".txt").exists():
+        path = path.with_name(path.name + ".txt")
+    try:
+        raw = path.read_bytes()
+    except FileNotFoundError:
+        return
+    if raw[:2] in (b"\xff\xfe", b"\xfe\xff"):
+        text = raw.decode("utf-16")
+    else:
+        text = raw.decode("utf-8-sig", errors="replace")
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip().removeprefix("export ").strip()
+        value = value.strip().strip('"').strip("'")
+        if key and value and key not in os.environ:
+            os.environ[key] = value
+
+
+def describe_config(cfg):
+    """Plain-English summary for --show-config."""
+    s, c = cfg["search"], cfg["career_sites"]
+    lines = ["A posting is added to your tracker when ALL of these are true:",
+             f"  - the title contains one of: {', '.join(cfg['titles_include'])}"]
+    if cfg["titles_exclude"]:
+        lines.append(f"  - the title does not contain: {', '.join(cfg['titles_exclude'])}")
+    if not any(t.lower() in ("senior", "sr", "sr.", "lead") for t in cfg["titles_exclude"]):
+        lines.append("    (Senior and Lead roles are kept)")
+    if cfg["require_stack_match"] and cfg["stack_keywords"]:
+        lines.append(f"  - the description mentions one of: {', '.join(cfg['stack_keywords'])}")
+    else:
+        lines.append("  - any tech stack (no keyword check)")
+    lines.append("  - the location is in one of your regions:")
+    for r in cfg["regions"]:
+        lines.append(f"      {r['name']}: {', '.join(r['match'])}")
+    if cfg["locations_exclude"]:
+        lines.append(f"    and not only in: {', '.join(cfg['locations_exclude'])}")
+    lines.append(f"  - it was posted within the last {cfg['max_posted_age_hours']:g} hours")
+    lines.append("")
+    key_name = SEARCH_KEYS[s["provider"]]
+    has_key = bool(os.environ.get(key_name))
+    if s["enabled"]:
+        per_run = len(s["sites"]) * s["pages_per_query"]
+        lines.append(f"New-company search: ON, {s['runs_per_day']:g} times a day through {s['provider']} "
+                     f"({key_name} {'found' if has_key else 'MISSING'}).")
+        if not has_key:
+            lines.append(f"  Put this line in {ENV_PATH}:  {key_name}=your-key")
+        lines.append(f"  Up to {per_run} queries per search, at most {s['monthly_query_limit']} a month. "
+                     f"Looks back one {s['look_back']}.")
+        for site in s["sites"]:
+            lines.append("  " + build_query(SEARCH_SITES[site.lower()], s["titles"], s["places"],
+                                            s["skip_words"]))
+        lines.append("  New companies are " + ("watched right away." if s["new_companies"] == "watch"
+                                               else "added with enabled = no for you to review."))
+    else:
+        lines.append("New-company search: OFF (turn it on with enabled = true under [search]).")
+    lines.append(f"Company careers websites: {'ON' if c['enabled'] else 'OFF'}"
+                 + (f", up to {c['max_new_pages_per_site']} new job pages per site per run."
+                    if c["enabled"] else "."))
+    lines.append(f"Tracker: {cfg['excel_file']}   Companies list: {cfg['companies_file']}")
+    return "\n".join(lines)
 
 
 # ----------------------------------------------------------------- helpers
@@ -225,9 +582,9 @@ class HostLimiter:
         host = urlparse(url).hostname or ""
         return next((s for s in cls.SITES if host == s or host.endswith("." + s)), host)
 
-    def wait(self, site):
+    def wait(self, site, default_gap=None):
         intervals = SETTINGS["host_intervals"]
-        gap = intervals.get(site, intervals.get("default", 0.3))
+        gap = intervals.get(site, intervals.get("default", 0.3) if default_gap is None else default_gap)
         with self.lock:
             now = time.monotonic()
             slot = max(now, self.next_slot.get(site, 0.0))
@@ -651,24 +1008,597 @@ def fetch_workday(slug, host=None, auto=False):
     return result(canonical, jobs, complete=complete, note=note)
 
 
+# --- Recognising job-board links
+# Any job or board link from Greenhouse, Ashby, Lever, Workable, SmartRecruiters or Workday
+# can be turned into (board, slug). Search results, careers pages and --add all use this.
+NOT_SLUGS = {"embed", "v0", "v1", "v3", "api", "j", "jobs", "job", "careers", "search", "wday",
+             "posting-api", "job-board", "postings", "companies", "widget", "accounts", "static",
+             "assets", "favicon.ico", "robots.txt", "sitemap.xml", "apply", "login", "signup", "www"}
+BOARD_URL_RE = re.compile(
+    r"(?:https?:)?//[A-Za-z0-9.-]+\.(?:greenhouse\.io|ashbyhq\.com|lever\.co|workable\.com|"
+    r"smartrecruiters\.com|myworkdayjobs\.com)[^\s\"'<>\\)]*")
+LEVER_EMBED_RE = re.compile(r"accountName\s*[:=]\s*['\"]([\w.-]+)['\"]")
+
+
+def _slug_ok(slug):
+    slug = (slug or "").strip()
+    if (not slug or slug.lower() in NOT_SLUGS or len(slug) > 80
+            or not re.fullmatch(r"[\w .&'-]+", slug)):
+        return None
+    return slug
+
+
+def board_from_url(url):
+    """('greenhouse', 'acme') style tuple for a job-board link, or None."""
+    if not url:
+        return None
+    url = url.strip().replace("\\/", "/")
+    if url.startswith("//"):
+        url = "https:" + url
+    if "://" not in url:
+        url = "https://" + url
+    try:
+        p = urlparse(url)
+        host = (p.hostname or "").lower()
+    except ValueError:
+        return None
+    segs = [unquote(x) for x in p.path.split("/") if x]
+    query = parse_qs(p.query)
+
+    def pick(provider, slug):
+        slug = _slug_ok(slug)
+        return (provider, slug) if slug else None
+
+    if host == "greenhouse.io" or host.endswith(".greenhouse.io"):
+        if query.get("for"):
+            return pick("greenhouse", query["for"][0])
+        if host.startswith("boards-api.") and len(segs) >= 3 and segs[:2] == ["v1", "boards"]:
+            return pick("greenhouse", segs[2])
+        if host.split(".")[0] in ("boards", "job-boards") and segs:
+            return pick("greenhouse", segs[0])
+        return None
+    if host == "jobs.ashbyhq.com" and segs:
+        return pick("ashby", segs[0])
+    if host == "api.ashbyhq.com" and len(segs) >= 3 and segs[:2] == ["posting-api", "job-board"]:
+        return pick("ashby", segs[2])
+    if host in ("jobs.lever.co", "jobs.eu.lever.co") and segs:
+        return pick("lever", segs[0])
+    if host.startswith("api.") and host.endswith("lever.co") and len(segs) >= 3 and segs[:2] == ["v0", "postings"]:
+        return pick("lever", segs[2])
+    if host == "apply.workable.com" and segs:
+        if segs[0] == "api":
+            if "accounts" in segs and segs.index("accounts") + 1 < len(segs):
+                return pick("workable", segs[segs.index("accounts") + 1])
+            return None
+        return pick("workable", segs[0])
+    if host in ("jobs.smartrecruiters.com", "careers.smartrecruiters.com") and segs:
+        return pick("smartrecruiters", segs[0])
+    if host == "api.smartrecruiters.com" and len(segs) >= 3 and segs[:2] == ["v1", "companies"]:
+        return pick("smartrecruiters", segs[2])
+    if host.endswith(".myworkdayjobs.com"):
+        parts = host.split(".")
+        if len(parts) < 4 or not re.fullmatch(r"wd\d+", parts[1]):
+            return None
+        if segs[:2] == ["wday", "cxs"]:
+            site = segs[3] if len(segs) >= 4 else None
+        else:
+            rest = segs[1:] if segs and re.fullmatch(r"[a-z]{2}-[A-Za-z]{2}", segs[0]) else segs
+            site = rest[0] if rest else None
+        if not site or site.lower() == "wday" or not re.fullmatch(r"[\w.-]{1,80}", site):
+            return None  # site names like "Careers" or "jobs" are normal on Workday
+        return "workday", f"https://{parts[0]}.{parts[1]}.myworkdayjobs.com/{site}"
+    return None
+
+
+def board_key(provider, slug):
+    """Comparable identity for a board, so 'Acme' and 'acme' count as the same one."""
+    provider = (provider or "").lower()
+    if provider == "workday":
+        tenant, _, site = parse_workday(slug or "")
+        return provider, (tenant or "").lower(), (site or "").lower()
+    return provider, (slug or "").strip().lower()
+
+
+def find_boards_in_html(text):
+    """Job boards a careers page links to or embeds, most-mentioned first."""
+    text = (text or "").replace("\\/", "/")
+    votes, seen = Counter(), {}
+    for m in BOARD_URL_RE.finditer(text):
+        b = board_from_url(m.group(0))
+        if b:
+            votes[board_key(*b)] += 1
+            seen.setdefault(board_key(*b), b)
+    if "lever" in text.lower():
+        for m in LEVER_EMBED_RE.finditer(text):
+            b = ("lever", _slug_ok(m.group(1)))
+            if b[1]:
+                votes[board_key(*b)] += 1
+                seen.setdefault(board_key(*b), b)
+    return [seen[k] for k, _ in votes.most_common()]
+
+
+# --- Reading web pages (companies' own careers sites)
+_ROBOTS = {}
+_ROBOTS_LOCK = threading.Lock()
+_PAGES_LOCK = threading.Lock()  # guards the cache of job pages already read
+
+
+def get_page(url, accept="text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+             max_bytes=5_000_000, retries=2):
+    """(final_url, text) for an ordinary web page, or None if it cannot be read.
+    Shares the polite per-site spacing and 429 handling used for the job boards."""
+    site = HostLimiter.site(url)
+    for attempt in range(retries):
+        last = attempt == retries - 1
+        if site in LIMITER.blocked:
+            raise RateLimited(f"{site} asked to slow down")
+        LIMITER.wait(site, SETTINGS["website_interval"])
+        try:
+            r = session().get(url, headers={"Accept": accept}, timeout=25, stream=True)
+            if r.status_code == 429:
+                r.close()
+                LIMITER.cool_down(site, retry_after(r))
+                LIMITER.refused(site)
+                if last:
+                    raise RateLimited(f"{site} asked to slow down")
+                continue
+            LIMITER.accepted(site)
+            if r.status_code >= 500:
+                r.close()
+                if last:
+                    return None
+                time.sleep(3)
+                continue
+            if r.status_code >= 400:
+                r.close()
+                return None
+            body = bytearray()
+            for chunk in r.iter_content(65536):
+                body.extend(chunk)
+                if len(body) > max_bytes:
+                    break
+            r.close()
+        except requests.RequestException:
+            if last:
+                return None
+            time.sleep(2)
+            continue
+        raw = bytes(body)
+        if url.lower().endswith(".gz") or raw[:2] == b"\x1f\x8b":
+            try:
+                raw = gzip.decompress(raw)
+            except OSError:
+                return None
+        charset = re.search(r"charset=([\w-]+)", r.headers.get("Content-Type", ""), re.I)
+        try:
+            text = raw.decode(charset.group(1) if charset else "utf-8", errors="replace")
+        except LookupError:
+            text = raw.decode("utf-8", errors="replace")
+        return r.url, text
+    return None
+
+
+def robots_for(url):
+    """The site's robots.txt rules (read once per run). A missing file allows everything."""
+    p = urlparse(url)
+    origin = f"{p.scheme}://{p.netloc}"
+    with _ROBOTS_LOCK:
+        if origin in _ROBOTS:
+            return _ROBOTS[origin]
+    got = get_page(origin + "/robots.txt", accept="text/plain,*/*", max_bytes=500_000)
+    rules = RobotFileParser()
+    rules.parse(got[1].splitlines() if got and "<html" not in got[1][:500].lower() else [])
+    with _ROBOTS_LOCK:
+        _ROBOTS[origin] = rules
+    return rules
+
+
+def robots_allow(url):
+    return robots_for(url).can_fetch(USER_AGENT, url)
+
+
+class PageParser(HTMLParser):
+    """Collects what the careers reader needs from a page: links with their text,
+    JSON-LD blocks, schema.org microdata for job postings, and the visible text."""
+    WANTED = {"title", "datePosted", "description", "addressLocality", "addressRegion",
+              "addressCountry", "validThrough", "jobLocation"}
+    VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source",
+            "track", "wbr"}
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.links, self.jsonld, self.text = [], [], []
+        self.micro = {}
+        self.has_microdata_job = False
+        self.base = None
+        self._a = None
+        self._script = None
+        self._skip = 0
+        self._captures = []
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag == "base" and a.get("href") and not self.base:
+            self.base = a["href"]
+        if tag == "a" and a.get("href"):
+            self._a = [a["href"], []]
+        if tag == "script":
+            self._script = [] if "ld+json" in (a.get("type") or "").lower() else None
+            self._skip += 1
+        elif tag in ("style", "noscript", "template"):
+            self._skip += 1
+        if "jobposting" in (a.get("itemtype") or "").lower():
+            self.has_microdata_job = True
+        prop = a.get("itemprop")
+        if prop in self.WANTED and prop not in self.micro:
+            if a.get("content") or a.get("datetime"):
+                self.micro[prop] = a.get("content") or a.get("datetime")
+            elif tag not in self.VOID:
+                self._captures.append([prop, tag, 0, []])
+        for cap in self._captures:
+            if cap[1] == tag:
+                cap[2] += 1
+
+    def handle_endtag(self, tag):
+        if tag == "a" and self._a is not None:
+            self.links.append((self._a[0], " ".join(" ".join(self._a[1]).split())))
+            self._a = None
+        if tag == "script":
+            if self._script is not None:
+                self.jsonld.append("".join(self._script))
+            self._script = None
+            self._skip = max(0, self._skip - 1)
+        elif tag in ("style", "noscript", "template"):
+            self._skip = max(0, self._skip - 1)
+        for cap in list(self._captures):
+            if cap[1] == tag:
+                cap[2] -= 1
+                if cap[2] <= 0:
+                    self.micro.setdefault(cap[0], " ".join(" ".join(cap[3]).split()))
+                    self._captures.remove(cap)
+
+    def handle_data(self, data):
+        if self._script is not None:
+            self._script.append(data)
+            return
+        if self._skip:
+            return
+        self.text.append(data)
+        if self._a is not None:
+            self._a[1].append(data)
+        for cap in self._captures:
+            cap[3].append(data)
+
+
+def parse_page(text):
+    parser = PageParser()
+    try:
+        parser.feed(text)
+        parser.close()
+    except Exception:  # a badly broken page still yields whatever was read before the error
+        pass
+    return parser
+
+
+def _as_list(x):
+    return x if isinstance(x, list) else ([] if x is None else [x])
+
+
+def _names(x):
+    out = []
+    for item in _as_list(x):
+        if isinstance(item, dict):
+            item = item.get("name") or item.get("addressCountry") or ""
+        if item:
+            out.append(COUNTRY_NAMES.get(str(item).upper(), str(item)))
+    return out
+
+
+def _walk_jsonld(node, found):
+    if isinstance(node, list):
+        for item in node:
+            _walk_jsonld(item, found)
+    elif isinstance(node, dict):
+        kinds = [str(t).lower() for t in _as_list(node.get("@type"))]
+        if "jobposting" in kinds:
+            found.append(node)
+        for key in ("@graph", "itemListElement", "item", "mainEntity"):
+            if key in node:
+                _walk_jsonld(node[key], found)
+
+
+def posted_from(value):
+    """A posting date. A bare date ('2026-11-20') is read as the end of that day, so a job
+    posted late in the evening is not mistaken for one that is a day older."""
+    if isinstance(value, str) and re.fullmatch(r"\s*\d{4}-\d{2}-\d{2}\s*", value):
+        d = dt.datetime.fromisoformat(value.strip()).replace(hour=23, minute=59, tzinfo=dt.timezone.utc)
+        return min(d, dt.datetime.now(dt.timezone.utc))
+    return parse_date(value)
+
+
+def job_from_jsonld(jp, page_url):
+    locs = []
+    for place in _as_list(jp.get("jobLocation")):
+        if isinstance(place, str):
+            locs.append(place)
+            continue
+        if not isinstance(place, dict):
+            continue
+        addr = place.get("address")
+        if isinstance(addr, str):
+            locs.append(addr)
+        elif isinstance(addr, dict):
+            parts = [addr.get("addressLocality"), addr.get("addressRegion")] + _names(addr.get("addressCountry"))
+            joined = ", ".join(str(x) for x in parts if x)
+            if joined:
+                locs.append(joined)
+        elif place.get("name"):
+            locs.append(str(place["name"]))
+    if "telecommute" in str(jp.get("jobLocationType", "")).lower():
+        where = _names(jp.get("applicantLocationRequirements"))
+        locs.append("Remote" + (f" - {', '.join(where)}" if where else ""))
+    text_parts = [str(jp.get("description") or "")]
+    for k in ("qualifications", "responsibilities", "skills", "experienceRequirements"):
+        if isinstance(jp.get(k), str):
+            text_parts.append(jp[k])
+    title = html_to_text(str(jp.get("title") or jp.get("name") or "")).strip()
+    url = jp.get("url") if isinstance(jp.get("url"), str) and jp["url"].startswith("http") else page_url
+    return {"title": " ".join(title.split()), "posted": posted_from(jp.get("datePosted")),
+            "locations": [" ".join(l.split()) for l in locs if l and l.strip()],
+            "text": html_to_text(" ".join(text_parts)), "url": url,
+            "expired": (parse_date(jp.get("validThrough")) or dt.datetime.max.replace(
+                tzinfo=dt.timezone.utc)) < dt.datetime.now(dt.timezone.utc)}
+
+
+def jobs_on_page(parsed, page_url):
+    """Job postings a page publishes in standard form (JSON-LD, or microdata as a fallback)."""
+    found = []
+    for block in parsed.jsonld:
+        block = re.sub(r"^\s*(?:<!--|/[/*]\s*<!\[CDATA\[(?:\s*\*/)?)|(?:-->|/[/*]\s*\]\]>(?:\s*\*/)?)\s*$", "",
+                       block.strip())  # some sites wrap the data in comment or CDATA markers
+        try:
+            _walk_jsonld(json.loads(block, strict=False), found)
+        except ValueError:
+            continue
+    jobs = [job_from_jsonld(jp, page_url) for jp in found]
+    if not jobs and parsed.has_microdata_job and parsed.micro.get("title"):
+        m = parsed.micro
+        loc = ", ".join(x for x in (m.get("addressLocality"), m.get("addressRegion"),
+                                    COUNTRY_NAMES.get(str(m.get("addressCountry", "")).upper(),
+                                                      m.get("addressCountry"))) if x)
+        jobs.append({"title": m["title"], "posted": posted_from(m.get("datePosted")),
+                     "locations": [loc] if loc else ([m["jobLocation"]] if m.get("jobLocation") else []),
+                     "text": m.get("description") or " ".join(" ".join(parsed.text).split()),
+                     "url": page_url, "expired": False})
+    return [j for j in jobs if j["title"] and not j["expired"]]
+
+
+JOB_PATH_RE = re.compile(r"/(?:jobs?|careers?|positions?|openings?|opportunit(?:y|ies)|"
+                         r"vacanc(?:y|ies)|requisitions?|roles?|postings?|apply)(?:[/?#_-]|$)", re.I)
+TRACKING_PARAMS = re.compile(r"^(?:utm_\w+|gh_src|source|src|ref|lever-source|lever-origin|trk)$", re.I)
+
+
+def _site_of(host):
+    parts = (host or "").lower().split(".")
+    return ".".join(parts[-2:])
+
+
+def clean_url(url):
+    p = urlparse(url)
+    query = "&".join(x for x in p.query.split("&") if x and not TRACKING_PARAMS.match(x.split("=")[0]))
+    return p._replace(fragment="", query=query).geturl()
+
+
+def looks_like_job_link(url, careers_url):
+    p, c = urlparse(url), urlparse(careers_url)
+    if p.scheme not in ("http", "https") or _site_of(p.hostname) != _site_of(c.hostname):
+        return False
+    path = p.path.rstrip("/")
+    if not path or path == c.path.rstrip("/") or not JOB_PATH_RE.search(path + "/"):
+        return False
+    last = path.split("/")[-1]
+    return bool(re.search(r"\d{3,}", path)) or last.count("-") >= 2 or last.count("_") >= 2
+
+
+def title_from_url(url):
+    """'.../jobs/12345/Senior-Software-Engineer' or '.../job/senior-software-engineer/12345'
+    -> 'Senior Software Engineer'. Empty when the link has no words in it."""
+    for seg in reversed([x for x in urlparse(url).path.split("/") if x]):
+        words = re.sub(r"[-_+]+|\d+|\.html?$", " ", unquote(seg)).split()
+        if len([w for w in words if len(w) > 1]) >= 2:
+            return " ".join(words)
+    return ""
+
+
+def sitemap_entries(xml):
+    """[(kind, url, lastmod)] from a sitemap or sitemap index."""
+    out = []
+    kind = "index" if "<sitemapindex" in xml[:3000] else "url"
+    for block in re.findall(r"<(?:url|sitemap)\b.*?</(?:url|sitemap)>", xml, re.S | re.I):
+        loc = re.search(r"<loc>\s*(.*?)\s*</loc>", block, re.S | re.I)
+        mod = re.search(r"<lastmod>\s*(.*?)\s*</lastmod>", block, re.S | re.I)
+        if loc:
+            out.append((kind, html.unescape(loc.group(1)), parse_date(mod.group(1)) if mod else None))
+    return out
+
+
+def sitemap_job_links(careers_url, robots, max_files=3, max_urls=5000):
+    """Job links (url, lastmod) from the careers site's sitemaps."""
+    p = urlparse(careers_url)
+    origin = f"{p.scheme}://{p.netloc}"
+    todo = [u for u in (robots.site_maps() or []) if _site_of(urlparse(u).hostname) == _site_of(p.hostname)]
+    todo = todo or [origin + "/sitemap.xml"]
+    links, read = {}, 0
+    while todo and read < max_files and len(links) < max_urls:
+        url = todo.pop(0)
+        if not robots.can_fetch(USER_AGENT, url):
+            continue
+        got = get_page(url, accept="application/xml,text/xml,*/*", max_bytes=10_000_000)
+        read += 1
+        if not got:
+            continue
+        entries = sitemap_entries(got[1])
+        children = [e for e in entries if e[0] == "index"]
+        if children:
+            jobby = [e for e in children if re.search(r"job|career|position|posting|vacanc", e[1], re.I)]
+            todo = [e[1] for e in (jobby or children)[:max_files]] + todo
+            continue
+        for _, loc, mod in entries:
+            if looks_like_job_link(loc, careers_url):
+                links.setdefault(clean_url(loc), mod)
+    return links
+
+
+def fetch_website(url, host=None, auto=False):
+    """A company's own careers site. If the page is really a Greenhouse, Lever, Ashby,
+    Workable, SmartRecruiters or Workday board, that board is read instead (and the company is
+    switched to it). Otherwise job pages that publish standard job details are read, a few new
+    ones per run, and each page only once."""
+    careers = url.strip()
+    if "://" not in careers:
+        careers = "https://" + careers
+    if not robots_allow(careers):
+        return result(careers, [], complete=False,
+                      note="The site's robots.txt asks automated tools not to read this page, so it is skipped.")
+    page = get_page(careers)
+    if page is None:
+        return None
+    final, text = page
+
+    direct = board_from_url(final)
+    for provider, slug in ([direct] if direct else find_boards_in_html(text))[:2]:
+        r = FETCHERS[provider](slug, None, False)
+        if r is not None:
+            r["switch_to"] = (provider, r["slug"])
+            r["note"] = (f"The careers page uses {provider.title()}, so its board is now read directly. "
+                         + (r.get("note") or "")).strip()
+            return r
+
+    rules = SETTINGS.get("rules")
+    title_ok = rules.title_ok if rules else (lambda t: True)
+    cache = SETTINGS.setdefault("website_pages", {})  # shared by worker threads; see _PAGES_LOCK
+    # Each careers site gets its own key space, even when two share a host name.
+    prefix = f"website:{urlparse(careers).netloc}:{hashlib.sha1(careers.encode()).hexdigest()[:6]}:"
+    max_age = dt.timedelta(days=SETTINGS["window_days"] + 2)
+    now = dt.datetime.now(dt.timezone.utc)
+
+    def key_for(link):
+        return prefix + hashlib.sha1(clean_url(link).encode("utf-8")).hexdigest()[:16]
+
+    parsed = parse_page(text)
+    jobs = {}
+    for j in jobs_on_page(parsed, final):  # some careers pages list every job as structured data
+        if j["url"] and j["url"] != final:
+            jobs[key_for(j["url"])] = {**j, "key": key_for(j["url"])}
+
+    candidates = {}  # url -> (title, lastmod)
+    base = parsed.base or final
+    for href, label in parsed.links:
+        link = clean_url(urljoin(base, href))
+        if looks_like_job_link(link, final) and link not in candidates:
+            candidates[link] = (label, None)
+    used_sitemap = False
+    if len(candidates) + len(jobs) < 3:
+        used_sitemap = True
+        for link, mod in sitemap_job_links(final, robots_for(final)).items():
+            candidates.setdefault(link, ("", mod))
+
+    to_read = []
+    for link, (label, mod) in candidates.items():
+        key = key_for(link)
+        if key in jobs:
+            continue
+        title = next((t for t in (label, title_from_url(link)) if len(t) > 3 and title_ok(t)), None)
+        if not title:
+            continue  # clearly not a role you want; its page is never downloaded
+        if mod and now - mod > max_age:
+            continue  # last changed before your look-back window, so posted before it too
+        with _PAGES_LOCK:
+            known = cache.get(key)
+        if known is not None:
+            if known.get("t"):
+                jobs[key] = {"key": key, "title": known["t"], "posted": parse_date(known.get("p")),
+                             "locations": known.get("l") or [], "url": link, "text": None}
+            else:
+                jobs[key] = {"key": key, "title": title, "posted": None, "locations": [], "url": link,
+                             "text": None}
+            continue
+        to_read.append((mod or dt.datetime.min.replace(tzinfo=dt.timezone.utc), link, key, title))
+
+    to_read.sort(reverse=True)  # newest first when the sitemap says when pages changed
+    read = no_data = 0
+    for _, link, key, title in to_read:
+        if read >= SETTINGS["site_pages_per_run"]:
+            jobs[key] = {"key": key, "title": title, "posted": None, "locations": [], "url": link,
+                         "text": None}
+            continue
+        if not robots_allow(link):
+            continue
+        got = get_page(link)
+        read += 1
+        found = jobs_on_page(parse_page(got[1]), got[0]) if got else []
+        if found:
+            j = found[0]
+            with _PAGES_LOCK:
+                cache[key] = {"t": j["title"], "p": j["posted"].isoformat() if j["posted"] else None,
+                              "l": j["locations"]}
+            jobs[key] = {**j, "key": key, "url": link}
+        else:
+            no_data += 1
+            if got:
+                with _PAGES_LOCK:
+                    cache[key] = {}
+            jobs[key] = {"key": key, "title": title, "posted": None, "locations": [], "url": link,
+                         "text": None}
+
+    with _PAGES_LOCK:
+        for key in [k for k in cache if k.startswith(prefix) and k not in jobs]:
+            del cache[key]  # forget pages that are no longer listed
+
+    if not jobs:
+        note = ("No job links found on the careers page. It probably loads jobs with JavaScript, "
+                "which this script cannot read; check it directly.")
+    else:
+        note = (f"Careers website{' (sitemap)' if used_sitemap else ''}: {len(jobs)} relevant job "
+                f"link{'s' if len(jobs) != 1 else ''}, {read} page{'s' if read != 1 else ''} read this run"
+                + (f", {no_data} without job details" if no_data else "") + ".")
+    out = [{k: j.get(k) for k in ("key", "title", "locations", "url", "posted", "text")}
+           for j in jobs.values()]
+    return result(careers, out, complete=False, note=note)
+
+
 FETCHERS = {"greenhouse": fetch_greenhouse, "ashby": fetch_ashby, "lever": fetch_lever,
             "smartrecruiters": fetch_smartrecruiters, "workable": fetch_workable,
-            "workday": fetch_workday}
+            "workday": fetch_workday, "website": fetch_website}
 AUTO_ORDER = ["greenhouse", "ashby", "lever", "smartrecruiters", "workable"]
 
 
 def slug_variants(name):
-    """The few spellings boards actually use: 'roserocket', 'rose-rocket', 'Rose Rocket'."""
-    low = name.lower().strip()
+    """The few spellings boards actually use: 'roserocket', 'rose-rocket', 'Rose Rocket'.
+    'Jane (Jane App)' also tries 'janeapp'; 'Acme Inc.' also tries 'acme'."""
+    base = re.sub(r"\s*\(.*?\)\s*", " ", name).strip() or name.strip()
+    base = re.sub(r"[,.]?\s+(inc|ltd|llc|corp|corporation|limited)\.?$", "", base, flags=re.I).strip()
+    paren = re.findall(r"\((.*?)\)", name)
     out = []
-    for v in (re.sub(r"[^a-z0-9]", "", low), re.sub(r"[^a-z0-9]+", "-", low).strip("-"), name.strip()):
-        if v and v not in out:
-            out.append(v)
-    return out
+    pieces = [base] + ([x.strip() for x in base.split(" / ")] if " / " in base else [])
+    for text in pieces + [p for p in paren if len(p) > 3 and p.lower() not in ("digital", "canada", "remote")]:
+        low = text.lower()
+        for v in (re.sub(r"[^a-z0-9]", "", low), re.sub(r"[^a-z0-9]+", "-", low).strip("-")):
+            if v and v not in out:
+                out.append(v)
+    if name.strip() not in out and " " in name.strip() and "(" not in name:
+        out.append(name.strip())  # Ashby keeps spaces: 'Rose Rocket'
+    return out[:6]
 
 
-def load_company(entry, state):
-    """Return (provider, result) or None. Auto-detects the board for entries without a prefix."""
+ATS_HINTS = {"greenhouse": ["greenhouse"], "ashby": ["ashby"], "lever": ["lever"], "workable": ["workable"],
+             "smartrecruiters": ["smartrecruiters"], "internal": [], "own": [], "workday": [], "icims": [],
+             "taleo": [], "successfactors": [], "other": []}
+
+
+def load_company(entry, state, only=None):
+    """Return (provider, result) or None. Auto-detects the board for entries without a prefix.
+    only: the job boards worth guessing for this company (from the ats column); None = all."""
     cache = state.setdefault("resolved", {})
     if entry in cache:
         c = cache[entry]
@@ -681,11 +1611,17 @@ def load_company(entry, state):
         provider, slug = entry.split(":", 1)
         candidates = [(provider, slug, False)]
     else:
-        candidates = [(p, v, True) for p in AUTO_ORDER for v in slug_variants(entry)]
+        variants = slug_variants(entry)
+        # Workable and SmartRecruiters allow the fewest requests, so only the likeliest spelling
+        # is tried there unless the company is known to use them.
+        candidates = [(p, v, True) for p in AUTO_ORDER if only is None or p in only
+                      for v in (variants if only or p not in ("workable", "smartrecruiters") else variants[:1])]
 
     for provider, slug, auto in candidates:
         r = FETCHERS[provider](slug, None, auto)
         if r is not None:
+            if r.get("switch_to"):  # a careers website that is really a job board
+                provider = r["switch_to"][0]
             cache[entry] = {"provider": provider, "slug": r["slug"], "host": r.get("host")}
             return provider, r
     return None
@@ -698,7 +1634,7 @@ def display_name(entry):
 
 # ----------------------------------------------------------------- company list
 CSV_FIELDS = ["priority", "region", "company", "score", "tier", "type", "ticker", "stage",
-              "last_raise", "layoffs_12m", "board", "slug", "careers_url", "hubs", "enabled",
+              "last_raise", "layoffs_12m", "board", "slug", "careers_url", "domain", "ats", "hubs", "enabled",
               "status", "verified", "market_cap_b", "stock_12m_pct", "revenue_growth_pct",
               "profit_margin_pct", "metrics_updated", "notes"]
 
@@ -708,7 +1644,7 @@ def companies_path(cfg):
 
 
 def load_company_rows(cfg):
-    """Rows from companies.csv, plus any quick additions listed in config.json."""
+    """Rows from companies.csv, plus any extra_companies listed in config.toml."""
     rows, path = [], companies_path(cfg)
     if path.exists():
         with open(path, newline="", encoding="utf-8-sig") as f:
@@ -717,10 +1653,10 @@ def load_company_rows(cfg):
                 if r.get("company"):
                     rows.append(r)
     else:
-        log.warning("%s not found; using only the companies listed in config.json", path.name)
+        log.warning("%s not found; using only the extra_companies listed in config.toml", path.name)
     for extra in cfg.get("companies", []):
         board, slug = extra.split(":", 1) if ":" in extra else ("auto", extra)
-        rows.append({"priority": "9", "region": "From config.json", "company": display_name(extra),
+        rows.append({"priority": "9", "region": "From config file", "company": display_name(extra),
                      "board": board, "slug": slug, "enabled": "yes"})
     return rows
 
@@ -728,7 +1664,7 @@ def load_company_rows(cfg):
 def save_company_rows(cfg, rows):
     """Write detected boards, metrics and scores back so the list maintains itself."""
     path = companies_path(cfg)
-    file_rows = sorted((r for r in rows if r.get("region") != "From config.json"),
+    file_rows = sorted((r for r in rows if r.get("region") != "From config file"),
                        key=lambda r: (priority_of(r), r["company"].lower()))
     fields = list(CSV_FIELDS) + sorted({k for r in file_rows for k in r} - set(CSV_FIELDS))
     tmp = path.with_name(path.stem + ".saving.csv")
@@ -743,9 +1679,18 @@ def save_company_rows(cfg, rows):
         tmp.unlink(missing_ok=True)
 
 
+def reads_website(row):
+    """True when this company is read from its own careers website."""
+    board = (row.get("board") or "").lower()
+    url = row.get("careers_url") or (row.get("slug") if board == "website" else "")
+    return bool(SETTINGS["career_sites"] and url and (board == "website" or board in MANUAL_BOARDS))
+
+
 def entry_for(row):
     board, slug = (row.get("board") or "auto").lower(), row.get("slug") or ""
-    return f"{board}:{slug}" if board in FETCHERS and slug else (slug or row["company"])
+    if reads_website(row):
+        return f"website:{row.get('careers_url') or slug}"
+    return f"{board}:{slug}" if board in FETCHERS and board != "website" and slug else (slug or row["company"])
 
 
 def is_enabled(row):
@@ -753,7 +1698,8 @@ def is_enabled(row):
 
 
 def is_manual(row):
-    return (row.get("board") or "").lower() in MANUAL_BOARDS
+    board = (row.get("board") or "").lower()
+    return (board in MANUAL_BOARDS or board == "website") and not reads_website(row)
 
 
 def priority_of(row):
@@ -904,8 +1850,36 @@ def fetch_board(row, state, rules, has_text, now, max_age, window_start, known_b
     Workday and SmartRecruiters lists carry no descriptions, so a description is fetched
     only for postings that could match (right title, fresh enough, in one of your regions)
     and only once: it is saved and never requested again."""
+    entry = entry_for(row)
+    careers = row.get("careers_url") if SETTINGS["career_sites"] else ""
+    hint = (row.get("ats") or "").strip().lower()
+    only = ATS_HINTS.get(hint.split()[0]) if hint else None  # unknown hint: guess every board
     try:
-        loaded = load_company(entry_for(row), state)
+        loaded = site = None
+        if (careers and not entry.startswith("website:") and entry not in state["resolved"]
+                and (row.get("board") or "auto").lower() in ("auto", "")):
+            # A company with no known board: its careers page usually names the board, which
+            # is far cheaper than guessing board names. A careers page with readable jobs
+            # needs no guessing at all.
+            site = load_company(f"website:{careers}", state)
+            if site and (site[0] != "website" or site[1].get("jobs")):
+                loaded = site
+        guessing = entry not in state["resolved"] and (
+            ":" not in entry or (entry.startswith("workday:") and not parse_workday(entry[8:])[2]))
+        guesses = state.setdefault("board_guesses", {})
+        last_guess = parse_date(guesses.get(row["company"]))
+        may_guess = (not guessing or SETTINGS["guess_every"] is None or last_guess is None
+                     or now - last_guess >= SETTINGS["guess_every"])
+        if loaded is None and may_guess:
+            loaded = load_company(entry, state, only)
+            if guessing:
+                # Spread the daily retries over the day instead of doing them all in one run.
+                spread = (zlib.crc32(row["company"].encode()) % 600) / 1000 * (SETTINGS["guess_every"] or dt.timedelta(0))
+                guesses[row["company"]] = (now - spread).isoformat()
+            if loaded is not None:
+                guesses.pop(row["company"], None)
+        if loaded is None and careers and not entry.startswith("website:"):
+            loaded = site or load_company(f"website:{careers}", state)  # no board: read the website
     except RateLimited as exc:
         return {"row": row, "deferred": str(exc)}
     except Exception as exc:
@@ -1080,6 +2054,531 @@ def find_new_matches(store, state, rules, now, max_age, window_start):
     return matches
 
 
+# ----------------------------------------------------------------- finding new companies
+# A web search for fresh postings on the job-board sites, the same as typing
+#   site:jobs.ashbyhq.com (intitle:"Software Engineer" OR ...) ("Toronto" OR ...) -India
+# into Google. Each result link names the company's board, and any board you are not
+# already watching is added to companies.csv. From then on the whole board is read through
+# its own feed, which gives exact posting dates and full descriptions.
+SEARCH_SITES = {"ashby": "jobs.ashbyhq.com", "greenhouse": "greenhouse.io", "lever": "jobs.lever.co",
+                "workable": "apply.workable.com", "smartrecruiters": "jobs.smartrecruiters.com",
+                "workday": "myworkdayjobs.com"}
+SEARCH_KEYS = {"serper": "SERPER_API_KEY", "brave": "BRAVE_API_KEY", "serpapi": "SERPAPI_API_KEY"}
+SEARCH_PAGE_SIZE = {"serper": 10, "brave": 20, "serpapi": 10}
+# look_back -> (Google tbs value, Brave freshness value)
+LOOK_BACK = {"day": ("qdr:d", "pd"), "week": ("qdr:w", "pw"), "month": ("qdr:m", "pm"), "any": (None, None)}
+NOT_CAREER_SITES = ("linkedin.", "indeed.", "glassdoor.", "ziprecruiter.", "wikipedia.", "crunchbase.",
+                    "builtin", "wellfound.", "angel.co", "monster.", "simplyhired.", "workopolis.",
+                    "jobbank.gc.ca", "facebook.", "twitter.", "x.com", "instagram.", "youtube.",
+                    "bloomberg.", "levels.fyi", "teamblind.", "comparably.", "zoominfo.", "rocketreach.",
+                    "theorg.com", "welcometothejungle.", "ycombinator.com", "reddit.", "talent.com",
+                    "jooble.", "careerbuilder.", "dice.com", "eluta.ca", "jobillico.", "workingnomads",
+                    "remoteok", "weworkremotely")
+
+
+class SearchError(Exception):
+    """The search service refused or failed; the message says why."""
+
+
+def build_query(host, titles, places, skip_words):
+    def quoted(t):
+        return '"' + str(t).replace('"', "").strip() + '"'
+    parts = [f"site:{host}"]
+    if titles:
+        parts.append("(" + " OR ".join(f"intitle:{quoted(t)}" for t in titles) + ")")
+    if places:
+        parts.append("(" + " OR ".join(quoted(p) for p in places) + ")")
+    for w in skip_words:
+        w = str(w).strip()
+        if w:
+            parts.append("-" + (quoted(w) if " " in w else w))
+    return " ".join(parts)
+
+
+def search_page(provider, key, query, page, look_back, country=""):
+    """One page of results as [(url, title)]."""
+    tbs, freshness = LOOK_BACK[look_back]
+    endpoint = {"serper": "https://google.serper.dev/search",
+                "brave": "https://api.search.brave.com/res/v1/web/search",
+                "serpapi": "https://serpapi.com/search.json"}[provider]
+    LIMITER.wait(urlparse(endpoint).hostname)
+    try:
+        if provider == "serper":
+            body = {"q": query, "num": 10, "page": page}
+            if tbs:
+                body["tbs"] = tbs
+            if country:
+                body["gl"] = country
+            r = session().post(endpoint, json=body, timeout=30,
+                               headers={"X-API-KEY": key, "Content-Type": "application/json"})
+        elif provider == "brave":
+            params = {"q": query, "count": 20, "offset": page - 1}
+            if freshness:
+                params["freshness"] = freshness
+            if country:
+                params["country"] = country
+            r = session().get(endpoint, params=params, timeout=30,
+                              headers={"X-Subscription-Token": key, "Accept": "application/json"})
+        else:
+            params = {"engine": "google", "q": query, "num": 10, "start": (page - 1) * 10, "api_key": key}
+            if tbs:
+                params["tbs"] = tbs
+            if country:
+                params["gl"] = country
+            r = session().get(endpoint, params=params, timeout=45)
+    except requests.RequestException as exc:
+        raise SearchError(f"could not reach {provider} ({exc.__class__.__name__})") from None
+    if r.status_code in (401, 403):
+        raise SearchError(f"{provider} rejected the API key; check {SEARCH_KEYS[provider]} in .env")
+    if r.status_code in (402, 429):
+        raise SearchError(f"{provider} says the plan's query limit or rate limit was reached")
+    if r.status_code >= 400:
+        raise SearchError(f"{provider} answered HTTP {r.status_code}: {r.text[:150]}")
+    try:
+        data = r.json()
+    except ValueError:
+        raise SearchError(f"{provider} sent a reply that is not JSON") from None
+    if provider == "serper":
+        items = [(o.get("link"), o.get("title", "")) for o in data.get("organic") or []]
+    elif provider == "brave":
+        items = [(o.get("url"), o.get("title", "")) for o in (data.get("web") or {}).get("results") or []]
+    else:
+        if data.get("error") and "hasn't returned any results" not in data["error"]:
+            raise SearchError(f"serpapi: {data['error']}")
+        items = [(o.get("link"), o.get("title", "")) for o in data.get("organic_results") or []]
+    return [(u, html.unescape(t or "")) for u, t in items if u]
+
+
+def norm_name(s):
+    return re.sub(r"[^a-z0-9]", "", (s or "").lower())
+
+
+def company_name_for(provider, slug, title=""):
+    """A readable company name: from the result title when it agrees with the slug,
+    otherwise from the slug ('rose-rocket' -> 'Rose Rocket')."""
+    if provider == "workday":
+        base = parse_workday(slug)[0].replace("-", " ").title()
+        key = norm_name(base)
+    else:
+        base, key = display_name(slug), norm_name(slug)
+    t = " ".join((title or "").split())
+    m = {"greenhouse": re.search(r"\bat\s+(.+?)\s*$", t),
+         "ashby": re.search(r"@\s*(.+?)\s*$", t),
+         "lever": re.match(r"(.+?)\s+[-|]\s+", t),
+         "workable": re.search(r"[-|]\s+([^-|]+?)\s*$", t),
+         "smartrecruiters": re.search(r"[-|]\s+([^-|]+?)\s*$", t)}.get(provider)
+    guess = m.group(1).strip(" -|") if m else ""
+    if guess and len(guess) <= 60 and key and (key in norm_name(guess) or norm_name(guess) in key):
+        return guess
+    return base
+
+
+def _append_note(old, text):
+    old = (old or "").strip()
+    return f"{old}; {text}" if old else text
+
+
+def merge_found_boards(state, rows, found, today, mode="watch", region="Found by search",
+                       how="search"):
+    """Add boards to the company list. found: [(provider, slug, title, link)].
+    A board already watched is skipped. A company already listed without a working board
+    is given this one. Anything else becomes a new row. Returns (added, updated) rows."""
+    by_board, by_name = {}, {}
+    for r in rows:
+        b = (r.get("board") or "").lower()
+        if b in FETCHERS and b != "website" and r.get("slug"):
+            by_board[board_key(b, r["slug"])] = r
+        if r.get("region") == "From config file":
+            continue  # lives in config.toml, not companies.csv
+        by_name.setdefault(norm_name(r["company"]), r)
+        if r.get("slug") and b not in ("workday", "website"):
+            by_name.setdefault(norm_name(r["slug"]), r)
+    for c in state.get("resolved", {}).values():  # boards found earlier by auto-detection
+        by_board.setdefault(board_key(c["provider"], c["slug"]), None)
+
+    names_taken = {norm_name(r["company"]) for r in rows}
+    added, updated = [], []
+    for provider, slug, title, link in found:
+        k = board_key(provider, slug)
+        if k in by_board:
+            continue
+        name = company_name_for(provider, slug, title)
+        r = by_name.get(norm_name(name)) or (by_name.get(norm_name(slug)) if provider != "workday" else None)
+        if r is not None:
+            b = (r.get("board") or "").lower()
+            has_board = (b in FETCHERS and b != "website" and r.get("slug")
+                         and r.get("status") != "not_found")
+            by_board[k] = r
+            if has_board:
+                continue  # already watched on another board
+            r.update(board=provider, slug=slug, status="", verified="")
+            r["notes"] = _append_note(r.get("notes"), f"{provider.title()} board found by {how} {today}")
+            state.get("companies", {}).pop(r["company"], None)  # forget an old NOT FOUND
+            updated.append(r)
+            continue
+        if norm_name(name) in names_taken:
+            name = f"{name} ({provider.title()})"
+        row = {"priority": "8", "region": region, "company": name, "board": provider, "slug": slug,
+               "enabled": "no" if mode == "review" else "yes",
+               "notes": f"Found by {how} {today}" + (f": {title}" if title else "")}
+        row["notes"] = row["notes"][:200]
+        rows.append(row)
+        added.append(row)
+        by_board[k] = row
+        by_name[norm_name(name)] = row
+        names_taken.add(norm_name(name))
+    return added, updated
+
+
+def _search_key(cfg):
+    provider = cfg["search"]["provider"]
+    key = os.environ.get(SEARCH_KEYS[provider], "").strip()
+    if not key:
+        log.warning("Web search skipped: %s is not set. Put it in a .env file next to job_watcher.py "
+                    "(see .env.example), or set enabled = false under [search] in config.toml.",
+                    SEARCH_KEYS[provider])
+    return provider, key
+
+
+def _queries_left(cfg, state, now):
+    month = now.astimezone().strftime("%Y-%m")
+    used = state.setdefault("search", {}).setdefault("queries_by_month", {})
+    for old in sorted(m for m in used if m < month)[:-2]:
+        used.pop(old, None)  # keep a few months of history
+    return int(cfg["search"]["monthly_query_limit"]) - used.get(month, 0), month, used
+
+
+def search_due(cfg, state, now):
+    s = cfg["search"]
+    if not s["enabled"]:
+        return False
+    last = parse_date(state.get("search", {}).get("last_run"))
+    gap = dt.timedelta(hours=24 / max(0.1, float(s["runs_per_day"]))) - dt.timedelta(minutes=10)
+    return last is None or now - last >= gap
+
+
+def run_search(cfg, state, rows, now, look_back=None):
+    """Search for fresh postings and add their companies. Returns True if companies.csv changed."""
+    s = cfg["search"]
+    provider, key = _search_key(cfg)
+    if not key:
+        return False
+    left, month, used = _queries_left(cfg, state, now)
+    if left <= 0:
+        log.info("Web search skipped: this month's limit of %s queries is used up "
+                 "(monthly_query_limit in config.toml).", s["monthly_query_limit"])
+        return False
+    look_back = look_back or s["look_back"]
+    found, queries, failed = {}, 0, None
+    for site in s["sites"]:
+        query = build_query(SEARCH_SITES[site.lower()], s["titles"], s["places"], s["skip_words"])
+        for page in range(1, int(s["pages_per_query"]) + 1):
+            if queries >= left or failed:
+                break
+            try:
+                results = search_page(provider, key, query, page, look_back, s.get("country", ""))
+            except SearchError as exc:
+                failed = str(exc)
+                break
+            queries += 1
+            for link, title in results:
+                b = board_from_url(link)
+                if b:
+                    found.setdefault(board_key(*b), (b[0], b[1], title, link))
+            if len(results) < SEARCH_PAGE_SIZE[provider]:
+                break
+    used[month] = used.get(month, 0) + queries
+    if failed:
+        log.warning("Web search stopped: %s.", failed)
+    if queries:
+        state["search"]["last_run"] = now.isoformat()
+    today = now.astimezone().date().isoformat()
+    added, updated = merge_found_boards(state, rows, list(found.values()), today,
+                                        mode=s["new_companies"])
+    log.info("Web search (%s, past %s): %d queries, %d used in %s of %s allowed. %d job boards in "
+             "the results, %d new compan%s added, %d listed compan%s given a board.",
+             provider, look_back, queries, used[month], month, s["monthly_query_limit"], len(found),
+             len(added), "y" if len(added) == 1 else "ies", len(updated), "y" if len(updated) == 1 else "ies")
+    for r in added:
+        log.info("  ADDED  %s (%s: %s)%s", r["company"], r["board"], r["slug"],
+                 "  [enabled = no, for review]" if r["enabled"] == "no" else "")
+    for r in updated:
+        log.info("  BOARD  %s now uses %s: %s", r["company"], r["board"], r["slug"])
+    return bool(added or updated)
+
+
+def looks_like_company_site(link, company):
+    host = (urlparse(link).hostname or "").lower()
+    if not host or any(bad in host for bad in NOT_CAREER_SITES):
+        return False
+    squashed = norm_name(host)
+    words = [w for w in re.findall(r"[a-z0-9]+", company.lower()) if len(w) >= 3 and w not in
+             {"inc", "ltd", "the", "and", "technologies", "technology", "labs", "software", "systems",
+              "group", "corp", "company", "canada", "global", "digital", "solutions", "health"}]
+    return norm_name(company) in squashed or any(w in squashed for w in words)
+
+
+def find_career_pages(cfg, state, rows, now):
+    """For companies with no job board found and no careers_url, search '"Company" careers'
+    and record the careers page (or the job board it points to). Returns True if rows changed."""
+    provider, key = _search_key(cfg)
+    if not key:
+        return False
+    limit = int(cfg["search"]["career_page_lookups_per_run"])
+    left, month, used = _queries_left(cfg, state, now)
+    tried = state.setdefault("career_page_lookups", {})
+    today = now.astimezone().date().isoformat()
+    todo = []
+    for r in rows:
+        board = (r.get("board") or "auto").lower()
+        unresolved = (board in ("auto", "") or r.get("status") == "not_found"
+                      or state["companies"].get(r["company"], {}).get("result") == "NOT FOUND")
+        last = parse_date(tried.get(r["company"]))
+        if (is_enabled(r) and unresolved and not r.get("careers_url") and board not in MANUAL_BOARDS
+                and r.get("region") != "From config file" and not (last and now - last < dt.timedelta(days=60))):
+            todo.append(r)
+    todo = todo[:max(0, min(limit, left))]
+    if not todo:
+        log.info("Career page lookup: nothing to look up (or this month's query limit is used up).")
+        return False
+    log.info("Looking up careers pages for %d companies with no job board found...", len(todo))
+    changed, queries = False, 0
+    for r in todo:
+        try:
+            results = search_page(provider, key, f'"{r["company"]}" careers jobs', 1, "any",
+                                  cfg["search"].get("country", ""))
+        except SearchError as exc:
+            log.warning("Career page lookup stopped: %s.", exc)
+            break
+        queries += 1
+        tried[r["company"]] = today
+        hit = None
+        for link, title in results[:5]:
+            b = board_from_url(link)
+            if b:
+                hit = ("board", b, link)
+                break
+            if looks_like_company_site(link, r["company"]):
+                hit = ("site", None, link)
+                break
+        if hit is None:
+            log.info("  NONE   %s: no confident match", r["company"])
+            continue
+        if hit[0] == "board":
+            r.update(board=hit[1][0], slug=hit[1][1], status="", verified="")
+            log.info("  BOARD  %s: %s %s", r["company"], hit[1][0], hit[1][1])
+        else:
+            r.update(careers_url=clean_url(hit[2]), board="website", slug="", status="", verified="")
+            log.info("  PAGE   %s: %s", r["company"], r["careers_url"])
+        r["notes"] = _append_note(r.get("notes"), f"careers page found by search {today}")
+        state["companies"].pop(r["company"], None)
+        changed = True
+    used[month] = used.get(month, 0) + queries
+    return changed
+
+
+def add_company(cfg, link, name=None):
+    """--add: watch a company from any job posting, board or careers page link."""
+    now = dt.datetime.now(dt.timezone.utc)
+    today = now.astimezone().date().isoformat()
+    state = load_json(STATE_PATH, {"jobs": {}, "resolved": {}, "companies": {}})
+    state.setdefault("companies", {})
+    rows = load_company_rows(cfg)
+    b = board_from_url(link)
+    if b:
+        added, updated = merge_found_boards(state, rows, [(b[0], b[1], "", link)], today,
+                                            region="Added by you", how="you")
+        if added and name:
+            added[0]["company"] = name
+        if not (added or updated):
+            print(f"Already watching that board ({b[0]}: {b[1]}).")
+            return
+        r = (added or updated)[0]
+        print(f"{'Added' if added else 'Updated'} {r['company']}: {r['board']} board '{r['slug']}'.")
+    else:
+        if "://" not in link:
+            link = "https://" + link
+        host = (urlparse(link).hostname or "").lower()
+        label = name or next((p for p in host.split(".") if p not in ("www", "careers", "jobs", "join",
+                                                                       "work", "apply", "boards")),
+                             host).replace("-", " ").title()
+        existing = next((r for r in rows if norm_name(r["company"]) == norm_name(label)
+                         and r.get("region") != "From config file"), None)
+        if existing:
+            no_board = ((existing.get("board") or "auto").lower() in ("auto", "", "other")
+                        or existing.get("status") != "ok")
+            existing.update(careers_url=clean_url(link), status="", verified="")
+            if no_board:
+                existing.update(board="website", slug="")
+            state["companies"].pop(existing["company"], None)
+            print(f"Updated {existing['company']}: careers page {existing['careers_url']}.")
+        else:
+            rows.append({"priority": "8", "region": "Added by you", "company": label, "board": "website",
+                         "careers_url": clean_url(link), "enabled": "yes", "notes": f"Added by you {today}"})
+            print(f"Added {label}: careers page {clean_url(link)}. "
+                  "The next run checks whether it uses a job board and reads it.")
+    save_company_rows(cfg, rows)
+    save_json(STATE_PATH, state)
+    print(f"Saved to {companies_path(cfg).name}. Run the watcher to read it now.")
+
+
+# ----------------------------------------------------------------- importing company lists
+# --import reads any spreadsheet (.xlsx or .csv) that has a "Company" column, and ideally a
+# careers page column, and adds every company you are not watching yet to companies.csv.
+AGGREGATOR_HOSTS = NOT_CAREER_SITES + ("communitech.", "edtech.com", "builtinvancouver", "builtintoronto")
+NAME_STOPWORDS = {"digital", "canada", "remote", "us", "usa", "inc", "the"}
+
+
+def name_keys(name):
+    """Every name a company might be listed under: 'Jane (Jane App)' -> jane, janeapp."""
+    base = re.sub(r"\s*\(.*?\)\s*", " ", name).strip()
+    keys = {norm_name(name), norm_name(base)}
+    keys |= {norm_name(p) for p in re.findall(r"\((.*?)\)", name) if p.strip().lower() not in NAME_STOPWORDS}
+    if " / " in base:
+        keys |= {norm_name(x) for x in base.split(" / ")}
+    stripped = re.sub(r"\b(inc|ltd|llc|corp|corporation|limited|technologies|technology|software|labs|group)\b\.?",
+                      "", base, flags=re.I)
+    keys.add(norm_name(stripped))
+    return {k for k in keys if len(k) >= 2}
+
+
+def site_domain(url):
+    host = (urlparse(url if "://" in (url or "") else "https://" + (url or "")).hostname or "").lower()
+    return _site_of(host) if host and "." in host else ""
+
+
+def guess_region(text):
+    t = f" {text or ''} "
+    checks = [("Vancouver / BC", r"Vancouver|\bBC\b|British Columbia|Burnaby|Victoria|Richmond|Surrey|Kelowna|"
+                                 r"Kamloops|Langley|Coquitlam|New Westminster"),
+              ("Toronto / GTA", r"Toronto|\bGTA\b|Mississauga|Markham|Kitchener|Waterloo|Guelph|Hamilton|Oakville"),
+              ("Ottawa", r"Ottawa"),
+              ("Seattle", r"Seattle|Bellevue|Redmond|Kirkland|,\s*WA\b"),
+              ("California", r"California|,\s*CA\b|San Francisco|Bay Area|Los Angeles|San Diego|Palo Alto|San Jose"),
+              ("Rest of Canada", r"Canada|Montr[eé]al|Calgary|Edmonton|Halifax|Winnipeg|Quebec|Ontario|Alberta")]
+    for region, pattern in checks:
+        if re.search(pattern, t, re.I):
+            return region
+    return "Remote / other US"
+
+
+def _sheet_rows(path):
+    """(sheet name, header, rows) for every sheet or CSV that has a Company column."""
+    if path.suffix.lower() == ".csv":
+        with open(path, newline="", encoding="utf-8-sig") as f:
+            tables = [(path.stem, list(csv.reader(f)))]
+    else:
+        wb = load_workbook(path, read_only=True, data_only=True)
+        tables = [(ws.title, [list(r) for r in ws.iter_rows(values_only=True)]) for ws in wb.worksheets]
+        wb.close()
+    out = []
+    for title, rows in tables:
+        for i, row in enumerate(rows[:15]):
+            cells = [str(c or "").strip().lower() for c in row]
+            if "company" in cells:
+                header = [str(c or "").strip() for c in row]
+                body = [r for r in rows[i + 1:] if r and any(c not in (None, "") for c in r)]
+                out.append((title, header, body))
+                break
+    return out
+
+
+def _column(header, *words, avoid=()):
+    for i, h in enumerate(header):
+        low = h.lower()
+        if any(w in low for w in words) and not any(a in low for a in avoid):
+            return i
+    return None
+
+
+def import_companies(cfg, paths):
+    """--import: add companies from spreadsheets to companies.csv. Returns (added, updated)."""
+    rows = load_company_rows(cfg)
+    file_rows = [r for r in rows if r.get("region") != "From config file"]
+    by_key, by_site, by_board = {}, {}, {}
+    for r in file_rows:
+        for k in name_keys(r["company"]):
+            by_key.setdefault(k, r)
+        if r.get("slug") and (r.get("board") or "").lower() in FETCHERS:
+            by_board[board_key(r["board"], r["slug"])] = r
+            by_key.setdefault(norm_name(r["slug"]), r)
+        if site_domain(r.get("careers_url")) and not any(a in r.get("careers_url", "") for a in AGGREGATOR_HOSTS):
+            by_site.setdefault(site_domain(r["careers_url"]), r)
+    priority_of_region = {}
+    for r in file_rows:
+        priority_of_region.setdefault(r.get("region", ""), Counter())[priority_of(r)] += 1
+    today = dt.date.today().isoformat()
+    added, updated, seen = [], [], 0
+    for path in paths:
+        path = Path(path)
+        if not path.exists():
+            raise ConfigError(f"{path} not found")
+        for title, header, body in _sheet_rows(path):
+            ci = header.index(next(h for h in header if h.lower() == "company"))
+            ui = _column(header, "careers url", "careers / job", "career", "job board", "url", "link",
+                         avoid=("role title", "job link"))
+            ai = _column(header, "ats")
+            loc_i = _column(header, "location", "geography", "hq", "city")
+            info = [i for i in (_column(header, "sector", "industry", "category"),
+                                _column(header, "remote policy", "work model"),
+                                _column(header, "hires in canada", "work auth"),
+                                _column(header, "stack")) if i is not None]
+            for raw in body:
+                cell = str(raw[ci] or "").strip() if ci < len(raw) else ""
+                if not cell or cell.lower() in ("company", "example"):
+                    continue
+                names = [x.strip() for x in cell.split(" / ")] if cell.count(" / ") >= 2 else [cell]
+                url = str(raw[ui] or "").strip() if ui is not None and ui < len(raw) else ""
+                url = url if url.startswith("http") and not any(a in url for a in AGGREGATOR_HOSTS) else ""
+                ats = str(raw[ai] or "").strip() if ai is not None and ai < len(raw) else ""
+                place = str(raw[loc_i] or "").strip() if loc_i is not None and loc_i < len(raw) else ""
+                extra = "; ".join(str(raw[i]).strip() for i in info if i < len(raw) and raw[i])
+                for name in names:
+                    seen += 1
+                    board = board_from_url(url) if url and len(names) == 1 else None
+                    match = (by_board.get(board_key(*board)) if board else None) \
+                        or next((by_key[k] for k in name_keys(name) if k in by_key), None) \
+                        or (by_site.get(site_domain(url)) if url and not board and len(names) == 1 else None)
+                    if match is not None:
+                        changed = False
+                        if url and not board and not match.get("careers_url"):
+                            match["careers_url"] = url
+                            changed = True
+                        if board and (match.get("board") or "auto").lower() in ("auto", "", "other") \
+                                and match.get("status") != "ok":
+                            match.update(board=board[0], slug=board[1], status="")
+                            changed = True
+                        if ats and not match.get("ats"):
+                            match["ats"] = ats.lower()
+                            changed = True
+                        if changed and match not in updated and match not in added:
+                            updated.append(match)
+                        continue
+                    region = guess_region(place) if place else "Rest of Canada"
+                    counts = priority_of_region.get(region)
+                    row = {"priority": str(counts.most_common(1)[0][0]) if counts else "7", "region": region,
+                           "company": name, "board": board[0] if board else "auto",
+                           "slug": board[1] if board else "", "careers_url": "" if board else url,
+                           "ats": ats.lower(), "hubs": place[:80], "enabled": "yes",
+                           "notes": f"Imported {today} from {path.name} ({title})" + (f": {extra}" if extra else "")}
+                    row["notes"] = row["notes"][:220]
+                    rows.append(row)
+                    added.append(row)
+                    for k in name_keys(name):
+                        by_key.setdefault(k, row)
+                    if board:
+                        by_board[board_key(*board)] = row
+                    elif url:
+                        by_site.setdefault(site_domain(url), row)
+    save_company_rows(cfg, rows)
+    print(f"Read {seen} company rows. Added {len(added)} new companies and filled in missing details "
+          f"for {len(updated)} you already had. Saved to {companies_path(cfg).name}.")
+    regions = Counter(r["region"] for r in added)
+    if regions:
+        print("New companies by region: " + ", ".join(f"{k} {v}" for k, v in regions.most_common()))
+    return added, updated
+
+
 # ----------------------------------------------------------------- state
 def load_json(path, default):
     try:
@@ -1105,7 +2604,7 @@ def to_local_naive(iso):
 # ----------------------------------------------------------------- excel
 COLUMNS = [("Found", 17), ("Posted", 11), ("Company", 20), ("Score", 7), ("Title", 46),
            ("Location", 34), ("Region", 22), ("Level", 12), ("Stack match", 28), ("Board", 14),
-           ("Status", 14), ("Notes", 30), ("Posting", 9), ("Key", 10)]
+           ("Status", 14), ("Notes", 30), ("Outreach", 12), ("Posting", 9), ("Key", 10)]
 HEADERS = [c for c, _ in COLUMNS]
 COL = {name: i + 1 for i, name in enumerate(HEADERS)}
 LETTER = {name: chr(64 + i) for name, i in COL.items()}
@@ -1131,15 +2630,36 @@ def read_excel_edits(path):
         rows = wb["Jobs"].iter_rows(values_only=True)
         header = list(next(rows))
         ki, si, ni = header.index("Key"), header.index("Status"), header.index("Notes")
+        oi = header.index("Outreach") if "Outreach" in header else None  # older trackers lack it
         edits = {}
         for row in rows:
             if row and row[ki]:
                 edits[row[ki]] = {"status": row[si] or "New", "notes": row[ni] or ""}
+                if oi is not None:
+                    edits[row[ki]]["outreach"] = (row[oi] or "").strip()
         wb.close()
         return edits
     except Exception as exc:
         log.warning("Could not read edits from %s (%s)", path.name, exc)
         return {}
+
+
+def apply_excel_edits(state, edits, now):
+    """Bring your Status, Notes and Outreach edits from the tracker into the saved state."""
+    for key, edit in edits.items():
+        j = state["jobs"].get(key)
+        if not j:
+            continue
+        outreach = edit.pop("outreach", None)  # None when the tracker has no Outreach column
+        j.update(edit)
+        if outreach is None:
+            continue
+        old = j.get("outreach", "")
+        if outreach == "Email" and old and old != "Email" and j.get("outreach_prepared"):
+            continue  # a tracker saved before outreach.py ran; keep what outreach.py recorded
+        if outreach == "Sent" and old != "Sent" and not j.get("outreach_sent"):
+            j["outreach_sent"] = now.isoformat()  # starts the follow-up clock
+        j["outreach"] = outreach
 
 
 def write_excel(path, state, cfg, scores):
@@ -1171,7 +2691,7 @@ def write_excel(path, state, cfg, scores):
             to_local_naive(j["found"]), to_local_naive(j.get("posted")), j["company"],
             int(score) if str(score).isdigit() else None, j["title"],
             "; ".join(dict.fromkeys(j["locations"])), j["region"], j["level"], ", ".join(j["stack"]),
-            j["provider"].title(), j.get("status", "New"), j.get("notes", ""),
+            j["provider"].title(), j.get("status", "New"), j.get("notes", ""), j.get("outreach", ""),
             "Open" if j["open"] else "Closed", j["key"],
         ])
         r = ws.max_row
@@ -1190,6 +2710,13 @@ def write_excel(path, state, cfg, scores):
     dv = DataValidation(type="list", formula1='"' + ",".join(STATUSES) + '"', allow_blank=True)
     ws.add_data_validation(dv)
     dv.add(f"{S}2:{S}{last + 500}")
+    O = LETTER["Outreach"]
+    dv_out = DataValidation(type="list", formula1='"' + ",".join(OUTREACH) + '"', allow_blank=True)
+    ws.add_data_validation(dv_out)
+    dv_out.add(f"{O}2:{O}{last + 500}")
+    for value, bg in OUTREACH_COLORS.items():
+        ws.conditional_formatting.add(f"{O}2:{O}{last + 500}", FormulaRule(
+            formula=[f'${O}2="{value}"'], fill=fill(bg)))
     ws.conditional_formatting.add(f"{F}2:{F}{last}", FormulaRule(
         formula=[f"AND(ISNUMBER(${F}2),NOW()-${F}2<1)"],
         fill=fill("C6EFCE"), font=Font(bold=True, color="006100")))
@@ -1246,6 +2773,12 @@ def write_excel(path, state, cfg, scores):
     legend += [(r.get("color"), f"Region: {r['name']}") for r in cfg["regions"] if r.get("color")]
     legend += [(c, f"Level: {lvl}") for lvl, c in LEVEL_COLORS.items() if c]
     legend += [(bg, f"Status: {s}") for s, (bg, _) in STATUS_COLORS.items()]
+    legend += [(OUTREACH_COLORS["Email"], "Outreach: Email = you want a recruiter email prepared (run outreach.py)"),
+               (OUTREACH_COLORS["Prepared"], "Outreach: Prepared = contacts found, ready for drafting"),
+               (OUTREACH_COLORS["No contact"], "Outreach: No contact = no recruiter email found; see the packet for LinkedIn links"),
+               (OUTREACH_COLORS["Sent"], "Outreach: Sent = you sent it (set this yourself)"),
+               (OUTREACH_COLORS["Follow-up"], "Outreach: Follow-up = a follow-up has been prepared"),
+               (OUTREACH_COLORS["Replied"], "Outreach: Replied = they answered (set this yourself)")]
     legend += [("FFFFFF", "Grey italic row: Rejected, Skipped, or posting no longer on the board")]
     for color, text in legend:
         lg.append(["", text])
@@ -1261,7 +2794,7 @@ def write_excel(path, state, cfg, scores):
     ordered = sorted(state.get("companies", {}).items(),
                      key=lambda kv: (kv[1].get("priority", 9), kv[0].lower()))
     result_colors = {"OK": "C6EFCE", "NOT FOUND": "F8CBAD", "MANUAL": "DDEBF7", "RETRY": "FFE699",
-                     "PENDING": "EDEDED", "ERROR": "F4B183"}
+                     "PENDING": "EDEDED", "ERROR": "F4B183", "NO JOBS READ": "FCE4D6"}
     for name, c in ordered:
         score, tier = scores.get(name, ("", ""))
         cs.append([c.get("priority", ""), c.get("region", ""), name,
@@ -1319,8 +2852,11 @@ def check_window(cfg, state, now, since_check, hours):
 def fetch_all(cfg, state, store, rows, rules, now, max_age, window_start, verify):
     """Step 1: download each board's full list into the local store, one board per request
     wherever possible. Returns (companies.csv changed?, stats)."""
-    recheck = dt.timedelta(days=cfg.get("recheck_not_found_days", 14))
-    detections_left = int(cfg.get("max_detections_per_run", 40))
+    check_all = cfg.get("check_all_every_run", True)
+    # check_all: every company is read on every run, including ones with no board found yet
+    recheck = dt.timedelta(0) if check_all else dt.timedelta(days=cfg.get("recheck_not_found_days", 14))
+    cap = int(cfg.get("max_detections_per_run", 40))
+    detections_left = float("inf") if check_all or cap <= 0 else cap
     stats = Counter()
     todo = []
     for r in rows:
@@ -1335,6 +2871,10 @@ def fetch_all(cfg, state, store, rows, rules, now, max_age, window_start, verify
         last = parse_date(prev.get("checked")) or parse_date(r.get("verified"))
         if missing and not verify and last and now - last < recheck:
             stats["skipped"] += 1
+            continue
+        if (prev.get("result") == "NO JOBS READ" and not verify and not check_all and last
+                and now - last < dt.timedelta(hours=20) and reads_website(r)):
+            stats["unreadable"] += 1  # a careers site with nothing readable is tried once a day
             continue
         entry = entry_for(r)
         explicit = ":" in entry and entry.split(":", 1)[0] in FETCHERS
@@ -1361,8 +2901,10 @@ def fetch_all(cfg, state, store, rows, rules, now, max_age, window_start, verify
             if delay:
                 time.sleep(delay)
 
-    log.info("Reading %d company boards (%d skipped as not found recently, %d waiting for detection)...",
-             len(todo), stats["skipped"], stats["waiting"])
+    log.info("Reading %d company boards (%d skipped as not found recently, %d waiting for detection%s)...",
+             len(todo), stats["skipped"], stats["waiting"],
+             f", {stats['unreadable']} careers sites with nothing readable rechecked daily"
+             if stats["unreadable"] else "")
     with ThreadPoolExecutor(max_workers=max(1, int(cfg.get("parallel_requests", 8)))) as pool:
         results = list(pool.map(work, todo))
 
@@ -1385,9 +2927,13 @@ def fetch_all(cfg, state, store, rows, rules, now, max_age, window_start, verify
             log.warning("%s: %s", company, out["error"])
             continue
         if out.get("missing"):
-            record.update(result="NOT FOUND",
-                          error="No supported job board found. Add the careers URL or slug in "
-                                "companies.csv, or set board to 'other'.")
+            if reads_website(row) or (SETTINGS["career_sites"] and row.get("careers_url")):
+                why = ("The careers page could not be loaded (it may be down or block scripts). "
+                       "Retried in a few days.")
+            else:
+                why = ("No job board found yet (board names are guessed again once a day). Add the "
+                       "careers_url or slug in companies.csv, or run --find-career-pages.")
+            record.update(result="NOT FOUND", error=why)
             state["companies"][company] = record
             if row.get("status") != "not_found":
                 row.update(status="not_found", verified=today)
@@ -1396,32 +2942,51 @@ def fetch_all(cfg, state, store, rows, rules, now, max_age, window_start, verify
 
         provider, res = out["provider"], out["res"]
         slug = res["slug"]
-        if (row.get("board"), row.get("slug"), row.get("status")) != (provider, slug, "ok"):
-            row.update(board=provider, slug=slug, status="ok", verified=today)
+        # A website is identified by its careers_url, so the slug column stays empty for it.
+        csv_slug = "" if provider == "website" and row.get("careers_url") else slug
+        if (row.get("board"), row.get("slug"), row.get("status")) != (provider, csv_slug, "ok"):
+            if res.get("switch_to"):
+                log.info("  BOARD  %s: careers page uses %s (%s); reading it directly from now on.",
+                         company, provider.title(), slug)
+            row.update(board=provider, slug=csv_slug, status="ok", verified=today)
             csv_dirty = True
         board = f"{provider}:{slug}"
         stats["new_postings"] += store.save_board(board, company, provider, out["postings"], now,
                                                   res.get("complete", True), board not in known_boards)
         stats["fetched"] += 1
         stats["details"] += out["details"]
-        record.update(result="OK", provider=provider, slug=slug, open=len(out["postings"]),
-                      error=res.get("note", ""))
+        nothing_read = provider == "website" and not out["postings"]
+        record.update(result="NO JOBS READ" if nothing_read else "OK", provider=provider, slug=slug,
+                      open=len(out["postings"]), error=res.get("note", ""))
         state["companies"][company] = record
     return csv_dirty, stats
 
 
-def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, offline=False):
+def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, offline=False,
+             search=None, look_back=None, find_pages=False):
+    """search: True runs the web search now, False skips it, None runs it when it is due."""
     now = dt.datetime.now(dt.timezone.utc)
+    started = time.monotonic()
     SETTINGS["search_terms"] = cfg.get("search_terms") or SETTINGS["search_terms"]
     SETTINGS["max_pages"] = int(cfg.get("max_pages_per_search", 10))
     SETTINGS["backoff"] = float(cfg.get("rate_limit_backoff_seconds", 30))
     SETTINGS["host_intervals"] = {**SETTINGS["host_intervals"], **cfg.get("host_min_interval_seconds", {})}
+    SETTINGS["website_interval"] = float(cfg.get("website_seconds_between_requests", 1.0))
+    SETTINGS["career_sites"] = bool(cfg["career_sites"]["enabled"])
+    SETTINGS["site_pages_per_run"] = int(cfg["career_sites"]["max_new_pages_per_site"])
+    retry = float(cfg.get("retry_board_search_hours", 24))
+    SETTINGS["guess_every"] = (dt.timedelta(hours=retry) if cfg.get("check_all_every_run", True) and retry > 0
+                               else None)
     LIMITER.reset()
+    with _ROBOTS_LOCK:
+        _ROBOTS.clear()
     rules = Rules(cfg)
+    SETTINGS["rules"] = rules
     excel_path = BASE / cfg.get("excel_file", "job_tracker.xlsx")
     state = load_json(STATE_PATH, {"jobs": {}, "resolved": {}, "companies": {}})
     for k in ("jobs", "resolved", "companies"):
         state.setdefault(k, {})
+    SETTINGS["website_pages"] = state.setdefault("website_pages", {})
     state.pop("rejected", None)  # replaced by the local postings store
     since_check = since_check or cfg.get("since_last_check_by_default", False)
     window_start = check_window(cfg, state, now, since_check, hours)
@@ -1430,9 +2995,7 @@ def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, of
                  window_start.astimezone().strftime("%Y-%m-%d %H:%M"),
                  to_local_naive(state.get("last_check")) or "never")
 
-    for key, edit in read_excel_edits(excel_path).items():
-        if key in state["jobs"]:
-            state["jobs"][key].update(edit)
+    apply_excel_edits(state, read_excel_edits(excel_path), now)
 
     # How old a posting may be when first found. --hours widens it for that run only.
     max_age = rules.max_age
@@ -1456,7 +3019,14 @@ def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, of
                  pruned, rules.max_age.total_seconds() // 3600)
 
     all_rows = load_company_rows(cfg)
+    found_dirty = False
+    if not offline:  # step 0: look for companies you are not watching yet
+        if search is True or (search is None and search_due(cfg, state, now)):
+            found_dirty = run_search(cfg, state, all_rows, now, look_back)
+        if find_pages:
+            found_dirty = find_career_pages(cfg, state, all_rows, now) or found_dirty
     csv_dirty = False if offline else refresh_metrics(cfg, all_rows, force=refresh)
+    csv_dirty = csv_dirty or found_dirty
     csv_dirty = rescore(all_rows) or csv_dirty
     scores = {r["company"]: (r.get("score", ""), r.get("tier", "")) for r in all_rows}
     rows = sorted((r for r in all_rows if is_enabled(r)),
@@ -1526,7 +3096,8 @@ def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, of
         log.info("All postings: %d open saved locally, %d new this run, %d descriptions downloaded.",
                  saved_open, stats["new_postings"], stats["details"])
     open_total = sum(1 for j in state["jobs"].values() if j.get("open"))
-    log.info("%d new matches, %d open matches in your tracker.", len(new_jobs), open_total)
+    log.info("%d new matches, %d open matches in your tracker. Run took %.1f minutes.",
+             len(new_jobs), open_total, (time.monotonic() - started) / 60)
     for line in new_jobs:
         log.info("  NEW  %s", line)
     if window_start:
@@ -1555,6 +3126,20 @@ def main():
                         help="refresh stock metrics and company scores now (needs yfinance)")
     parser.add_argument("--refilter", action="store_true",
                         help="re-run your filters on the saved postings only; makes no requests")
+    parser.add_argument("--show-config", action="store_true",
+                        help="explain your current settings in plain English, then exit")
+    parser.add_argument("--search", action="store_true",
+                        help="run the new-company web search now, even if it is not due")
+    parser.add_argument("--no-search", action="store_true", help="skip the web search this run")
+    parser.add_argument("--look-back", choices=["day", "week", "month"],
+                        help="with --search: how far back to search this time")
+    parser.add_argument("--find-career-pages", action="store_true",
+                        help="use web search to find careers pages for companies with no board found")
+    parser.add_argument("--add", metavar="URL",
+                        help="watch a company from a job posting, job board or careers page link")
+    parser.add_argument("--name", help="with --add: the company name to show")
+    parser.add_argument("--import", dest="import_files", nargs="+", metavar="FILE",
+                        help="add the companies in these .xlsx or .csv files to companies.csv")
     args = parser.parse_args()
     if args.hours and not args.since_last_check:
         args.since_last_check = True
@@ -1563,19 +3148,50 @@ def main():
                         datefmt="%Y-%m-%d %H:%M",
                         handlers=[logging.FileHandler(LOG_PATH, encoding="utf-8"),
                                   logging.StreamHandler(sys.stdout)])
-    while True:
-        cfg = load_json(CONFIG_PATH, None)  # reloaded every cycle so edits apply without a restart
-        if cfg is None:
-            sys.exit(f"Could not read {CONFIG_PATH.name}")
+    load_env()
+
+    def settings():
         try:
-            run_once(cfg, since_check=args.since_last_check, hours=args.hours,
-                     verify=args.verify, refresh=args.refresh_metrics, offline=args.refilter)
-            args.verify = args.refresh_metrics = False  # only the first cycle of --loop forces these
-        except Exception:
-            log.exception("Run failed")
+            return load_config()  # reloaded every cycle so edits apply without a restart
+        except ConfigError as exc:
+            log.error("Settings problem: %s", exc)
+            return None
+
+    if args.show_config or args.add or args.import_files:
+        cfg = settings()
+        if cfg is None:
+            sys.exit(1)
+        SETTINGS["career_sites"] = bool(cfg["career_sites"]["enabled"])
+        if args.show_config:
+            print(describe_config(cfg))
+        elif args.import_files:
+            try:
+                import_companies(cfg, args.import_files)
+            except ConfigError as exc:
+                log.error("%s", exc)
+                sys.exit(1)
+        else:
+            add_company(cfg, args.add, args.name)
+        return
+
+    search = True if args.search else (False if args.no_search else None)
+    while True:
+        cfg = settings()
+        if cfg is None and not args.loop:
+            sys.exit(1)
+        if cfg is not None:
+            try:
+                run_once(cfg, since_check=args.since_last_check, hours=args.hours,
+                         verify=args.verify, refresh=args.refresh_metrics, offline=args.refilter,
+                         search=search, look_back=args.look_back, find_pages=args.find_career_pages)
+                # only the first cycle of --loop forces these
+                args.verify = args.refresh_metrics = args.find_career_pages = False
+                search, args.look_back = (False if args.no_search else None), None
+            except Exception:
+                log.exception("Run failed")
         if not args.loop:
             break
-        minutes = args.interval or cfg.get("interval_minutes", 30)
+        minutes = args.interval or (cfg or {}).get("interval_minutes", 30)
         time.sleep(max(minutes, 5) * 60)
 
 

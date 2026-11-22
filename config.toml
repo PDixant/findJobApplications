@@ -1,0 +1,261 @@
+# =====================================================================
+#  Job Watcher settings
+# =====================================================================
+#  How to edit this file:
+#    - Change the value to the right of the = sign, save, and the next
+#      run uses it. No restart needed.
+#    - Text goes in "double quotes". Lists go in [square brackets] with
+#      commas between items. true and false have no quotes.
+#    - Lines starting with # are notes and are ignored.
+#    - Anything you delete falls back to the built-in default.
+#
+#  To see what your settings mean in plain English, run:
+#      python job_watcher.py --show-config
+#
+#  API keys never go in this file. They go in a file named .env next to
+#  job_watcher.py (copy .env.example to start).
+# =====================================================================
+
+
+# ---------------------------------------------------------------------
+# 1. Which jobs you want
+# ---------------------------------------------------------------------
+[jobs]
+
+# A job title must contain at least one of these. Capital letters don't matter.
+titles = [
+  "Software Engineer", "Software Developer", "Web Developer",
+  "Frontend", "Front End", "Front-End",
+  "Full Stack", "Full-Stack", "Fullstack",
+  "UI Engineer", "Product Engineer", "React", "JavaScript",
+]
+
+# Skip any title that contains one of these.
+# Senior is not in this list, so Senior roles are kept. Add "Senior" to hide them.
+skip_titles = [
+  "Staff", "Principal", "Intern", "Internship", "Co-op", "Coop",
+  "Junior", "Jr", "New Grad", "Graduate", "Entry Level",
+  "Manager", "Director", "Head of", "VP",
+]
+
+# The job description must mention at least one of these.
+# To accept any tech stack, use an empty list:  must_mention = []
+must_mention = ["React", "React Native", "JavaScript", "TypeScript", "Node.js", "NodeJS", "Next.js"]
+
+# Only add jobs that were posted within this many hours.
+max_age_hours = 24
+
+
+# ---------------------------------------------------------------------
+# 2. Where
+# ---------------------------------------------------------------------
+[places]
+
+# Ignore these locations. A job listed only in these places is skipped.
+skip = [
+  "India", "Bengaluru", "Bangalore", "Hyderabad", "Pune", "Chennai",
+  "Gurugram", "Gurgaon", "Noida", "Mumbai", "Delhi",
+]
+
+# A job must be in at least one region below.
+#   name  = what the Region column in your tracker shows
+#   color = cell colour for that region (a hex code, optional)
+#   match = place names to look for in the job's location
+# Short all-caps codes such as BC, ON and CA must match exactly.
+# The first region that matches wins, so put your favourite first.
+# To add a region, copy a whole [[places.region]] block and edit it.
+
+[[places.region]]
+name  = "Canada - BC"
+color = "C6EFCE"
+match = ["British Columbia", "BC", "Vancouver", "Burnaby", "Victoria", "Kelowna"]
+
+[[places.region]]
+name  = "Canada - Ontario"
+color = "DDEBF7"
+match = ["Ontario", "ON", "Toronto", "Ottawa", "Waterloo", "Kitchener",
+         "Mississauga", "Brampton", "Markham", "Guelph"]
+
+[[places.region]]
+name  = "Canada - Other/Remote"
+color = "D9F2F2"
+match = ["Canada", "Canadian", "Montreal", "Montréal", "Calgary", "Edmonton",
+         "Halifax", "Winnipeg", "Quebec"]
+
+[[places.region]]
+name  = "California"
+color = "FCE4D6"
+match = ["California", "CA", "San Francisco", "SF", "Bay Area", "Los Angeles",
+         "San Jose", "San Diego", "Palo Alto", "Mountain View", "Menlo Park",
+         "Sunnyvale", "Santa Clara", "Redwood City", "Oakland", "Santa Monica",
+         "Irvine", "Cupertino"]
+
+[[places.region]]
+name  = "Seattle"
+color = "E4DFEC"
+match = ["Seattle", "Bellevue", "Redmond", "Kirkland"]
+
+[[places.region]]
+name  = "Remote - North America"
+color = "FFF2CC"
+match = ["North America", "Americas"]
+
+
+# ---------------------------------------------------------------------
+# 3. Find new companies with web search
+# ---------------------------------------------------------------------
+# Searches for fresh postings on job-board sites, the same as typing this
+# into Google:
+#   site:jobs.ashbyhq.com (intitle:"Software Engineer" OR ...) ("Toronto" OR ...) -India
+# Every company in the results that you are not watching yet is added to
+# companies.csv, and from then on its whole job board is read directly.
+[search]
+
+enabled = true
+
+# Which search service to use, and where its key goes in .env:
+#   "serper"  -> SERPER_API_KEY   real Google results, 2,500 free queries when you sign up
+#   "brave"   -> BRAVE_API_KEY    Brave's own index, about 1,000 free queries a month
+#   "serpapi" -> SERPAPI_API_KEY  real Google results, 250 free queries a month
+provider = "serper"
+
+# How many times a day to search.
+# Each search uses up to (number of sites) x (pages_per_query) queries.
+runs_per_day = 2
+
+# How far back each search looks: "day", "week" or "month".
+look_back = "day"
+
+# Job sites to search. Any of: ashby, greenhouse, lever, workable, smartrecruiters, workday
+sites = ["ashby", "greenhouse", "lever"]
+
+# The posting's title must contain one of these.
+# Keep this list short: search engines cut off long queries.
+titles = ["Software Engineer", "Software Developer", "Web Developer"]
+
+# The posting must mention at least one of these places.
+places = ["Toronto", "Vancouver", "Ottawa", "Canada"]
+
+# Leave out postings that contain any of these words.
+skip_words = ["India"]
+
+# Result pages to read per site per search (10 results a page).
+pages_per_query = 3
+
+# Never use more queries than this in one calendar month.
+monthly_query_limit = 1000
+
+# What to do with new companies:
+#   "watch"  = start watching them right away
+#   "review" = add them with enabled = no, so you choose which ones to switch on
+new_companies = "watch"
+
+# How many companies --find-career-pages looks up per run (one query each).
+career_page_lookups_per_run = 50
+
+
+# ---------------------------------------------------------------------
+# 4. Company careers websites
+# ---------------------------------------------------------------------
+# Used for companies in companies.csv with board = website or other and a
+# careers_url (Amazon, Microsoft, RBC and so on), and for any company whose
+# job board could not be found but has a careers_url.
+# The script first checks whether the careers page is really a Greenhouse,
+# Lever, Ashby, Workable, SmartRecruiters or Workday board, and if so reads
+# that board instead. Otherwise it reads the site's job pages that publish
+# standard job details. It follows each site's robots.txt rules.
+[career_sites]
+
+enabled = true
+
+# New job pages to read per site per run. Each page is only ever read once.
+new_pages_per_site_per_run = 15
+
+
+# ---------------------------------------------------------------------
+# 5. Tracker, alerts and timing
+# ---------------------------------------------------------------------
+[tracker]
+
+tracker_file   = "job_tracker.xlsx"
+companies_file = "companies.csv"
+
+# Pop-up on your desktop when new matches arrive (needs: pip install plyer).
+desktop_notifications = true
+
+# true makes every run behave like --since-last-check.
+since_last_check_by_default = false
+
+# Minutes between checks when running with --loop.
+check_every_minutes = 30
+
+# Read every company's job board and careers page on every run. Nothing is skipped.
+# false = companies with no job board found are only retried every recheck_not_found_days.
+check_all_companies_every_run = true
+
+# For companies where no job board or readable careers page has been found yet, the script
+# guesses board names (Greenhouse, Lever, Ashby, ...). Guessing every 30 minutes would make
+# each run take over an hour and trip the job boards' rate limits, so it is retried this many
+# hours apart instead (spread over the day). 0 = guess on every run.
+retry_board_search_hours = 24
+
+
+# ---------------------------------------------------------------------
+# 6. Recruiter emails (outreach.py)
+# ---------------------------------------------------------------------
+# Set the Outreach column in job_tracker.xlsx to "Email" for jobs you want to
+# reach out about, then run:  python outreach.py
+# It finds recruiters and engineering leaders with Hunter.io (HUNTER_API_KEY
+# in .env) and writes a packet your Claude agent turns into Gmail drafts.
+# Nothing is ever sent for you.
+[outreach]
+
+# Your resume PDF, attached to every email unless a tailored one is found.
+# A path relative to this folder, or a full path.
+resume = "resume.pdf"
+
+# Optional folder of tailored resumes. A PDF whose file name contains the
+# company name (for example Dixant_Patel_Shopify_Frontend.pdf) is used for that company.
+tailored_resumes_folder = ""
+
+# A short file about you that the email writer uses. Start from about_me.example.md.
+about_me = "about_me.md"
+
+# People to suggest per company: a recruiter first, then an engineering leader.
+contacts_per_company = 2
+
+# Hunter departments to search: hr finds recruiters; it, management and executive
+# find engineering managers, directors and founders.
+departments = ["hr", "it", "management", "executive"]
+
+# Double-check each chosen address with Hunter before using it (half a credit each).
+verify_emails = true
+
+# Never use more Hunter credits than this in a month. The free plan has 50.
+monthly_hunter_credit_limit = 50
+
+# Days after you mark an email Sent before  python outreach.py --follow-ups  offers a follow-up.
+follow_up_after_days = 5
+
+# Only for  python outreach.py --make-drafts : your mail server and drafts folder.
+imap_server = "imap.gmail.com"
+drafts_folder = "[Gmail]/Drafts"
+
+
+# ---------------------------------------------------------------------
+# 7. Advanced: most people never change these
+# ---------------------------------------------------------------------
+# Remove the # at the start of a line to change it. The value shown is
+# the default.
+[advanced]
+
+# parallel_requests = 8                  # job boards read at the same time
+# recheck_not_found_days = 14            # used when check_all_companies_every_run = false
+# max_detections_per_run = 40            # companies to find a job board for per run
+# max_detail_requests_per_board = 25     # Workday/SmartRecruiters descriptions per board per run
+# rate_limit_backoff_seconds = 30        # pause for a site that says "too many requests"
+# website_seconds_between_requests = 1.0 # spacing for companies' own careers sites
+# metrics_refresh_days = 7               # how often stock metrics refresh
+# first_check_lookback_hours = 24        # how far the first --since-last-check looks back
+# workday_search_terms = ["software engineer", "software developer", "frontend", "full stack", "web developer"]
+# extra_companies = []                   # quick additions, e.g. ["greenhouse:acme", "lever:widgetco"]
