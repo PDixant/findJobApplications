@@ -87,12 +87,51 @@ def edit_user_path(folder, add):
 
 
 # ----------------------------------------------------------------- install
+def store_python(executable=None, base_prefix=None):
+    """The Microsoft Store build of Python. Files it writes under AppData go to a private copy that
+    only it can see, so the jobwatcher command and the Start menu shortcut would be invisible to the
+    rest of Windows, and the app can fail to open from a click."""
+    executable = sys.executable if executable is None else executable
+    base_prefix = sys.base_prefix if base_prefix is None else base_prefix
+    return "WindowsApps" in executable or "WindowsApps" in base_prefix
+
+
+def venv_base(cfg_text):
+    """The Python a .venv was made from, from its pyvenv.cfg."""
+    for line in cfg_text.splitlines():
+        key, _, value = line.partition("=")
+        if key.strip().lower() == "home":
+            return value.strip()
+    return ""
+
+
+def venv_needs_remaking(cfg_text, base_prefix):
+    """True when .venv was made by another Python (the Store one, or one since replaced)."""
+    home = venv_base(cfg_text)
+    if not home or "WindowsApps" in home:
+        return True
+    return os.path.normcase(os.path.normpath(home)) != os.path.normcase(os.path.normpath(base_prefix))
+
+
 def install(minimal=False):
     if sys.version_info < (3, 10):
         sys.exit(f"Job Watcher needs Python 3.10 or newer; this is {sys.version.split()[0]}.")
+    if WINDOWS and store_python():
+        sys.exit("This is the Microsoft Store version of Python, which Job Watcher can't use: it keeps the\n"
+                 "files Job Watcher sets up in a private copy the rest of Windows can't see.\n"
+                 "Double-click \"Install Job Watcher\" instead; it installs the python.org version if needed.")
     made = {"shortcuts": [], "command": None, "path_entry": None}
 
     step("Making a private Python environment (.venv)")
+    cfg = VENV / "pyvenv.cfg"
+    if PYTHON.exists() and cfg.exists() and venv_needs_remaking(cfg.read_text(encoding="utf-8"), sys.base_prefix):
+        print(f"   it was made with another Python ({venv_base(cfg.read_text(encoding='utf-8')) or 'unknown'}); "
+              "making it again with this one")
+        try:
+            shutil.rmtree(VENV)
+        except OSError as exc:
+            sys.exit(f"Couldn't replace .venv ({exc}).\nClose Job Watcher and any terminal using it, "
+                     "then run Install Job Watcher again.")
     if not PYTHON.exists():
         venv.EnvBuilder(with_pip=True, upgrade_deps=False).create(VENV)
     else:

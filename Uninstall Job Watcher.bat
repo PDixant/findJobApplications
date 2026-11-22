@@ -5,11 +5,15 @@ setlocal
 cd /d "%~dp0"
 title Uninstalling Job Watcher
 set "PYEXE="
-for /f "delims=" %%i in ('py -3 -c "import sys; sys.version_info[:2] < (3, 10) or print(sys.executable)" 2^>nul') do set "PYEXE=%%i"
-if not defined PYEXE (
-  for /f "delims=" %%i in ('python -c "import sys; sys.version_info[:2] < (3, 10) or print(sys.executable)" 2^>nul') do set "PYEXE=%%i"
+set "FINDPY=%~dp0install\find_python.py"
+for /f "delims=" %%i in ('py -3 "%FINDPY%" 2^>nul') do set "PYEXE=%%i"
+if not defined PYEXE for /f "delims=" %%i in ('python "%FINDPY%" 2^>nul') do set "PYEXE=%%i"
+for %%v in (313 312 311 310) do (
+  if not defined PYEXE if exist "%LOCALAPPDATA%\Programs\Python\Python%%v\python.exe" set "PYEXE=%LOCALAPPDATA%\Programs\Python\Python%%v\python.exe"
+  if not defined PYEXE if exist "%ProgramFiles%\Python%%v\python.exe" set "PYEXE=%ProgramFiles%\Python%%v\python.exe"
 )
-if not defined PYEXE if exist "%LOCALAPPDATA%\Programs\Python\Python312\python.exe" set "PYEXE=%LOCALAPPDATA%\Programs\Python\Python312\python.exe"
+rem Any Python will do for removing things, the Store one included.
+if not defined PYEXE for /f "delims=" %%i in ('python -c "import sys; print(sys.executable)" 2^>nul') do set "PYEXE=%%i"
 if not defined PYEXE (
   echo Python was not found, so this can't run. Delete the .venv folder and the Job Watcher shortcuts by hand.
   pause

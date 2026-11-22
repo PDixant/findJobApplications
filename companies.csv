@@ -105,148 +105,148 @@
 1,Vancouver / BC,Kyndryl Canada,,,,,,,,workday,kyndryl/wd5/KyndrylProfessionalCareers,https://www.kyndryl.com/ca/en/careers,,,Vancouver,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: IT Services; Remote-first; Java, .NET"
 1,Vancouver / BC,Later,64,B,private,,Late,,,greenhouse,Later,https://later.com/careers,,,Vancouver / BC,yes,ok,2026-11-09,,,,,,
 1,Vancouver / BC,Latitude Technologies,,,,,,,,website,,https://www.latitudetech.com,,,Victoria,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Aviation Telematics; Onsite; C#, .NET"
-1,Vancouver / BC,Lighthouse Labs,,,,,,,,auto,,https://www.lighthouselabs.ca/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: EdTech / Bootcamp; Remote-first; Node, React"
-1,Vancouver / BC,LlamaZOO,,,,,,,,auto,,https://www.llamazoo.com/careers,,,Victoria,yes,,,,,,,,"Imported 2026-11-21: Industrial Visualization; Hybrid; C#, Unity, TS"
-1,Vancouver / BC,London Drugs,,,,,,,,auto,,https://www.londondrugs.com/careers,,,Richmond,yes,,,,,,,,"Imported 2026-11-21: Retail Tech; Hybrid; C#, .NET, React"
-1,Vancouver / BC,Lululemon,42,C,public,LULU,,,,auto,,https://careers.lululemon.com,,,Vancouver / BC,yes,,,11.9,-39.5,-4.3,12.8,2026-11-21,"Vancouver HQ, digital team"
+1,Vancouver / BC,Lighthouse Labs,,,,,,,,auto,,https://www.lighthouselabs.ca/careers,,,Vancouver,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: EdTech / Bootcamp; Remote-first; Node, React"
+1,Vancouver / BC,LlamaZOO,,,,,,,,workable,llamazoo,https://www.llamazoo.com/careers,,,Victoria,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Industrial Visualization; Hybrid; C#, Unity, TS"
+1,Vancouver / BC,London Drugs,,,,,,,,auto,,https://www.londondrugs.com/careers,,,Richmond,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Retail Tech; Hybrid; C#, .NET, React"
+1,Vancouver / BC,Lululemon,42,C,public,LULU,,,,workable,lululemon,https://careers.lululemon.com,,,Vancouver / BC,yes,ok,2026-11-22,11.9,-39.5,-4.3,12.8,2026-11-21,"Vancouver HQ, digital team"
 1,Vancouver / BC,Mastercard,74,A,public,MA,,,,workday,mastercard/wd1/CorporateCareers,https://careers.mastercard.com,,internal,Vancouver / BC; Toronto / GTA,yes,ok,2026-11-09,545.0,16.3,14.0,46.7,2026-11-21,Vancouver tech hub
 1,Vancouver / BC,MDA Space,80,A,public,MDA.TO,,,,workable,mda,https://mda.space/en/careers,,,Vancouver / BC; Toronto / GTA,yes,ok,2026-11-09,6.0,57.8,21.5,5.4,2026-11-21,"Brampton HQ, Richmond BC site"
 1,Vancouver / BC,MetaLab,,,,,,,,greenhouse,metalab,https://www.metalab.com/careers,,,Victoria,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Product Design Studio; Remote-first; TS, React, Node"
 1,Vancouver / BC,Microsoft,61,B,public,MSFT,,,2026-06 (300),website,,https://careers.microsoft.com,,internal,Vancouver / BC; Seattle; California; Toronto / GTA,yes,ok,2026-11-21,3598.1,2.2,18.8,41.2,2026-11-21,Uses its own careers site
-1,Vancouver / BC,MistyWest,55,B,private,,Bootstrapped,,,auto,,,,,Vancouver / BC,yes,,,,,,,,
-1,Vancouver / BC,Mogo,,,public,MOGO,,,,auto,,https://www.mogo.ca/careers,,,Vancouver / BC,yes,,,,,,,2026-11-21,
+1,Vancouver / BC,MistyWest,55,B,private,,Bootstrapped,,,workable,mistywest,,,,Vancouver / BC,yes,ok,2026-11-22,,,,,,
+1,Vancouver / BC,Mogo,,,public,MOGO,,,,website,,https://www.mogo.ca/careers,,,Vancouver / BC,yes,ok,2026-11-22,,,,,2026-11-21,
 1,Vancouver / BC,Mojio,64,B,private,,Late,,,greenhouse,Mojio,https://www.moj.io/careers,,,Vancouver / BC,yes,ok,2026-11-09,,,,,,
 1,Vancouver / BC,Motorola Solutions,78,A,public,MSI,,,,workday,motorolasolutions/wd5/Careers,https://www.motorolasolutions.com/en_us/about/careers.html,,,Vancouver / BC,yes,ok,2026-11-09,86.0,41.2,12.2,16.5,2026-11-21,Vancouver team from Avigilon
 1,Vancouver / BC,Mozilla,55,B,nonprofit,,Nonprofit,,,greenhouse,Mozilla,,,,Vancouver / BC; Toronto / GTA; Remote / other US,yes,ok,2026-11-09,,,,,,
-1,Vancouver / BC,Nature's Path,,,,,,,,auto,,https://www.naturespath.com/careers,,,Richmond,yes,,,,,,,,"Imported 2026-11-21: CPG / Digital; Hybrid; .NET, JS"
-1,Vancouver / BC,Netcoins,,,,,,,,auto,,https://www.netcoins.ca/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: Crypto Exchange; Hybrid; Node, React, TS"
-1,Vancouver / BC,Next Level Games,,,,,,,,auto,,https://www.nextlevelgames.com/careers,,,Vancouver,yes,,,,,,,,Imported 2026-11-21: Gaming; Onsite; C++
-1,Vancouver / BC,Nicoya,,,,,,,,auto,,https://nicoyalife.com/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: Life Science Instruments; Hybrid; Python, React"
-1,Vancouver / BC,Novarc Technologies,,,,,,,,auto,,https://novarctech.com/careers,,,North Vancouver,yes,,,,,,,,"Imported 2026-11-21: Robotics / Welding; Onsite; C++, Python"
-1,Vancouver / BC,Offworld Industries,,,,,,,,auto,,https://www.offworldindustries.com/careers,,,Burnaby,yes,,,,,,,,"Imported 2026-11-21: Gaming; Hybrid; C++, Unreal"
-1,Vancouver / BC,PayByPhone,,,,,,,,auto,,https://www.paybyphone.com/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: Mobile Payments; Hybrid; C#, .NET, React"
-1,Vancouver / BC,Phoenix Labs,58,B,private,,Subsidiary,,,auto,phoenixlabs,https://www.phoenixlabs.com/careers,,,Vancouver / BC,yes,,,,,,,,Games
-1,Vancouver / BC,Pixel Union / Archetype,,,,,,,,auto,,https://pixelunion.net,,,Victoria,yes,,,,,,,,"Imported 2026-11-21: E-commerce Themes; Remote-first; Liquid, JS, React"
-1,Vancouver / BC,Plurilock,26,C,public,PLUR.V,,,,auto,,,,,Vancouver / BC,yes,,,0.0,-20.0,-30.5,-10.1,2026-11-21,Victoria
-1,Vancouver / BC,Port of Vancouver,,,,,,,,auto,,https://www.portvancouver.com/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: Logistics / Digital; Hybrid; C#, .NET"
-1,Vancouver / BC,PressReader,64,B,private,,Late,,,auto,,,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,Nature's Path,,,,,,,,website,,https://www.naturespath.com/careers,,,Richmond,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: CPG / Digital; Hybrid; .NET, JS"
+1,Vancouver / BC,Netcoins,,,,,,,,auto,,https://www.netcoins.ca/careers,,,Vancouver,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Crypto Exchange; Hybrid; Node, React, TS"
+1,Vancouver / BC,Next Level Games,,,,,,,,auto,,https://www.nextlevelgames.com/careers,,,Vancouver,yes,not_found,2026-11-22,,,,,,Imported 2026-11-21: Gaming; Onsite; C++
+1,Vancouver / BC,Nicoya,,,,,,,,website,,https://nicoyalife.com/careers,,,Vancouver,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Life Science Instruments; Hybrid; Python, React"
+1,Vancouver / BC,Novarc Technologies,,,,,,,,website,,https://novarctech.com/careers,,,North Vancouver,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Robotics / Welding; Onsite; C++, Python"
+1,Vancouver / BC,Offworld Industries,,,,,,,,website,,https://www.offworldindustries.com/careers,,,Burnaby,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Gaming; Hybrid; C++, Unreal"
+1,Vancouver / BC,PayByPhone,,,,,,,,auto,,https://www.paybyphone.com/careers,,,Vancouver,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Mobile Payments; Hybrid; C#, .NET, React"
+1,Vancouver / BC,Phoenix Labs,58,B,private,,Subsidiary,,,auto,phoenixlabs,https://www.phoenixlabs.com/careers,,,Vancouver / BC,yes,not_found,2026-11-22,,,,,,Games
+1,Vancouver / BC,Pixel Union / Archetype,,,,,,,,website,,https://pixelunion.net,,,Victoria,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: E-commerce Themes; Remote-first; Liquid, JS, React"
+1,Vancouver / BC,Plurilock,26,C,public,PLUR.V,,,,workable,plurilock,,,,Vancouver / BC,yes,ok,2026-11-22,0.0,-20.0,-30.5,-10.1,2026-11-21,Victoria
+1,Vancouver / BC,Port of Vancouver,,,,,,,,auto,,https://www.portvancouver.com/careers,,,Vancouver,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Logistics / Digital; Hybrid; C#, .NET"
+1,Vancouver / BC,PressReader,64,B,private,,Late,,,workable,pressreader,,,,Vancouver / BC,yes,ok,2026-11-22,,,,,,
 1,Vancouver / BC,Procurify,60,B,private,,Series C,,,ashby,Procurify,https://www.procurify.com/careers,,,Vancouver / BC,yes,ok,2026-11-09,,,,,,
-1,Vancouver / BC,Provincial Health Services Authority,,,,,,,,auto,,https://jobs.phsa.ca,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: Health IT; Hybrid; .NET, Java, React"
-1,Vancouver / BC,QHR Technologies,,,,,,,,auto,,https://www.qhrtechnologies.com/careers,,,Kelowna,yes,,,,,,,,"Imported 2026-11-21: Health Software; Hybrid; C#, .NET, React"
-1,Vancouver / BC,RB Global,63,B,public,RBA,,,,auto,,https://careers.rbglobal.com,,,Vancouver / BC,yes,not_found,2026-11-09,16.5,-4.6,16.6,10.5,2026-11-21,Burnaby tech teams (Ritchie Bros)
+1,Vancouver / BC,Provincial Health Services Authority,,,,,,,,auto,,https://jobs.phsa.ca,,,Vancouver,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Health IT; Hybrid; .NET, Java, React"
+1,Vancouver / BC,QHR Technologies,,,,,,,,website,,https://www.qhrtechnologies.com/careers,,,Kelowna,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Health Software; Hybrid; C#, .NET, React"
+1,Vancouver / BC,RB Global,63,B,public,RBA,,,,website,,https://careers.rbglobal.com,,,Vancouver / BC,yes,ok,2026-11-22,16.5,-4.6,16.6,10.5,2026-11-21,Burnaby tech teams (Ritchie Bros)
 1,Vancouver / BC,RBC,74,A,public,RY,,,,website,,https://jobs.rbc.com,,,Toronto / GTA; Vancouver / BC,yes,ok,2026-11-21,254.0,22.5,8.9,33.9,2026-11-21,Uses its own careers site
-1,Vancouver / BC,Redbrick,64,B,private,,Late,,,auto,,https://rdbrck.com/careers,,,Vancouver / BC,yes,not_found,2026-11-09,,,,,,Victoria
-1,Vancouver / BC,Relic Entertainment,64,B,private,,Late,,,auto,relic,https://www.relic.com/careers,,,Vancouver / BC,yes,,,,,,,,Games
-1,Vancouver / BC,Riipen,,,,,,,,auto,,https://www.riipen.com/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: EdTech / Work-Integrated Learning; Remote-first; Node, React, TS"
+1,Vancouver / BC,Redbrick,64,B,private,,Late,,,website,,https://rdbrck.com/careers,,,Vancouver / BC,yes,ok,2026-11-22,,,,,,Victoria
+1,Vancouver / BC,Relic Entertainment,64,B,private,,Late,,,auto,relic,https://www.relic.com/careers,,,Vancouver / BC,yes,not_found,2026-11-22,,,,,,Games
+1,Vancouver / BC,Riipen,,,,,,,,website,,https://www.riipen.com/careers,,,Vancouver,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: EdTech / Work-Integrated Learning; Remote-first; Node, React, TS"
 1,Vancouver / BC,Rise People,64,B,private,,Late,,,auto,,,,,Vancouver / BC,yes,not_found,2026-11-09,,,,,,
 1,Vancouver / BC,Rivian,55,B,public,RIVN,,,,website,,https://careers.rivian.com,,greenhouse,Vancouver / BC; California,yes,ok,2026-11-21,15.1,-31.9,38.3,-45.9,2026-11-21,Vancouver software office
-1,Vancouver / BC,Routific,50,B,private,,Series A,,,auto,,,,,Vancouver / BC,yes,,,,,,,,
-1,Vancouver / BC,SaaSquatch,,,,,,,,auto,,https://saasquatch.com/careers,,,Victoria,yes,,,,,,,,"Imported 2026-11-21: Referral Marketing SaaS; Remote-first; Java, React, TS"
+1,Vancouver / BC,Routific,50,B,private,,Series A,,,workable,routific,,,,Vancouver / BC,yes,ok,2026-11-22,,,,,,
+1,Vancouver / BC,SaaSquatch,,,,,,,,website,,https://saasquatch.com/careers,,,Victoria,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Referral Marketing SaaS; Remote-first; Java, React, TS"
 1,Vancouver / BC,Safe Software,,,,,,,,ashby,safe,https://www.safe.com/careers/,,,Vancouver / BC (Surrey HQ),yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Data-integration / spatial ETL (FME); 400+ employees, profitable, $100M+ revenue FY25; Canada-based, Surrey BC office; C++ core, web UI laye"
 1,Vancouver / BC,Salesforce,60,B,public,CRM,,,,workday,salesforce/wd12/External_Career_Site,https://slack.com/careers,,internal,Vancouver / BC; Seattle; California; Toronto / GTA,yes,ok,2026-11-09,148.7,-20.4,10.8,22.0,2026-11-21,
 1,Vancouver / BC,Sanctuary AI,55,B,private,,Series B,,,ashby,sanctuary,https://sanctuary.ai/careers,,,Vancouver / BC,yes,ok,2026-11-09,,,,,,Humanoid robotics
 1,Vancouver / BC,SAP,62,B,public,SAP,,,,website,,https://jobs.sap.com,,internal,Vancouver / BC; Toronto / GTA; Rest of Canada,yes,ok,2026-11-21,229.6,-16.5,13.2,20.4,2026-11-21,Uses its own careers site
-1,Vancouver / BC,Save-On-Foods (Pattison Food Group),,,,,,,,auto,,https://careers.saveonfoods.com,,,Langley,yes,,,,,,,,"Imported 2026-11-21: Retail Tech; Hybrid; C#, .NET, React"
-1,Vancouver / BC,Scanline VFX,,,,,,,,auto,,,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: VFX; Hybrid; C++, Python"
-1,Vancouver / BC,Seaspan,,,,,,,,auto,,https://www.seaspan.com/careers,,,North Vancouver,yes,,,,,,,,"Imported 2026-11-21: Marine / Shipbuilding; Hybrid; C#, .NET"
-1,Vancouver / BC,Semios,60,B,private,,Series C,,,auto,,https://semios.com/careers,,,Vancouver / BC,yes,,,,,,,,
-1,Vancouver / BC,Semtech (Sierra Wireless),,,,,,,,auto,,https://www.semtech.com/company/careers,,,Richmond,yes,,,,,,,,"Imported 2026-11-21: IoT / Semiconductors; Hybrid; C, C++, Python"
+1,Vancouver / BC,Save-On-Foods (Pattison Food Group),,,,,,,,auto,,https://careers.saveonfoods.com,,,Langley,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Retail Tech; Hybrid; C#, .NET, React"
+1,Vancouver / BC,Scanline VFX,,,,,,,,workable,scanlinevfx,,,,Vancouver,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: VFX; Hybrid; C++, Python"
+1,Vancouver / BC,Seaspan,,,,,,,,website,,https://www.seaspan.com/careers,,,North Vancouver,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Marine / Shipbuilding; Hybrid; C#, .NET"
+1,Vancouver / BC,Semios,60,B,private,,Series C,,,workable,semios,https://semios.com/careers,,,Vancouver / BC,yes,ok,2026-11-22,,,,,,
+1,Vancouver / BC,Semtech (Sierra Wireless),,,,,,,,workable,semtech,https://www.semtech.com/company/careers,,,Richmond,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: IoT / Semiconductors; Hybrid; C, C++, Python"
 1,Vancouver / BC,Shopify,64,B,public,SHOP,,,"2026-05 (30, minor)",website,,https://www.shopify.com/careers,,,Ottawa; Toronto / GTA; Vancouver / BC,yes,ok,2026-11-21,159.2,-20.3,31.6,15.0,2026-11-21,Uses its own careers site
 1,Vancouver / BC,Sierra Systems / NTT Data,,,,,,,,workday,nttglobaldatacenters/wd501/External,https://careers.nttdata.com,,,Vancouver,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: IT Consulting; Hybrid; Java, .NET, React"
 1,Vancouver / BC,Sign In Enterprise (Traction Guest),,,,,,,,lever,signinsolutions,https://signinenterprise.com/careers,,,Vancouver,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Visitor Management SaaS; Remote-first; Node, React, TS"
-1,Vancouver / BC,Simon Fraser University,,,,,,,,auto,,https://www.sfu.ca/human-resources/careers,,,Burnaby,yes,,,,,,,,"Imported 2026-11-21: Higher Education; Hybrid; Java, PHP, React"
+1,Vancouver / BC,Simon Fraser University,,,,,,,,auto,,https://www.sfu.ca/human-resources/careers,,,Burnaby,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Higher Education; Hybrid; Java, PHP, React"
 1,Vancouver / BC,Skybox Labs,,,,,,,,lever,skyboxlabs,https://skyboxlabs.com/careers,,,Burnaby,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Gaming; Hybrid; C++, C#"
-1,Vancouver / BC,SkyHive,55,B,private,,Series B,,,auto,,,,,Vancouver / BC,yes,,,,,,,,
+1,Vancouver / BC,SkyHive,55,B,private,,Series B,,,auto,,,,,Vancouver / BC,yes,not_found,2026-11-22,,,,,,
 1,Vancouver / BC,Slalom,,,,,,,,website,,https://www.slalom.com/ca/en/careers,,internal,Vancouver,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Consulting; Hybrid; C#, .NET, React"
-1,Vancouver / BC,Softchoice,,,,,,,,auto,,https://www.softchoice.com/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: IT Services; Remote-first; C#, .NET"
+1,Vancouver / BC,Softchoice,,,,,,,,workable,softchoice,https://www.softchoice.com/careers,,,Vancouver,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: IT Services; Remote-first; C#, .NET"
 1,Vancouver / BC,Sony Pictures Imageworks,,,,,,,,greenhouse,sonypicturesimageworks,https://www.imageworks.com/careers,,,Vancouver,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: VFX; Hybrid; C++, Python"
 1,Vancouver / BC,Sophos,,,,,,,,ashby,sophos,https://www.sophos.com/en-us/company/careers,,,Vancouver,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Cybersecurity; Remote-first; C++, TS, React"
 1,Vancouver / BC,Spare Labs,55,B,private,,Series B,,,ashby,spare,,,,Vancouver / BC,yes,ok,2026-11-09,,,,,,
 1,Vancouver / BC,Splunk,,,,,,,,website,,https://www.splunk.com/en_us/careers.html,,internal,Vancouver,yes,ok,2026-11-21,,,,,,Imported 2026-11-21: Data analytics
 1,Vancouver / BC,Spring Financial,64,B,private,,Late,,,auto,,,,,Vancouver / BC,yes,not_found,2026-11-09,,,,,,
 1,Vancouver / BC,Staffbase (Bananatag),,,,,,,,greenhouse,staffbase,https://staffbase.com/en/about/careers,,,Kelowna,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Employee Comms SaaS; Remote-first; TS, React, Node"
-1,Vancouver / BC,StarFish Medical,,,,,,,,auto,,https://starfishmedical.com/careers,,,Victoria,yes,,,,,,,,"Imported 2026-11-21: Medical Device Development; Onsite; C++, C#"
+1,Vancouver / BC,StarFish Medical,,,,,,,,website,,https://starfishmedical.com/careers,,,Victoria,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Medical Device Development; Onsite; C++, C#"
 1,Vancouver / BC,STEMCELL Technologies,,,,,,,,website,,https://www.stemcell.com/careers,,,Vancouver,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Life Sciences; Hybrid; C#, .NET, React"
 1,Vancouver / BC,Tantalus Systems,40,C,public,GRID.TO,,,,auto,tantalus,,,,Vancouver / BC,yes,not_found,2026-11-09,0.2,-1.2,-9.0,0.3,2026-11-21,Burnaby
-1,Vancouver / BC,Teck Resources,,,,,,,,auto,,https://www.teck.com/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: Mining / Digital; Hybrid; Python, .NET, React"
+1,Vancouver / BC,Teck Resources,,,,,,,,website,,https://www.teck.com/careers,,,Vancouver,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Mining / Digital; Hybrid; Python, .NET, React"
 1,Vancouver / BC,Telus,46,C,public,TU,,,,workday,lifeworks/wd3/External,https://careers.telus.com,,,Vancouver / BC; Toronto / GTA,yes,ok,2026-11-21,17.6,-14.7,-0.9,-10.3,2026-11-21,Vancouver HQ
-1,Vancouver / BC,Terramera,,,,,,,,auto,,https://www.terramera.com/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: AgTech; Hybrid; Python, React"
+1,Vancouver / BC,Terramera,,,,,,,,website,,https://www.terramera.com/careers,,,Vancouver,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: AgTech; Hybrid; Python, React"
 1,Vancouver / BC,Thinkific,52,B,public,THNC.TO,,,,greenhouse,Thinkific,https://www.thinkific.com/careers,,,Vancouver / BC,yes,ok,2026-11-09,0.2,24.6,2.3,-6.5,2026-11-21,
-1,Vancouver / BC,Thrive Health,50,B,private,,Series A,,,auto,thrivehealth,https://www.thrive.health/careers,,,Vancouver / BC,yes,,,,,,,,
-1,Vancouver / BC,Timbre Games,,,,,,,,auto,,https://timbregames.com/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: Gaming; Hybrid; C++, Unity"
-1,Vancouver / BC,TransLink,,,,,,,,auto,,https://www.translink.ca/careers,,,New Westminster,yes,,,,,,,,"Imported 2026-11-21: Transit / GovTech; Hybrid; Java, .NET, React"
+1,Vancouver / BC,Thrive Health,50,B,private,,Series A,,,website,,https://www.thrive.health/careers,,,Vancouver / BC,yes,ok,2026-11-22,,,,,,
+1,Vancouver / BC,Timbre Games,,,,,,,,auto,,https://timbregames.com/careers,,,Vancouver,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Gaming; Hybrid; C++, Unity"
+1,Vancouver / BC,TransLink,,,,,,,,workable,translink,https://www.translink.ca/careers,,,New Westminster,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Transit / GovTech; Hybrid; Java, .NET, React"
 1,Vancouver / BC,Trulioo,64,B,private,,Late,,,ashby,Trulioo,https://www.trulioo.com/careers,,,Vancouver / BC,yes,ok,2026-11-09,,,,,,
-1,Vancouver / BC,Tutela / Ookla,,,,,,,,auto,,https://www.ookla.com/careers,,,Victoria,yes,,,,,,,,"Imported 2026-11-21: Network Analytics; Hybrid; Python, React, TS"
+1,Vancouver / BC,Tutela / Ookla,,,,,,,,website,,https://www.ookla.com/careers,,,Victoria,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Network Analytics; Hybrid; Python, React, TS"
 1,Vancouver / BC,Unbounce,58,B,private,,Subsidiary,,,greenhouse,Unbounce,https://unbounce.com/careers,,,Vancouver / BC,yes,ok,2026-11-09,,,,,,Owned by CM Group
 1,Vancouver / BC,Unity,67,A,public,U,,,,website,,https://careers.unity.com,,greenhouse,Vancouver / BC; Toronto / GTA; Rest of Canada,yes,ok,2026-11-21,19.9,7.6,32.2,-15.6,2026-11-21,
 1,Vancouver / BC,University of British Columbia,,,,,,,,workday,ubc/wd10/ubcfacultyjobs,https://hr.ubc.ca/careers-and-job-postings,,,Vancouver,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Higher Education; Hybrid; Java, .NET, React"
-1,Vancouver / BC,University of Victoria,,,,,,,,auto,,https://www.uvic.ca/careers,,,Victoria,yes,,,,,,,,"Imported 2026-11-21: Higher Education; Hybrid; Java, .NET"
-1,Vancouver / BC,UrbanLogiq,,,,,,,,auto,,https://www.urbanlogiq.com/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: GovTech / Urban Data; Hybrid; Rust, React, TS"
+1,Vancouver / BC,University of Victoria,,,,,,,,website,,https://www.uvic.ca/careers,,,Victoria,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Higher Education; Hybrid; Java, .NET"
+1,Vancouver / BC,UrbanLogiq,,,,,,,,website,,https://www.urbanlogiq.com/careers,,,Vancouver,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: GovTech / Urban Data; Hybrid; Rust, React, TS"
 1,Vancouver / BC,Vancity,,,,,,,,auto,,https://www.vancity.com/AboutVancity/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: Credit Union / Fintech; Hybrid; Java, .NET"
-1,Vancouver / BC,Vancouver Airport Authority,,,,,,,,auto,,https://www.yvr.ca/en/about-yvr/careers,,,Richmond,yes,,,,,,,,"Imported 2026-11-21: Aviation Tech; Hybrid; C#, .NET, React"
-1,Vancouver / BC,Vancouver Coastal Health,,,,,,,,auto,,https://careers.vch.ca,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: Health IT; Hybrid; .NET, Java"
-1,Vancouver / BC,Vanhack,,,,,,,,auto,,https://vanhack.com/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: Tech Recruiting Platform; Remote-first; Node, React"
-1,Vancouver / BC,Vecima Networks,,,,,,,,auto,,https://www.vecima.com/careers,,,Victoria,yes,,,,,,,,"Imported 2026-11-21: Broadband Technology; Hybrid; C++, Java, React"
-1,Vancouver / BC,Verathon,,,,,,,,auto,,https://www.verathon.com/careers,,,Burnaby,yes,,,,,,,,"Imported 2026-11-21: Medical Devices; Hybrid; C++, C#"
+1,Vancouver / BC,Vancouver Airport Authority,,,,,,,,auto,,https://www.yvr.ca/en/about-yvr/careers,,,Richmond,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Aviation Tech; Hybrid; C#, .NET, React"
+1,Vancouver / BC,Vancouver Coastal Health,,,,,,,,auto,,https://careers.vch.ca,,,Vancouver,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Health IT; Hybrid; .NET, Java"
+1,Vancouver / BC,Vanhack,,,,,,,,workable,vanhack,https://vanhack.com/careers,,,Vancouver,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Tech Recruiting Platform; Remote-first; Node, React"
+1,Vancouver / BC,Vecima Networks,,,,,,,,website,,https://www.vecima.com/careers,,,Victoria,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Broadband Technology; Hybrid; C++, Java, React"
+1,Vancouver / BC,Verathon,,,,,,,,website,,https://www.verathon.com/careers,,,Burnaby,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Medical Devices; Hybrid; C++, C#"
 1,Vancouver / BC,Visier,68,A,private,,Unicorn,,,ashby,Visier,https://www.visier.com/careers,,,Vancouver / BC; Toronto / GTA,yes,ok,2026-11-09,,,,,,
-1,Vancouver / BC,West Fraser,,,,,,,,auto,,https://www.westfraser.com/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: Forestry / Digital; Hybrid; C#, .NET"
-1,Vancouver / BC,Westport Fuel Systems,,,,,,,,auto,,https://wfsinc.com/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: Clean Transport; Hybrid; C++, C#"
+1,Vancouver / BC,West Fraser,,,,,,,,website,,https://www.westfraser.com/careers,,,Vancouver,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Forestry / Digital; Hybrid; C#, .NET"
+1,Vancouver / BC,Westport Fuel Systems,,,,,,,,auto,,https://wfsinc.com/careers,,,Vancouver,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Clean Transport; Hybrid; C++, C#"
 1,Vancouver / BC,WildBrain,,,,,,,,smartrecruiters,wildbrain,https://www.wildbrain.com/careers,,,Vancouver,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Kids Media; Hybrid; Node, React"
 1,Vancouver / BC,Wishpond,14,C,public,WISH.V,,,,lever,wishpond,,,,Vancouver / BC,yes,ok,2026-11-09,0.0,-46.4,-36.7,-51.9,2026-11-21,
 1,Vancouver / BC,Workday,56,B,public,WDAY,,,,workday,workday/wd5/Workday,https://www.workday.com/en-us/company/careers.html,,internal,Vancouver / BC; Seattle; California; Toronto / GTA,yes,ok,2026-11-09,42.1,-23.0,12.8,12.3,2026-11-21,"Hiring in Vancouver, Toronto, Bellevue"
-1,Vancouver / BC,Xenon Pharmaceuticals,,,,,,,,auto,,https://www.xenon-pharma.com/careers,,,Burnaby,yes,,,,,,,,Imported 2026-11-21: Pharma; Onsite; Python
-1,Vancouver / BC,Yeti Farm Creative,,,,,,,,auto,,https://yetifarm.com/careers,,,Kelowna,yes,,,,,,,,"Imported 2026-11-21: Animation; Hybrid; Python, JS"
-1,Vancouver / BC,Zymeworks,,,,,,,,auto,,https://www.zymeworks.com/careers,,,Vancouver,yes,,,,,,,,"Imported 2026-11-21: Biotech; Hybrid; Python, React"
+1,Vancouver / BC,Xenon Pharmaceuticals,,,,,,,,website,,https://www.xenon-pharma.com/careers,,,Burnaby,yes,ok,2026-11-22,,,,,,Imported 2026-11-21: Pharma; Onsite; Python
+1,Vancouver / BC,Yeti Farm Creative,,,,,,,,auto,,https://yetifarm.com/careers,,,Kelowna,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Animation; Hybrid; Python, JS"
+1,Vancouver / BC,Zymeworks,,,,,,,,workable,zymeworks,https://www.zymeworks.com/careers,,,Vancouver,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Biotech; Hybrid; Python, React"
 2,Ottawa,Adobe,59,B,public,ADBE,,,,workday,adobe/wd5/external_experienced,https://www.adobe.com/careers.html,,internal,Ottawa; Seattle; California,yes,ok,2026-11-09,84.7,-31.7,12.9,28.0,2026-11-21,
 2,Ottawa,Alludo (Corel),64,B,private,,Late,,,workable,alludo,,,,Ottawa,yes,ok,2026-11-09,,,,,,
 2,Ottawa,Assent,68,A,private,,Unicorn,,,smartrecruiters,assent,,,,Ottawa,yes,ok,2026-11-21,,,,,,
-2,Ottawa,BitHeads,55,B,private,,Bootstrapped,,,auto,,,,,Ottawa,yes,,,,,,,,
+2,Ottawa,BitHeads,55,B,private,,Bootstrapped,,,auto,,,,,Ottawa,yes,not_found,2026-11-22,,,,,,
 2,Ottawa,BlackBerry,81,A,public,BB,,,,workday,bb/wd3/BlackBerry,,,,Ottawa; Toronto / GTA; Rest of Canada,yes,ok,2026-11-09,4.6,87.2,26.0,13.1,2026-11-21,"QNX in Kanata, Waterloo HQ"
 2,Ottawa,Cadence Design Systems,69,A,public,CDNS,,,,workday,cadence/wd1/External_Careers,,,,Ottawa; California,yes,ok,2026-11-09,77.3,-7.5,22.0,22.5,2026-11-21,
 2,Ottawa,Calian,71,A,public,CGY.TO,,,,auto,,,,,Ottawa,yes,not_found,2026-11-09,0.9,69.5,19.9,4.4,2026-11-21,
 2,Ottawa,CGI,54,B,public,GIB,,,,website,,https://www.cgi.com/en/careers,,,Ottawa; Toronto / GTA; Rest of Canada,yes,ok,2026-11-21,16.2,-9.8,3.3,10.9,2026-11-21,Uses its own careers site
 2,Ottawa,Ciena,80,A,public,CIEN,,,,workday,ciena/wd5/Careers,,,,Ottawa,yes,ok,2026-11-21,33.2,20.4,37.0,10.9,2026-11-21,Kanata is its largest R&D site
-2,Ottawa,CIRA,55,B,nonprofit,,Nonprofit,,,auto,cira,,,,Ottawa,yes,,,,,,,,Canadian Internet Registration Authority
+2,Ottawa,CIRA,55,B,nonprofit,,Nonprofit,,,auto,cira,,,,Ottawa,yes,not_found,2026-11-22,,,,,,Canadian Internet Registration Authority
 2,Ottawa,Cisco,78,A,public,CSCO,,,,website,,https://jobs.cisco.com,,internal,Ottawa; California; Toronto / GTA,yes,ok,2026-11-21,357.3,18.9,24.4,22.3,2026-11-21,Uses its own careers site
-2,Ottawa,Clearwater Clinical,55,B,private,,Bootstrapped,,,auto,,,,,Ottawa,yes,,,,,,,,
-2,Ottawa,Crank Software,58,B,private,,Subsidiary,,,auto,crank,,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Clearwater Clinical,55,B,private,,Bootstrapped,,,auto,,,,,Ottawa,yes,not_found,2026-11-22,,,,,,
+2,Ottawa,Crank Software,58,B,private,,Subsidiary,,,auto,crank,,,,Ottawa,yes,not_found,2026-11-22,,,,,,
 2,Ottawa,Ericsson,59,B,public,ERIC,,,,website,,https://jobs.ericsson.com,,,Ottawa; Rest of Canada,yes,ok,2026-11-21,31.6,3.9,5.8,8.4,2026-11-21,Uses its own careers site
-2,Ottawa,Evidence Partners,64,B,private,,Late,,,auto,evidencepartners,,,,Ottawa,yes,,,,,,,,DistillerSR
-2,Ottawa,Field Effect,64,B,private,,Late,,,auto,fieldeffect,,,,Ottawa,yes,,,,,,,,Cybersecurity
-2,Ottawa,Foko Retail,50,B,private,,Series A,,,auto,foko,,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Evidence Partners,64,B,private,,Late,,,auto,evidencepartners,,,,Ottawa,yes,not_found,2026-11-22,,,,,,DistillerSR
+2,Ottawa,Field Effect,64,B,private,,Late,,,auto,fieldeffect,,,,Ottawa,yes,not_found,2026-11-22,,,,,,Cybersecurity
+2,Ottawa,Foko Retail,50,B,private,,Series A,,,auto,foko,,,,Ottawa,yes,not_found,2026-11-22,,,,,,
 2,Ottawa,Ford,47,C,public,F,,,,website,,https://corporate.ford.com/careers.html,,internal,Ottawa; Rest of Canada,yes,ok,2026-11-21,44.6,-13.8,-2.0,-4.2,2026-11-21,Ottawa software centre
 2,Ottawa,Fullscript,68,A,private,,Unicorn,,,lever,fullscript,,,,Ottawa,yes,ok,2026-11-09,,,,,,
 2,Ottawa,IBM,53,B,public,IBM,,,,website,,https://www.ibm.com/careers,,internal,Ottawa; Toronto / GTA; Rest of Canada,yes,ok,2026-11-21,212.1,-26.2,4.7,16.0,2026-11-21,Uses its own careers site
-2,Ottawa,Kinaxis,74,A,public,KXS.TO,,,,auto,,,,,Ottawa,yes,,,6.0,26.0,19.1,14.3,2026-11-21,
-2,Ottawa,Kivuto,64,B,private,,Late,,,auto,,,,,Ottawa,yes,,,,,,,,
-2,Ottawa,Klipfolio,64,B,private,,Late,,,auto,,,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Kinaxis,74,A,public,KXS.TO,,,,auto,,,,,Ottawa,yes,not_found,2026-11-22,6.0,26.0,19.1,14.3,2026-11-21,
+2,Ottawa,Kivuto,64,B,private,,Late,,,auto,,,,,Ottawa,yes,not_found,2026-11-22,,,,,,
+2,Ottawa,Klipfolio,64,B,private,,Late,,,auto,,,,,Ottawa,yes,not_found,2026-11-22,,,,,,
 2,Ottawa,Lightspeed,45,C,public,LSPD,,,,ashby,Lightspeed,,,,Ottawa; Rest of Canada,yes,ok,2026-11-09,1.2,-13.5,1.5,-5.5,2026-11-21,"Montreal HQ, Ottawa office"
-2,Ottawa,Martello,36,C,public,MTLO.V,,,,auto,,,,,Ottawa,yes,,,0.0,0.0,-6.2,-25.1,2026-11-21,
-2,Ottawa,MindBridge,55,B,private,,Series B,,,auto,mindbridge,,,,Ottawa,yes,,,,,,,,
-2,Ottawa,Mitel,64,B,private,,Late,,,auto,,,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Martello,36,C,public,MTLO.V,,,,auto,,,,,Ottawa,yes,not_found,2026-11-22,0.0,0.0,-6.2,-25.1,2026-11-21,
+2,Ottawa,MindBridge,55,B,private,,Series B,,,auto,mindbridge,,,,Ottawa,yes,not_found,2026-11-22,,,,,,
+2,Ottawa,Mitel,64,B,private,,Late,,,auto,,,,,Ottawa,yes,not_found,2026-11-22,,,,,,
 2,Ottawa,Noibu,55,B,private,,Series B,,,ashby,Noibu,,,,Ottawa,yes,ok,2026-11-09,,,,,,
 2,Ottawa,Nokia,63,B,public,NOK,,,,website,,https://www.nokia.com/about-us/careers/,,,Ottawa,yes,ok,2026-11-21,38.9,13.0,9.7,3.8,2026-11-21,Uses its own careers site
 2,Ottawa,Pythian,64,B,private,,Late,,,workable,pythian,,,,Ottawa,yes,ok,2026-11-09,,,,,,Data consulting
 2,Ottawa,Recollective,55,B,private,,Bootstrapped,,,auto,,,,,Ottawa,yes,not_found,2026-11-09,,,,,,
 2,Ottawa,Rewind,55,B,private,,Series B,,,ashby,Rewind,,,,Ottawa,yes,ok,2026-11-09,,,,,,
 2,Ottawa,Ribbon Communications,31,C,public,RBBN,,,,workable,ribbon-communications,,,,Ottawa,yes,ok,2026-11-09,0.2,-55.4,1.6,2.3,2026-11-21,Kanata office
-2,Ottawa,Ross Video,55,B,private,,Bootstrapped,,,auto,rossvideo,,,,Ottawa,yes,,,,,,,,Employee-owned
+2,Ottawa,Ross Video,55,B,private,,Bootstrapped,,,auto,rossvideo,,,,Ottawa,yes,not_found,2026-11-22,,,,,,Employee-owned
 2,Ottawa,Shoebox,50,B,private,,Series A,,,auto,,,,,Ottawa,yes,not_found,2026-11-09,,,,,,Hearing tech
 2,Ottawa,Solink,55,B,private,,Series B,,,ashby,Solink,,,,Ottawa,yes,ok,2026-11-09,,,,,,
 2,Ottawa,Synopsys,77,A,public,SNPS,,,,workday,synopsys,,,,Ottawa; California,yes,not_found,2026-11-09,75.9,-2.1,42.4,11.4,2026-11-21,
-2,Ottawa,Tehama,50,B,private,,Series A,,,auto,,,,,Ottawa,yes,,,,,,,,
+2,Ottawa,Tehama,50,B,private,,Series A,,,auto,,,,,Ottawa,yes,not_found,2026-11-22,,,,,,
 2,Ottawa,Telesat,47,C,public,TSAT,,,,lever,telesat,,,,Ottawa,yes,ok,2026-11-09,1.9,48.8,-20.2,-112.5,2026-11-21,
 2,Ottawa,Trend Micro,61,B,public,4704.T,,,,other,,,,,Ottawa,yes,,,984.2,-3.0,9.4,10.6,2026-11-21,Ottawa office; check its careers site directly
-2,Ottawa,TrueContext,,,public,TCXT.V,,,,auto,,,,,Ottawa,yes,,,,,,,2026-11-21,
-2,Ottawa,Veem,64,B,private,,Late,,,auto,,,,,Ottawa; California,yes,,,,,,,,
+2,Ottawa,TrueContext,,,public,TCXT.V,,,,auto,,,,,Ottawa,yes,not_found,2026-11-22,,,,,2026-11-21,
+2,Ottawa,Veem,64,B,private,,Late,,,auto,,,,,Ottawa; California,yes,not_found,2026-11-22,,,,,,
 3,Seattle,Alaska Airlines,,,,,,,,website,,https://careers.alaskaair.com,,internal,"Seattle, WA",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Airline Tech; Remote OK; US only; C#, .NET"
-3,Seattle,Allen Institute for AI,55,B,nonprofit,,Nonprofit,,,auto,allenai,,,,Seattle,yes,,,,,,,,
+3,Seattle,Allen Institute for AI,55,B,nonprofit,,Nonprofit,,,auto,allenai,,,,Seattle,yes,not_found,2026-11-22,,,,,,
 3,Seattle,Amperity,68,A,private,,Unicorn,,,greenhouse,Amperity,,,,Seattle,yes,ok,2026-11-09,,,,,,
-3,Seattle,Anduril,68,A,private,,Unicorn,,,auto,,,,,California; Seattle,yes,,,,,,,,
+3,Seattle,Anduril,68,A,private,,Unicorn,,,auto,,,,,California; Seattle,yes,not_found,2026-11-22,,,,,,
 3,Seattle,Anthropic,68,A,private,,Unicorn,,,greenhouse,anthropic,https://www.anthropic.com/careers,,greenhouse,Seattle; California,yes,ok,2026-11-09,,,,,,Seattle and San Francisco offices
 3,Seattle,Apple,75,A,public,AAPL,,,,website,,https://jobs.apple.com,,internal,California; Seattle,yes,ok,2026-11-21,4978.1,24.2,11.7,27.6,2026-11-21,Uses its own careers site
-3,Seattle,Auger,47,C,private,,Early-stage,,,auto,,,,,Seattle,yes,,,,,,,,AI startup
-3,Seattle,Aurora,70,A,public,AUR,,,,auto,aurorainnovation,,,,California; Seattle,yes,,,7.1,-10.1,200.0,0.0,2026-11-21,
+3,Seattle,Auger,47,C,private,,Early-stage,,,auto,,,,,Seattle,yes,not_found,2026-11-22,,,,,,AI startup
+3,Seattle,Aurora,70,A,public,AUR,,,,auto,aurorainnovation,,,,California; Seattle,yes,not_found,2026-11-22,7.1,-10.1,200.0,0.0,2026-11-21,
 3,Seattle,Avalara,64,B,private,,Late,,,website,,https://careers.avalara.com,,greenhouse,Seattle,yes,ok,2026-11-21,,,,,,Private since 2022
 3,Seattle,Avante,47,C,private,,Early-stage,,,greenhouse,Avante,,,,Seattle,yes,ok,2026-11-09,,,,,,AI startup
 3,Seattle,Blue Origin,64,B,private,,Late,,,lever,blueorigin,,,,Seattle,yes,ok,2026-11-09,,,,,,
@@ -265,13 +265,13 @@
 3,Seattle,Expedia,60,B,public,EXPE,,,,workday,expedia/wd108/Search,https://careers.expediagroup.com,,internal,Seattle,yes,ok,2026-11-09,27.9,-5.7,11.9,13.0,2026-11-21,
 3,Seattle,F5,74,A,public,FFIV,,,,workday,f5,,,,Seattle,yes,not_found,2026-11-09,17.3,28.7,13.3,21.1,2026-11-21,
 3,Seattle,Flexe,64,B,private,,Series D+,,,greenhouse,Flexe,,,,Seattle,yes,ok,2026-11-09,,,,,,
-3,Seattle,Glowforge,64,B,private,,Late,,,auto,,,,,Seattle,yes,,,,,,,,
+3,Seattle,Glowforge,64,B,private,,Late,,,auto,,,,,Seattle,yes,not_found,2026-11-22,,,,,,
 3,Seattle,Google,70,A,public,GOOGL,,,,website,,https://www.google.com/about/careers/applications/,,internal,Seattle; California; Toronto / GTA; Rest of Canada,yes,ok,2026-11-21,3261.5,-16.7,24.7,50.0,2026-11-21,Uses its own careers site
 3,Seattle,Gradial,47,C,private,,Early-stage,,,greenhouse,Gradial,,,,Seattle,yes,ok,2026-11-09,,,,,,AI startup
 3,Seattle,Highspot,68,A,private,,Unicorn,,,lever,highspot,,,,Seattle,yes,ok,2026-11-09,,,,,,
 3,Seattle,Hiya,64,B,private,,Late,,,ashby,Hiya,,,,Seattle,yes,ok,2026-11-09,,,,,,
-3,Seattle,Howie,47,C,private,,Early-stage,,,auto,,,,,Seattle,yes,,,,,,,,AI startup
-3,Seattle,Icertis,68,A,private,,Unicorn,,,auto,,,,,Seattle,yes,,,,,,,,
+3,Seattle,Howie,47,C,private,,Early-stage,,,auto,,,,,Seattle,yes,not_found,2026-11-22,,,,,,AI startup
+3,Seattle,Icertis,68,A,private,,Unicorn,,,auto,,,,,Seattle,yes,not_found,2026-11-22,,,,,,
 3,Seattle,Impinj,55,B,public,PI,,,,greenhouse,Impinj,,,,Seattle,yes,ok,2026-11-09,4.4,-8.6,16.7,-2.5,2026-11-21,
 3,Seattle,Indeed,58,B,private,,Subsidiary,,,other,,https://www.indeed.jobs,,internal,Seattle; Toronto / GTA,yes,not_found,2026-11-21,,,,,,Owned by Recruit
 3,Seattle,Leafly,,,public,LFLY,,,,auto,,,,,Seattle,yes,not_found,2026-11-09,,,,,2026-11-21,
@@ -294,17 +294,17 @@
 3,Seattle,Pioneer Square Labs,47,C,private,,Early-stage,,,greenhouse,psl,,,,Seattle,yes,ok,2026-11-09,,,,,,Startup studio
 3,Seattle,PitchBook,58,B,private,,Subsidiary,,,auto,,,,,Seattle,yes,not_found,2026-11-09,,,,,,Owned by Morningstar
 3,Seattle,Pokemon Company International,58,B,private,,Subsidiary,,,workable,pokemon,,,,Seattle,yes,ok,2026-11-09,,,,,,Bellevue
-3,Seattle,Porch,72,A,public,PRCH,,,,auto,,,,,Seattle,yes,,,2.3,110.4,13.0,1.8,2026-11-21,
-3,Seattle,Pulumi,60,B,private,,Series C,,,auto,,,,,Seattle; Remote / other US,yes,,,,,,,,
+3,Seattle,Porch,72,A,public,PRCH,,,,auto,,,,,Seattle,yes,not_found,2026-11-22,2.3,110.4,13.0,1.8,2026-11-21,
+3,Seattle,Pulumi,60,B,private,,Series C,,,auto,,,,,Seattle; Remote / other US,yes,not_found,2026-11-22,,,,,,
 3,Seattle,Qualtrics,64,B,private,,Late,,,greenhouse,Qualtrics,https://www.qualtrics.com/careers,,greenhouse,Seattle,yes,ok,2026-11-09,,,,,,
 3,Seattle,Qumulo,64,B,private,,Late,,,ashby,Qumulo,,,,Seattle,yes,ok,2026-11-09,,,,,,
-3,Seattle,Rec Room,68,A,private,,Unicorn,,,auto,recroom,,,,Seattle,yes,,,,,,,,
+3,Seattle,Rec Room,68,A,private,,Unicorn,,,auto,recroom,,,,Seattle,yes,not_found,2026-11-22,,,,,,
 3,Seattle,Redfin,58,B,private,,Subsidiary,,,website,,https://www.redfin.com/about/jobs,,greenhouse,Seattle,yes,ok,2026-11-21,,,,,,Owned by Rocket Companies
 3,Seattle,REI,,,,,,,,website,,https://www.rei.com/jobs,,internal,"Seattle, WA",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Retail; Remote OK; US only; Java, React"
-3,Seattle,Remitly,81,A,public,RELY,,,,auto,,,,,Seattle,yes,,,4.2,58.8,21.5,19.1,2026-11-21,
+3,Seattle,Remitly,81,A,public,RELY,,,,auto,,,,,Seattle,yes,not_found,2026-11-22,4.2,58.8,21.5,19.1,2026-11-21,
 3,Seattle,Rover,64,B,private,,Late,,,lever,rover,,,,Seattle,yes,ok,2026-11-09,,,,,,Private since 2024
 3,Seattle,SeekOut,60,B,private,,Series C,,,greenhouse,SeekOut,,,,Seattle,yes,ok,2026-11-09,,,,,,
-3,Seattle,Seeq,60,B,private,,Series C,,,auto,,,,,Seattle,yes,,,,,,,,
+3,Seattle,Seeq,60,B,private,,Series C,,,auto,,,,,Seattle,yes,not_found,2026-11-22,,,,,,
 3,Seattle,Smartsheet,64,B,private,,Late,,,greenhouse,Smartsheet,https://www.smartsheet.com/careers,,greenhouse,Seattle,yes,ok,2026-11-09,,,,,,Private since 2025
 3,Seattle,Snap,35,C,public,SNAP,,,"2026-04 (1,000)",website,,https://careers.snap.com,,greenhouse,California; Seattle,yes,ok,2026-11-21,7.9,-40.8,14.3,-2.3,2026-11-21,Uses its own careers site
 3,Seattle,Snowflake,69,A,public,SNOW,,,,website,,https://careers.snowflake.com,snowflake.com,internal,Toronto / GTA; Seattle; California,yes,ok,2026-11-21,89.9,5.3,35.1,-20.1,2026-11-21,Uses its own careers site
@@ -315,13 +315,13 @@
 3,Seattle,Stripe,68,A,private,,Unicorn,,,greenhouse,stripe,https://stripe.com/jobs,,greenhouse,Seattle; California; Toronto / GTA,yes,ok,2026-11-09,,,,,,Toronto office
 3,Seattle,T-Mobile,56,B,public,TMUS,,,,workday,tmobile/wd1/External,https://careers.t-mobile.com,,internal,Seattle,yes,ok,2026-11-21,175.4,-20.1,7.4,12.0,2026-11-21,Bellevue
 3,Seattle,Tanium,68,A,private,,Unicorn,,,greenhouse,Tanium,,,,Seattle,yes,ok,2026-11-09,,,,,,Kirkland
-3,Seattle,Temporal,68,A,private,,Unicorn,,,auto,temporaltechnologies,,,,Seattle; Remote / other US,yes,,,,,,,,
+3,Seattle,Temporal,68,A,private,,Unicorn,,,auto,temporaltechnologies,,,,Seattle; Remote / other US,yes,not_found,2026-11-22,,,,,,
 3,Seattle,Textio,64,B,private,,Late,,,greenhouse,Textio,,,,Seattle,yes,ok,2026-11-09,,,,,,
 3,Seattle,Truveta,68,A,private,,Unicorn,,,greenhouse,Truveta,,,,Seattle,yes,ok,2026-11-09,,,,,,
 3,Seattle,Uber,42,C,public,UBER,,,"2026-09 (~3,300)",website,,https://www.uber.com/careers,,internal,Seattle; California; Toronto / GTA,yes,ok,2026-11-21,129.6,-24.2,9.6,6.1,2026-11-21,Uses its own careers site
 3,Seattle,Valve,55,B,private,,Bootstrapped,,,website,,https://www.valvesoftware.com/jobs,,,Seattle,yes,ok,2026-11-21,,,,,,Bellevue
-3,Seattle,XBOW,55,B,private,,Series B,,,auto,,,,,Seattle,yes,,,,,,,,AI startup
-3,Seattle,Yoodli,55,B,private,,Series B,,,auto,,,,,Seattle,yes,,,,,,,,AI startup
+3,Seattle,XBOW,55,B,private,,Series B,,,auto,,,,,Seattle,yes,not_found,2026-11-22,,,,,,AI startup
+3,Seattle,Yoodli,55,B,private,,Series B,,,auto,,,,,Seattle,yes,not_found,2026-11-22,,,,,,AI startup
 3,Seattle,Zillow,29,C,public,Z,,,2026-08 (500+),workday,zillow/wd5/Zillow_Group_External,https://www.zillow.com/careers,,greenhouse,Seattle,yes,ok,2026-11-21,6.2,-62.0,7.1,-4.0,2026-11-21,
 4,California,23andMe,,,,,,,,website,,https://www.23andme.com/careers,,greenhouse,"Sunnyvale, CA",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Genomics; Remote-first; US only; Python, React"
 4,California,Abnormal Security,68,A,private,,Unicorn,,,greenhouse,abnormalsecurity,https://abnormalsecurity.com/careers,,greenhouse,California,yes,ok,2026-11-09,,,,,,
@@ -337,8 +337,8 @@
 4,California,Amgen,,,,,,,,workday,amgen/wd1/Careers,https://careers.amgen.com,,internal,"Thousand Oaks, CA",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Biotech; Hybrid; Yes - Mississauga; Java, Python"
 4,California,Amplitude,71,A,public,AMPL,,,,ashby,Amplitude,https://amplitude.com/careers,,greenhouse,California,yes,ok,2026-11-09,2.1,62.3,24.9,-25.2,2026-11-21,
 4,California,Anyscale,68,A,private,,Unicorn,,,ashby,Anyscale,,,,California,yes,ok,2026-11-09,,,,,,
-4,California,Anysphere (Cursor),68,A,private,,Unicorn,,,auto,anysphere,,,,California,yes,,,,,,,,
-4,California,Applied Intuition,68,A,private,,Unicorn,,,auto,appliedintuition,,,,California,yes,,,,,,,,
+4,California,Anysphere (Cursor),68,A,private,,Unicorn,,,auto,anysphere,,,,California,yes,not_found,2026-11-22,,,,,,
+4,California,Applied Intuition,68,A,private,,Unicorn,,,auto,appliedintuition,,,,California,yes,not_found,2026-11-22,,,,,,
 4,California,Applied Materials,92,A,public,AMAT,,,,workday,amat/wd1/External,,,,California,yes,ok,2026-11-09,240.2,31.1,53.1,29.3,2026-11-21,
 4,California,Ashby,,,,,,,,ashby,ashby,https://www.ashbyhq.com/careers,,ashby,"San Francisco, CA",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Recruiting SaaS; Remote-first; Check; TS, React, Node"
 4,California,Atlassian,,,,,,,,website,,https://www.atlassian.com/company/careers,,internal,"San Francisco, CA",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Dev Tools / SaaS; Remote-first; Yes - TEAM Anywhere in Canada; React, TS, Java"
@@ -382,11 +382,11 @@
 4,California,Dropbox,50,B,public,DBX,,,2026-10 (~200),greenhouse,dropbox,Hires remote in Canada,,greenhouse,California; Remote / other US,yes,ok,2026-11-09,7.3,13.5,0.5,17.2,2026-11-21,
 4,California,Duda,,,,,,,,greenhouse,duda,https://www.duda.co/careers,,greenhouse,"Palo Alto, CA",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Website Builder; Remote OK; Check; Java, React"
 4,California,eBay,79,A,public,EBAY,,,,other,,https://jobs.ebayinc.com,,internal,California,yes,not_found,2026-11-21,50.7,42.9,13.7,16.9,2026-11-21,Uses its own careers site
-4,California,Eventbrite,,,public,EB,,,2026-04,auto,,,,,California,yes,,,,,,,2026-11-21,
+4,California,Eventbrite,,,public,EB,,,2026-04,auto,,,,,California,yes,not_found,2026-11-22,,,,,2026-11-21,
 4,California,Fastly,66,A,public,FSLY,,,,greenhouse,Fastly,https://www.fastly.com/about/careers,,greenhouse,California,yes,ok,2026-11-09,2.4,28.3,20.2,-8.7,2026-11-21,
 4,California,Figma,50,B,public,FIG,,,,greenhouse,figma,https://www.figma.com/careers,,greenhouse,California,yes,ok,2026-11-09,8.4,-55.5,42.8,-40.2,2026-11-21,
 4,California,Figure AI,68,A,private,,Unicorn,,,greenhouse,figureai,,,,California,yes,ok,2026-11-09,,,,,,
-4,California,Fireworks AI,68,A,private,,Unicorn,,,auto,fireworksai,,,,California,yes,,,,,,,,
+4,California,Fireworks AI,68,A,private,,Unicorn,,,auto,fireworksai,,,,California,yes,not_found,2026-11-22,,,,,,
 4,California,Five9,63,B,public,FIVN,,,,greenhouse,Five9,,,,California,yes,ok,2026-11-09,1.7,18.1,13.1,4.5,2026-11-21,
 4,California,Fivetran,68,A,private,,Unicorn,,,greenhouse,Fivetran,https://www.fivetran.com/careers,,greenhouse,California,yes,ok,2026-11-09,,,,,,
 4,California,Flexport,68,A,private,,Unicorn,,,greenhouse,Flexport,https://www.flexport.com/careers,,greenhouse,California,yes,ok,2026-11-09,,,,,,
@@ -402,7 +402,7 @@
 4,California,Harness,68,A,private,,Unicorn,,,workable,harness,,,,California,yes,ok,2026-11-09,,,,,,
 4,California,Harvey,68,A,private,,Unicorn,,,ashby,Harvey,,,,California,yes,ok,2026-11-09,,,,,,
 4,California,HashiCorp,,,,,,,,auto,,https://www.hashicorp.com/careers,,greenhouse,"San Francisco, CA",yes,,,,,,,,"Imported 2026-11-21: Infra / DevOps; Remote-first; Yes; Go, React, TS"
-4,California,Headspace,52,B,private,,Late,,2026-10,auto,,,,,California,yes,,,,,,,,
+4,California,Headspace,52,B,private,,Late,,2026-10,auto,,,,,California,yes,not_found,2026-11-22,,,,,,
 4,California,Hex,60,B,private,,Series C,,,ashby,Hex,,,,California,yes,ok,2026-11-09,,,,,,
 4,California,Hightouch,68,A,private,,Unicorn,,,ashby,Hightouch,,,,California,yes,ok,2026-11-09,,,,,,
 4,California,Hims & Hers,53,B,public,HIMS,,,,auto,hims,https://www.hims.com/careers,,greenhouse,California,yes,not_found,2026-11-21,3.4,-61.4,48.6,-6.7,2026-11-21,
@@ -436,7 +436,7 @@
 4,California,Mixpanel,64,B,private,,Late,,,greenhouse,Mixpanel,https://mixpanel.com/careers,,greenhouse,California,yes,ok,2026-11-09,,,,,,
 4,California,Modal,68,A,private,,Unicorn,,,ashby,Modal,,,,California,yes,ok,2026-11-09,,,,,,
 4,California,Motive,,,,,,,,greenhouse,gomotive,https://gomotive.com/careers,,greenhouse,"San Francisco, CA",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Fleet Tech; Remote OK; Check; Go, React"
-4,California,Moveworks,58,B,private,,Subsidiary,,,auto,,,,,California; Toronto / GTA,yes,,,,,,,,Owned by ServiceNow
+4,California,Moveworks,58,B,private,,Subsidiary,,,auto,,,,,California; Toronto / GTA,yes,not_found,2026-11-22,,,,,,Owned by ServiceNow
 4,California,Mux,64,B,private,,Series D+,,,ashby,Mux,,,,California,yes,ok,2026-11-09,,,,,,
 4,California,Navan,78,A,public,NAVN,,,,website,,https://navan.com/careers,,greenhouse,California,yes,ok,2026-11-21,6.3,58.1,35.4,-42.1,2026-11-21,
 4,California,Neo4j,,,,,,,,greenhouse,neo4j,https://neo4j.com/careers,,greenhouse,"San Mateo, CA",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Database; Remote-first; Check; Java, TS"
@@ -459,7 +459,7 @@
 4,California,Perplexity,68,A,private,,Unicorn,,,ashby,Perplexity,,,,California,yes,ok,2026-11-09,,,,,,
 4,California,Perplexity AI,,,,,,,,website,,https://www.perplexity.ai/careers,,ashby,"San Francisco, CA",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: AI Search; Hybrid; Check; Python, Next.js, TS"
 4,California,Physical Intelligence,68,A,private,,Unicorn,,,ashby,physicalintelligence,,,,California,yes,ok,2026-11-09,,,,,,
-4,California,Pilot,68,A,private,,Unicorn,,,auto,,,,,California,yes,,,,,,,,
+4,California,Pilot,68,A,private,,Unicorn,,,auto,,,,,California,yes,not_found,2026-11-22,,,,,,
 4,California,Pinecone,68,A,private,,Unicorn,,,ashby,Pinecone,,,,California,yes,ok,2026-11-09,,,,,,
 4,California,Plaid,68,A,private,,Unicorn,,,website,,https://plaid.com/careers,,greenhouse,California,yes,ok,2026-11-21,,,,,,
 4,California,Postman,68,A,private,,Unicorn,,,website,,https://www.postman.com/company/careers,,greenhouse,California,yes,ok,2026-11-21,,,,,,
@@ -527,7 +527,7 @@
 4,California,Waymo,58,B,private,,Subsidiary,,,greenhouse,Waymo,https://waymo.com/careers,,internal,California,yes,ok,2026-11-09,,,,,,Owned by Alphabet
 4,California,Wealthfront,37,C,public,WLTH,,,,lever,wealthfront,https://www.wealthfront.com/careers,,greenhouse,California,yes,ok,2026-11-09,1.6,-27.4,0.8,-19.4,2026-11-21,
 4,California,Webflow,68,A,private,,Unicorn,,,greenhouse,Webflow,https://webflow.com/careers,,greenhouse,California; Remote / other US,yes,ok,2026-11-09,,,,,,
-4,California,Weights & Biases,58,B,private,,Subsidiary,,,auto,wandb,,,,California,yes,,,,,,,,Owned by CoreWeave
+4,California,Weights & Biases,58,B,private,,Subsidiary,,,auto,wandb,,,,California,yes,not_found,2026-11-22,,,,,,Owned by CoreWeave
 4,California,Western Digital,98,A,public,WDC,,,,workday,wdc,,,,California,yes,not_found,2026-11-09,97.7,73.0,55.5,69.2,2026-11-21,
 4,California,WorkOS,55,B,private,,Series B,,,ashby,WorkOS,,,,California,yes,ok,2026-11-09,,,,,,
 4,California,Writer,68,A,private,,Unicorn,,,ashby,Writer,,,,California,yes,ok,2026-11-09,,,,,,
@@ -543,44 +543,44 @@
 5,Toronto / GTA,Achievers,58,B,private,,Subsidiary,,,lever,achievers,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Ada,68,A,private,,Unicorn,,,greenhouse,ada18,,,,Toronto / GTA,yes,ok,2026-11-21,,,,,,
 5,Toronto / GTA,AlayaCare,64,B,private,,Late,,,greenhouse,AlayaCare,,,,Toronto / GTA; Rest of Canada,yes,ok,2026-11-09,,,,,,
-5,Toronto / GTA,Basetwo,50,B,private,,Series A,,,auto,,,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Basetwo,50,B,private,,Series A,,,auto,,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,
 5,Toronto / GTA,BCE (Bell),55,B,public,BCE,,,,website,,https://jobs.bell.ca,,,Toronto / GTA; Rest of Canada,yes,ok,2026-11-21,20.4,-5.2,2.2,10.2,2026-11-21,Uses its own careers site
 5,Toronto / GTA,BenchSci,64,B,private,,Series D+,,,ashby,BenchSci,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,BMO,76,A,public,BMO,,,,workday,bmo/wd3/External,,,,Toronto / GTA,yes,ok,2026-11-09,108.6,27.8,12.0,25.7,2026-11-21,
-5,Toronto / GTA,Borderless AI,50,B,private,,Series A,,,auto,borderless,,,,Toronto / GTA,yes,,,,,,,,
-5,Toronto / GTA,Borrowell,64,B,private,,Late,,,auto,,,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Borderless AI,50,B,private,,Series A,,,auto,borderless,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,
+5,Toronto / GTA,Borrowell,64,B,private,,Late,,,auto,,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,
 5,Toronto / GTA,Canadian Tire,66,A,public,CTC-A.TO,,,,workday,canadiantirecorporation/wd3/Enterprise_External_Careers_Site,https://corp.canadiantire.ca/English/careers,,,Toronto / GTA,yes,ok,2026-11-21,11.2,32.3,5.3,4.3,2026-11-21,Digital team in Toronto
 5,Toronto / GTA,Celestica,63,B,public,CLS,,,,workday,celestica,,,,Toronto / GTA,yes,not_found,2026-11-09,25.4,-37.4,82.5,6.8,2026-11-21,
 5,Toronto / GTA,CIBC,77,A,public,CM,,,,workday,cibc/wd3/search,,,,Toronto / GTA,yes,ok,2026-11-09,93.4,22.3,16.6,33.7,2026-11-21,
 5,Toronto / GTA,Clearco,64,B,private,,Late,,,ashby,Clearco,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Clutch,64,B,private,,Late,,,greenhouse,clutch,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,Online car retailer
-5,Toronto / GTA,Coinsquare,58,B,private,,Subsidiary,,,auto,,,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Coinsquare,58,B,private,,Subsidiary,,,auto,,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,
 5,Toronto / GTA,Datadog,74,A,public,DDOG,,,,greenhouse,datadog,https://careers.datadoghq.com,,greenhouse,Toronto / GTA; Remote / other US,yes,ok,2026-11-09,56.8,-0.7,35.2,6.1,2026-11-21,
 5,Toronto / GTA,Dayforce,64,B,private,,Late,,,other,,https://www.dayforce.com/careers,,internal,Toronto / GTA,yes,not_found,2026-11-21,,,,,,Taken private by Thoma Bravo (2025 deal)
 5,Toronto / GTA,Descartes Systems,68,A,public,DSGX,,,,auto,descartes,,,,Toronto / GTA; Rest of Canada,yes,not_found,2026-11-09,7.6,10.3,11.8,24.3,2026-11-21,Waterloo HQ
 5,Toronto / GTA,Docebo,65,A,public,DCBO,,,,ashby,Docebo,https://www.docebo.com/company/careers/,,,Toronto / GTA,yes,ok,2026-11-09,0.7,32.0,14.1,13.8,2026-11-21,
 5,Toronto / GTA,Dye & Durham,23,C,public,DND.TO,,,,auto,dyedurham,,,,Toronto / GTA,yes,not_found,2026-11-09,0.1,-63.2,-12.4,-2.9,2026-11-21,
-5,Toronto / GTA,ecobee,58,B,private,,Subsidiary,,,auto,,https://careers.generac.com/en/brands/ecobee,,,Toronto / GTA,yes,,,,,,,,Owned by Generac
+5,Toronto / GTA,ecobee,58,B,private,,Subsidiary,,,website,,https://careers.generac.com/en/brands/ecobee,,,Toronto / GTA,yes,ok,2026-11-22,,,,,,Owned by Generac
 5,Toronto / GTA,Enghouse,40,C,public,ENGH.TO,,,,workable,enghouse,,,,Toronto / GTA,yes,ok,2026-11-09,0.9,-17.5,-6.4,14.8,2026-11-21,
-5,Toronto / GTA,Enso Connect,50,B,private,,Series A,,,auto,ensoconnect,,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Enso Connect,50,B,private,,Series A,,,auto,ensoconnect,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,
 5,Toronto / GTA,EQ Bank,54,B,public,EQB.TO,,,,lever,eqbank,,,,Toronto / GTA,yes,ok,2026-11-09,5.0,36.7,-67.5,-0.3,2026-11-21,
 5,Toronto / GTA,Faire,,,,,,,,greenhouse,faire,,,,Toronto (+ San Francisco),yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: B2B wholesale marketplace; unicorn; Canada-based (Toronto); React, TypeScript, Next.js, Storybook, Playwright, WCAG, Nx; Kotlin backend"
 5,Toronto / GTA,Felix Health,50,B,private,,Series A,,,ashby,felix,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
-5,Toronto / GTA,Float,55,B,private,,Series B,,,auto,floatcard,,,,Toronto / GTA,yes,,,,,,,,
-5,Toronto / GTA,FreshBooks,68,A,private,,Unicorn,,,auto,,,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Float,55,B,private,,Series B,,,auto,floatcard,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,
+5,Toronto / GTA,FreshBooks,68,A,private,,Unicorn,,,auto,,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,
 5,Toronto / GTA,General Motors,48,C,public,GM,,,2026-05 (~600),website,,https://search-careers.gm.com,,internal,Toronto / GTA,yes,ok,2026-11-21,66.4,10.9,2.9,2.1,2026-11-21,Markham technical centre
 5,Toronto / GTA,Geotab,64,B,private,,Late,,,greenhouse,Geotab,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,Oakville
 5,Toronto / GTA,HubSpot,37,C,public,HUBS,,,2026-10 (~660),website,,https://www.hubspot.com/careers,,greenhouse,Toronto / GTA,yes,ok,2026-11-21,9.5,-45.6,17.1,5.9,2026-11-21,
-5,Toronto / GTA,Index Exchange,64,B,private,,Late,,,auto,indexexchange,,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Index Exchange,64,B,private,,Late,,,auto,indexexchange,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,
 5,Toronto / GTA,Intact Financial,54,B,public,IFC.TO,,,,website,,https://careers.intactfc.com,,,Toronto / GTA; Rest of Canada,yes,ok,2026-11-21,48.5,-2.8,-1.7,11.3,2026-11-21,Uses its own careers site
 5,Toronto / GTA,Interac,64,B,private,,Late,,,auto,,,,,Toronto / GTA,yes,not_found,2026-11-09,,,,,,
-5,Toronto / GTA,IXL,,,,,,,,auto,,,,,Remote / Toronto (EdTech cluster),yes,,,,,,,,"Imported 2026-11-21: Learning platforms; various stages; Flag: many EdTech roles are US-only. Verify Canadian work authorisation; React, JavaScript front-ends"
+5,Toronto / GTA,IXL,,,,,,,,auto,,,,,Remote / Toronto (EdTech cluster),yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Learning platforms; various stages; Flag: many EdTech roles are US-only. Verify Canadian work authorisation; React, JavaScript front-ends"
 5,Toronto / GTA,Jobber,68,A,private,,Unicorn,,,ashby,jobber,,,,Rest of Canada; Toronto / GTA,yes,ok,2026-11-09,,,,,,Edmonton
 5,Toronto / GTA,Kepler Communications,64,B,private,,Late,,,ashby,kepler,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
-5,Toronto / GTA,Klarna,40,C,public,KLAR,,,,auto,,,,,Toronto / GTA,yes,,,4.6,-59.0,11.7,-2.9,2026-11-21,
+5,Toronto / GTA,Klarna,40,C,public,KLAR,,,,auto,,,,,Toronto / GTA,yes,not_found,2026-11-22,4.6,-59.0,11.7,-2.9,2026-11-21,
 5,Toronto / GTA,KOHO,68,A,private,,Unicorn,,,ashby,koho,,,,Toronto / GTA; Remote / other US,yes,ok,2026-11-09,,,,,,
-5,Toronto / GTA,League,64,B,private,,Late,,,auto,,,,,Toronto / GTA,yes,,,,,,,,
-5,Toronto / GTA,Ledn,55,B,private,,Series B,,,auto,,,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,League,64,B,private,,Late,,,auto,,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,
+5,Toronto / GTA,Ledn,55,B,private,,Series B,,,auto,,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,
 5,Toronto / GTA,Loblaw Digital,63,B,public,L.TO,,,,website,,https://careers.loblaw.ca,,,Toronto / GTA,yes,ok,2026-11-21,82.1,15.4,3.6,4.9,2026-11-21,Uses its own careers site
 5,Toronto / GTA,Loopio,64,B,private,,Late,,,ashby,Loopio,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Manulife,69,A,public,MFC,,,,workday,manulife/wd3/MFCJH_Jobs,,,,Toronto / GTA; Rest of Canada,yes,ok,2026-11-09,67.5,17.3,7.3,19.0,2026-11-21,
@@ -594,13 +594,13 @@
 5,Toronto / GTA,Pivotree,27,C,public,PVT.V,,,,auto,,,,,Toronto / GTA,yes,not_found,2026-11-09,0.0,-27.7,-27.3,2.8,2026-11-21,
 5,Toronto / GTA,Plooto,55,B,private,,Series B,,,lever,plooto,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,PocketHealth,55,B,private,,Series B,,,lever,PocketHealth,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
-5,Toronto / GTA,Points,58,B,private,,Subsidiary,,,auto,,,,,Toronto / GTA,yes,,,,,,,,Owned by Plusgrade
+5,Toronto / GTA,Points,58,B,private,,Subsidiary,,,auto,,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,Owned by Plusgrade
 5,Toronto / GTA,PolicyMe,55,B,private,,Series B,,,lever,policyme,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Private AI,50,B,private,,Series A,,,auto,privateai,,,,Toronto / GTA,yes,not_found,2026-11-09,,,,,,
-5,Toronto / GTA,Prodigy,,,,,,,,auto,,,,,Remote / Toronto (EdTech cluster),yes,,,,,,,,"Imported 2026-11-21: Learning platforms; various stages; Flag: many EdTech roles are US-only. Verify Canadian work authorisation; React, JavaScript front-ends"
-5,Toronto / GTA,Prodigy Education,64,B,private,,Late,,,auto,prodigy,,,,Toronto / GTA,yes,,,,,,,,Oakville
+5,Toronto / GTA,Prodigy,,,,,,,,auto,,,,,Remote / Toronto (EdTech cluster),yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Learning platforms; various stages; Flag: many EdTech roles are US-only. Verify Canadian work authorisation; React, JavaScript front-ends"
+5,Toronto / GTA,Prodigy Education,64,B,private,,Late,,,auto,prodigy,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,Oakville
 5,Toronto / GTA,Propel Holdings,73,A,public,PRL.TO,,,,ashby,propel,,,,Toronto / GTA,yes,ok,2026-11-09,1.0,13.6,32.5,8.7,2026-11-21,
-5,Toronto / GTA,Q4 Inc,64,B,private,,Late,,,auto,q4inc,,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Q4 Inc,64,B,private,,Late,,,auto,q4inc,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,
 5,Toronto / GTA,Questrade,64,B,private,,Late,,,lever,Questrade,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Real Matters,34,C,public,REAL.TO,,,,auto,,,,,Toronto / GTA,yes,not_found,2026-11-09,0.2,-53.8,13.3,-10.0,2026-11-21,
 5,Toronto / GTA,Ritual,64,B,private,,Late,,,greenhouse,Ritual,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
@@ -613,7 +613,7 @@
 5,Toronto / GTA,StackAdapt,64,B,private,,Late,,,greenhouse,StackAdapt,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Sun Life,61,B,public,SLF,,,,workday,sunlife/wd3/Experienced-Jobs,,,,Toronto / GTA; Rest of Canada,yes,ok,2026-11-09,38.3,17.0,0.7,8.6,2026-11-21,
 5,Toronto / GTA,Super.com,64,B,private,,Late,,,greenhouse,super,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
-5,Toronto / GTA,Swift Medical,55,B,private,,Series B,,,auto,swiftmedical,,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Swift Medical,55,B,private,,Series B,,,auto,swiftmedical,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,
 5,Toronto / GTA,Tailscale,68,A,private,,Unicorn,,,greenhouse,Tailscale,,,,Toronto / GTA; Remote / other US,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,TD Bank,78,A,public,TD,,,,workday,td/wd3/TD_Bank_Careers,,,,Toronto / GTA,yes,ok,2026-11-09,184.3,36.5,11.5,26.6,2026-11-21,
 5,Toronto / GTA,Tealbook,55,B,private,,Series B,,,lever,tealbook,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
@@ -621,42 +621,42 @@
 5,Toronto / GTA,Top Hat,64,B,private,,Late,,,ashby,top-hat,https://tophat.com/careers/,,,Toronto / GTA,yes,ok,2026-11-21,,,,,,
 5,Toronto / GTA,TouchBistro,64,B,private,,Late,,,greenhouse,TouchBistro,,,,Toronto / GTA,yes,not_found,2026-11-13,,,,,,
 5,Toronto / GTA,TribalScale,55,B,private,,Bootstrapped,,,greenhouse,TribalScale,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
-5,Toronto / GTA,Tulip,64,B,private,,Late,,,auto,tulipretail,,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Tulip,64,B,private,,Late,,,auto,tulipretail,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,
 5,Toronto / GTA,Uberflip,64,B,private,,Late,,,auto,,,,,Toronto / GTA,yes,not_found,2026-11-09,,,,,,
 5,Toronto / GTA,Ubisoft,0,C,public,UBI.PA,,,2026-06 (up to 380),smartrecruiters,Ubisoft2,Toronto and Montreal studios,,,Toronto / GTA; Rest of Canada,yes,ok,2026-11-09,0.4,-55.9,-33.7,-108.7,2026-11-21,
-5,Toronto / GTA,Untether AI,58,B,private,,Subsidiary,,,auto,untether,,,,Toronto / GTA,yes,,,,,,,,Team joined AMD in 2025
-5,Toronto / GTA,Validere,55,B,private,,Series B,,,auto,,,,,Toronto / GTA; Rest of Canada,yes,,,,,,,,
+5,Toronto / GTA,Untether AI,58,B,private,,Subsidiary,,,auto,untether,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,Team joined AMD in 2025
+5,Toronto / GTA,Validere,55,B,private,,Series B,,,auto,,,,,Toronto / GTA; Rest of Canada,yes,not_found,2026-11-22,,,,,,
 5,Toronto / GTA,Vector Institute,55,B,nonprofit,,Nonprofit,,,workable,vectorinstitute,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,AI research institute
-5,Toronto / GTA,Vena Solutions,68,A,private,,Unicorn,,,auto,vena,,,,Toronto / GTA,yes,,,,,,,,
+5,Toronto / GTA,Vena Solutions,68,A,private,,Unicorn,,,auto,vena,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,
 5,Toronto / GTA,Voiceflow,55,B,private,,Series B,,,workable,voiceflow,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Waabi,55,B,private,,Series B,,,lever,waabi,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,
 5,Toronto / GTA,Wattpad,58,B,private,,Subsidiary,,,lever,wattpad,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,Owned by Naver
 5,Toronto / GTA,Wave,58,B,private,,Subsidiary,,,lever,waveapps,,,,Toronto / GTA,yes,ok,2026-11-09,,,,,,Owned by H&R Block
 5,Toronto / GTA,Wealthsimple,68,A,private,,Unicorn,,,ashby,Wealthsimple,,,,Toronto / GTA; Remote / other US,yes,ok,2026-11-09,,,,,,
-5,Toronto / GTA,Xanadu,68,A,private,,Unicorn,,,auto,,,,,Toronto / GTA,yes,,,,,,,,Announced plans to go public
+5,Toronto / GTA,Xanadu,68,A,private,,Unicorn,,,auto,,,,,Toronto / GTA,yes,not_found,2026-11-22,,,,,,Announced plans to go public
 6,Rest of Canada,7shifts,64,B,private,,Late,,,ashby,7shifts,,,,Rest of Canada,yes,ok,2026-11-09,,,,,,Saskatoon
-6,Rest of Canada,Alethea Medical,,,,,,,,auto,,,,,,yes,,,,,,,,Imported 2026-11-21
+6,Rest of Canada,Alethea Medical,,,,,,,,auto,,,,,,yes,not_found,2026-11-22,,,,,,Imported 2026-11-21
 6,Rest of Canada,AltaML,50,B,private,,Series A,,,lever,altaml,,,,Rest of Canada,yes,ok,2026-11-09,,,,,,Edmonton
 6,Rest of Canada,Amii,55,B,nonprofit,,Nonprofit,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-09,,,,,,Edmonton AI institute
 6,Rest of Canada,ApplyBoard,68,A,private,,Unicorn,,,workday,applyboard/wd3/ApplyBoardNH,https://www.applyboard.com/careers,,,Rest of Canada,yes,ok,2026-11-21,,,,,,Kitchener
 6,Rest of Canada,Arctic Wolf,68,A,private,,Unicorn,,,workday,arcticwolf/wd1/External,https://arcticwolf.com/careers,,greenhouse,Rest of Canada,yes,ok,2026-11-21,,,,,,Waterloo
 6,Rest of Canada,Auvik,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-09,,,,,,Waterloo
-6,Rest of Canada,Axonify,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,,,,,,,,Waterloo
+6,Rest of Canada,Axonify,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-22,,,,,,Waterloo
 6,Rest of Canada,Behaviour Interactive,64,B,private,,Late,,,auto,behaviour,,,,Rest of Canada,yes,not_found,2026-11-09,,,,,,"Montreal, games"
 6,Rest of Canada,Benevity,68,A,private,,Unicorn,,,ashby,Benevity,,,,Rest of Canada,yes,ok,2026-11-09,,,,,,Calgary
 6,Rest of Canada,Bold Commerce,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-09,,,,,,Winnipeg
 6,Rest of Canada,Botpress,55,B,private,,Series B,,,workable,botpress,,,,Rest of Canada,yes,ok,2026-11-09,,,,,,"Montreal, AI"
-6,Rest of Canada,Busbud,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,,,,,,,,Montreal
+6,Rest of Canada,Busbud,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-22,,,,,,Montreal
 6,Rest of Canada,Coconut Software,64,B,private,,Late,,,greenhouse,coconutsoftware,,,,Rest of Canada,yes,ok,2026-11-09,,,,,,Saskatoon
-6,Rest of Canada,Coveo,39,C,public,CVO.TO,,,,auto,,,,,Rest of Canada,yes,,,0.4,-25.3,8.3,-11.9,2026-11-21,"Quebec City, Montreal"
-6,Rest of Canada,CSE (Government of Canada),,,,,,,,auto,,,,,,yes,,,,,,,,Imported 2026-11-21
+6,Rest of Canada,Coveo,39,C,public,CVO.TO,,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-22,0.4,-25.3,8.3,-11.9,2026-11-21,"Quebec City, Montreal"
+6,Rest of Canada,CSE (Government of Canada),,,,,,,,auto,,,,,,yes,not_found,2026-11-22,,,,,,Imported 2026-11-21
 6,Rest of Canada,D2L,36,C,public,DTOL.TO,,,,greenhouse,d2l,,,,Rest of Canada,yes,ok,2026-11-09,0.6,-33.0,1.5,0.7,2026-11-21,Kitchener
 6,Rest of Canada,Dejero,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-09,,,,,,Waterloo
-6,Rest of Canada,Dialogue,58,B,private,,Subsidiary,,,auto,,,,,Rest of Canada,yes,,,,,,,,"Montreal, owned by Sun Life"
+6,Rest of Canada,Dialogue,58,B,private,,Subsidiary,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-22,,,,,,"Montreal, owned by Sun Life"
 6,Rest of Canada,Digital Extremes,,,,,,,,greenhouse,digitalextremes,,,,,yes,ok,2026-11-21,,,,,,Imported 2026-11-21
 6,Rest of Canada,eSentire,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-09,,,,,,Waterloo
 6,Rest of Canada,Flare Systems,55,B,private,,Series B,,,workable,flare,,,,Rest of Canada,yes,ok,2026-11-09,,,,,,Montreal
-6,Rest of Canada,Helcim,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,,,,,,,,Calgary
+6,Rest of Canada,Helcim,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-22,,,,,,Calgary
 6,Rest of Canada,Hopper,68,A,private,,Unicorn,,,ashby,Hopper,,,,Rest of Canada,yes,ok,2026-11-09,,,,,,Montreal
 6,Rest of Canada,Igloo Software,64,B,private,,Late,,,workable,igloo,,,,Rest of Canada,yes,ok,2026-11-09,,,,,,Kitchener
 6,Rest of Canada,Magnet Forensics,64,B,private,,Late,,,lever,magnetforensics,,,,Rest of Canada,yes,ok,2026-11-09,,,,,,Waterloo
@@ -667,8 +667,8 @@
 6,Rest of Canada,Mirego,55,B,private,,Bootstrapped,,,lever,mirego,,,,Rest of Canada,yes,ok,2026-11-09,,,,,,Quebec City
 6,Rest of Canada,National Bank,77,A,public,NA.TO,,,,website,,https://jobs.nbc.ca,,,Rest of Canada,yes,ok,2026-11-21,75.5,20.5,17.3,33.3,2026-11-21,Montreal
 6,Rest of Canada,Neo Financial,68,A,private,,Unicorn,,,ashby,neofinancial,,,,Rest of Canada,yes,ok,2026-11-09,,,,,,"Calgary, Winnipeg"
-6,Rest of Canada,nesto,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,,,,,,,,Montreal
-6,Rest of Canada,Nuvei,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,,,,,,,,"Montreal, private since 2024"
+6,Rest of Canada,nesto,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-22,,,,,,Montreal
+6,Rest of Canada,Nuvei,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-22,,,,,,"Montreal, private since 2024"
 6,Rest of Canada,Paper,64,B,private,,Late,,,workable,paper,,,,Rest of Canada,yes,ok,2026-11-09,,,,,,"Montreal, education"
 6,Rest of Canada,Pason Systems,66,A,public,PSI.TO,,,,auto,pason,,,,Rest of Canada,yes,not_found,2026-11-09,1.0,11.4,18.0,12.5,2026-11-21,Calgary
 6,Rest of Canada,Plotly,60,B,private,,Series C,,,ashby,Plotly,,,,Rest of Canada,yes,ok,2026-11-09,,,,,,Montreal
@@ -676,17 +676,17 @@
 6,Rest of Canada,Practice Better,,,,,,,,greenhouse,practicebetter,,,,Remote-Canada,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Health / EHR practice-management SaaS; Remote-Canada; C#/.NET, TypeScript, React"
 6,Rest of Canada,Proposify,50,B,private,,Series A,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-09,,,,,,Halifax
 6,Rest of Canada,Showpass,50,B,private,,Series A,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-09,,,,,,Calgary
-6,Rest of Canada,Siemens,,,,,,,,auto,,,,,,yes,,,,,,,,Imported 2026-11-21
-6,Rest of Canada,SkillsWave,,,,,,,,auto,,,,,,yes,,,,,,,,Imported 2026-11-21
+6,Rest of Canada,Siemens,,,,,,,,auto,,,,,,yes,not_found,2026-11-22,,,,,,Imported 2026-11-21
+6,Rest of Canada,SkillsWave,,,,,,,,auto,,,,,,yes,not_found,2026-11-22,,,,,,Imported 2026-11-21
 6,Rest of Canada,SkipTheDishes,58,B,private,,Subsidiary,,,workable,skipthedishes,,,,Rest of Canada,yes,ok,2026-11-09,,,,,,Winnipeg
 6,Rest of Canada,SSENSE,64,B,private,,Late,,,workable,ssense,,,,Rest of Canada,yes,ok,2026-11-09,,,,,,Montreal
-6,Rest of Canada,Symend,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,,,,,,,,Calgary
+6,Rest of Canada,Symend,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-22,,,,,,Calgary
 6,Rest of Canada,Tecsys,51,B,public,TCS.TO,,,,workable,tecsys,,,,Rest of Canada,yes,ok,2026-11-09,0.5,2.7,8.9,3.2,2026-11-21,Montreal
-6,Rest of Canada,Valsoft / Harris Computer,,,,,,,,auto,,https://www.harriscomputer.com/en/careers,,,Remote-Canada,yes,,,,,,,,"Imported 2026-11-21: Vertical-market software conglomerate; Remote across Canada; .NET, C#, .NET Core, Angular"
-6,Rest of Canada,Vendasta,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,,,,,,,,Saskatoon
-6,Rest of Canada,Vention,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,,,,,,,,Montreal
-6,Rest of Canada,Vidyard,64,B,private,,Late,,,auto,,https://www.vidyard.com/careers/,,,Rest of Canada,yes,,,,,,,,Kitchener
-6,Rest of Canada,Wagepoint,,,,,,,,auto,,,,,,yes,,,,,,,,Imported 2026-11-21
+6,Rest of Canada,Valsoft / Harris Computer,,,,,,,,auto,,https://www.harriscomputer.com/en/careers,,,Remote-Canada,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Vertical-market software conglomerate; Remote across Canada; .NET, C#, .NET Core, Angular"
+6,Rest of Canada,Vendasta,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-22,,,,,,Saskatoon
+6,Rest of Canada,Vention,64,B,private,,Late,,,auto,,,,,Rest of Canada,yes,not_found,2026-11-22,,,,,,Montreal
+6,Rest of Canada,Vidyard,64,B,private,,Late,,,website,,https://www.vidyard.com/careers/,,,Rest of Canada,yes,ok,2026-11-22,,,,,,Kitchener
+6,Rest of Canada,Wagepoint,,,,,,,,auto,,,,,,yes,not_found,2026-11-22,,,,,,Imported 2026-11-21
 6,Rest of Canada,Workleap,64,B,private,,Late,,,greenhouse,Workleap,,,,Rest of Canada,yes,ok,2026-11-09,,,,,,Montreal
 7,Remote / other US,15Five,,,,,,,,lever,15five,https://www.15five.com/careers,,greenhouse,Remote,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: HR SaaS; Remote-first; Check; Ruby, React"
 7,Remote / other US,37signals,55,B,private,,Bootstrapped,,,workable,37signals,https://37signals.com/careers,,internal,Remote / other US,yes,ok,2026-11-09,,,,,,Makers of Basecamp
@@ -729,7 +729,7 @@
 7,Remote / other US,Calendly,68,A,private,,Unicorn,,,greenhouse,Calendly,https://careers.calendly.com,,greenhouse,Remote / other US,yes,ok,2026-11-09,,,,,,
 7,Remote / other US,Canonical,64,B,private,,Late,,,greenhouse,Canonical,,,,Remote / other US,yes,ok,2026-11-09,,,,,,
 7,Remote / other US,Capgemini,,,,,,,,website,,https://www.capgemini.com/careers,,internal,"New York, NY (US)",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: IT Services; Hybrid; Yes - Toronto; Java, .NET"
-7,Remote / other US,Carbon Engineering,,,,,,,,auto,,https://carbonengineering.com/careers,,,Squamish,yes,,,,,,,,"Imported 2026-11-21: Direct Air Capture; Onsite; Python, C#"
+7,Remote / other US,Carbon Engineering,,,,,,,,website,,https://carbonengineering.com/careers,,,Squamish,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Direct Air Capture; Onsite; Python, C#"
 7,Remote / other US,Caterpillar,,,,,,,,website,,https://careers.caterpillar.com,,internal,"Irving, TX",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Heavy Equipment; Hybrid; Yes - Ontario sites; Java, C#"
 7,Remote / other US,CCC Intelligent Solutions,,,,,,,,workday,cccis/wd1/broadbean_external,https://cccis.com/careers,,internal,"Chicago, IL",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Insurance Tech; Remote OK; US only; C#, .NET, React"
 7,Remote / other US,Cedar,,,,,,,,website,,https://www.cedar.com/careers,,greenhouse,"New York, NY",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Health Payments; Remote-first; US only; TS, React, Node"
@@ -745,7 +745,7 @@
 7,Remote / other US,CircleCI,68,A,private,,Unicorn,,,greenhouse,CircleCI,https://circleci.com/careers,,greenhouse,Remote / other US,yes,ok,2026-11-09,,,,,,
 7,Remote / other US,Citadel,,,,,,,,auto,,https://www.citadel.com/careers,,greenhouse,"Miami, FL",yes,not_found,2026-11-21,,,,,,"Imported 2026-11-21: Hedge Fund; Onsite; Limited; C++, Python"
 7,Remote / other US,Close,55,B,private,,Bootstrapped,,,ashby,close,https://www.close.com/careers,,internal,Remote / other US,yes,ok,2026-11-09,,,,,,
-7,Remote / other US,Cloudhead Games,,,,,,,,auto,,https://www.cloudheadgames.com/careers,,,Qualicum Beach,yes,,,,,,,,"Imported 2026-11-21: VR Gaming; Onsite; C#, Unity"
+7,Remote / other US,Cloudhead Games,,,,,,,,auto,,https://www.cloudheadgames.com/careers,,,Qualicum Beach,yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: VR Gaming; Onsite; C#, Unity"
 7,Remote / other US,Cockroach Labs,68,A,private,,Unicorn,,,greenhouse,cockroachlabs,https://www.cockroachlabs.com/careers,,greenhouse,Remote / other US,yes,ok,2026-11-09,,,,,,
 7,Remote / other US,Cognizant,,,,,,,,website,,https://careers.cognizant.com,,internal,"Teaneck, NJ",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: IT Consulting; Hybrid; Yes - Toronto; Java, .NET, React"
 7,Remote / other US,Comcast,,,,,,,,workday,comcast/wd115/Comcast_Careers,https://jobs.comcast.com,,internal,"Philadelphia, PA",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Telecom / Media; Hybrid; Yes - Toronto; Java, React"
@@ -815,7 +815,7 @@
 7,Remote / other US,Hewlett Packard Enterprise,,,,,,,,website,,https://careers.hpe.com,,internal,"Spring, TX",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Enterprise Infra; Hybrid; Yes; Go, Java"
 7,Remote / other US,Hilton,,,,,,,,website,,https://jobs.hilton.com,,internal,"McLean, VA",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Hospitality; Remote OK; US only; Java, React"
 7,Remote / other US,Honeywell,,,,,,,,website,,https://careers.honeywell.com,,internal,"Charlotte, NC",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Industrial; Hybrid; Yes - Mississauga; C#, .NET, Java"
-7,Remote / other US,Hotjar,58,B,private,,Subsidiary,,,auto,,,,,Remote / other US,yes,,,,,,,,Owned by Contentsquare
+7,Remote / other US,Hotjar,58,B,private,,Subsidiary,,,auto,,,,,Remote / other US,yes,not_found,2026-11-22,,,,,,Owned by Contentsquare
 7,Remote / other US,Hudson River Trading,,,,,,,,auto,,https://www.hudsonrivertrading.com/careers,,greenhouse,"New York, NY",yes,not_found,2026-11-21,,,,,,"Imported 2026-11-21: Trading; Onsite; Limited; C++, Python"
 7,Remote / other US,Hugging Face,68,A,private,,Unicorn,,,workable,huggingface,,,workable,Remote / other US,yes,ok,2026-11-09,,,,,,
 7,Remote / other US,Humana,,,,,,,,website,,https://careers.humana.com,,internal,"Louisville, KY",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Health Insurance; Remote OK; US only; Java, .NET"
@@ -962,10 +962,10 @@
 7,Remote / other US,Zed,55,B,private,,Series B,,,auto,zedindustries,,,,Remote / other US,yes,not_found,2026-11-09,,,,,,
 7,Remote / other US,Zocdoc,,,,,,,,greenhouse,zocdoc,https://www.zocdoc.com/about/careers,,greenhouse,"New York, NY",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Health Marketplace; Hybrid; US only; .NET, C#, React"
 8,Found by search,Alpaca,,,,,,,,greenhouse,alpaca,,,,,yes,ok,2026-11-21,,,,,,Found by search 2026-11-21: Senior Software Engineer – Developer Platform
-8,Found by search,Capco,,,,,,,,greenhouse,capco,,,,,yes,,,,,,,,"Found by search 2026-11-22: Software Engineer, Implementation & Support"
+8,Found by search,Capco,,,,,,,,greenhouse,capco,,,,,yes,ok,2026-11-22,,,,,,"Found by search 2026-11-22: Software Engineer, Implementation & Support"
 8,Found by search,Geocomply 2,,,,,,,,lever,geocomply-2,,,,,yes,ok,2026-11-21,,,,,,Found by search 2026-11-21: Software Engineer Intern (Infrastructure & Platform)
 8,Found by search,Going,,,,,,,,ashby,going,,,,,yes,ok,2026-11-21,,,,,,Found by search 2026-11-21: Senior Full Stack Software Engineer @ Going
 8,Found by search,Jobgether,,,,,,,,lever,jobgether,,,,,yes,ok,2026-11-21,,,,,,"Found by search 2026-11-21: Jobgether - Senior Software Engineer, Data Solutions"
 8,Found by search,Rivianvw.Tech,,,,,,,,ashby,rivianvw.tech,,,,,yes,ok,2026-11-21,,,,,,"Found by search 2026-11-21: Staff Software Engineer, Vehicle Access Cloud"
 8,Found by search,SalesJack,,,,,,,,ashby,salesjack,,,,,yes,ok,2026-11-21,,,,,,Found by search 2026-11-21: Software Engineer @ SalesJack
-8,Found by search,True Talent Solutions Partners,,,,,,,,ashby,true-talent-solutions-partners,,,,,yes,,,,,,,,"Found by search 2026-11-22: Senior Software Engineer, Infrastructure"
+8,Found by search,True Talent Solutions Partners,,,,,,,,ashby,true-talent-solutions-partners,,,,,yes,ok,2026-11-22,,,,,,"Found by search 2026-11-22: Senior Software Engineer, Infrastructure"

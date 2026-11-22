@@ -332,6 +332,7 @@ def test_app_starts_without_a_terminal(monkeypatch):
 
     monkeypatch.setattr(sys, "stdout", None)
     monkeypatch.setattr(sys, "stderr", None)
+    monkeypatch.setattr(sys, "platform", "linux")  # on Windows it would also redirect pytest's own stderr
     desktop.no_console_streams()
     assert sys.stdout is not None and sys.stderr is not None
     config = desktop.server_config(uvicorn, lambda scope, receive, send: None, 1)
@@ -352,3 +353,75 @@ def test_a_failed_start_is_shown_not_silent(monkeypatch):
     monkeypatch.setattr(desktop, "fail", lambda text: shown.append(text))
     desktop.main([])
     assert shown and "boom" in shown[0] and "job_watcher.log" in shown[0]
+
+
+def _load(path, name):
+    import importlib.util
+    from pathlib import Path
+
+    spec = importlib.util.spec_from_file_location(name, Path(__file__).resolve().parent.parent / path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+STORE = (r"C:\Users\me\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0"
+         r"\python.exe")
+
+
+def test_installer_skips_microsoft_store_python():
+    """The Store build keeps files written under AppData in a private copy, so the jobwatcher
+    command and the Start menu shortcut it made were invisible to the rest of Windows."""
+    find = _load("install/find_python.py", "find_python")
+    assert not find.usable(STORE, r"C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_x64", (3, 13))
+    assert find.usable(r"C:\Users\me\AppData\Local\Programs\Python\Python312\python.exe",
+                       r"C:\Users\me\AppData\Local\Programs\Python\Python312", (3, 12))
+    assert not find.usable("/usr/bin/python3.9", "/usr", (3, 9))
+
+
+def test_installer_remakes_a_venv_from_another_python():
+    inst = _load("install/install.py", "jw_install")
+    store_cfg = f"home = {STORE.rsplit(chr(92), 1)[0]}\ninclude-system-site-packages = false\nversion = 3.13.14\n"
+    org = r"C:\Users\me\AppData\Local\Programs\Python\Python312"
+    assert inst.store_python(STORE, "")
+    assert inst.venv_needs_remaking(store_cfg, org)
+    assert not inst.venv_needs_remaking(f"home = {org}\nversion = 3.12.10\n", org)
+    assert inst.venv_needs_remaking(f"home = {org}\n", r"C:\Python313")
+    assert inst.venv_needs_remaking("version = 3.12.10\n", org)  # no home line: can't tell, so remake
+
+
+def test_a_click_hands_over_to_a_hidden_console(monkeypatch, tmp_path):
+    """jobwatcher-app.exe (no terminal) starts jobwatcher.exe with its console hidden, the way a
+    terminal runs it, and sends its errors to job_watcher_errors.log."""
+    import subprocess
+    import sys
+
+    from jobwatcher import desktop
+
+    scripts = tmp_path / "Scripts"
+    scripts.mkdir()
+    (scripts / "jobwatcher.exe").write_bytes(b"")
+    started = {}
+
+    class FakePopen:
+        pid = 4321
+
+        def __init__(self, cmd, **kw):
+            started.update(cmd=cmd, **kw)
+
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr(sys, "executable", str(scripts / "pythonw.exe"))
+    monkeypatch.setattr(sys, "stdout", None)
+    monkeypatch.setattr(desktop, "RELAUNCHED", False)
+    monkeypatch.setattr(desktop.subprocess, "Popen", FakePopen)
+    assert desktop.hand_over_to_hidden_console(["--tray"]) is True
+    assert started["cmd"] == [str(scripts / "jobwatcher.exe"), "--tray"]
+    assert started["creationflags"] & desktop.CREATE_NO_WINDOW
+    assert started["env"]["JOBWATCHER_RELAUNCHED"] == "1"
+    assert started["stdout"] == subprocess.DEVNULL and started["stderr"] not in (None, subprocess.DEVNULL)
+
+    monkeypatch.setattr(desktop, "RELAUNCHED", True)  # the copy it started doesn't hand over again
+    assert desktop.hand_over_to_hidden_console([]) is False
+    monkeypatch.setattr(desktop, "RELAUNCHED", False)
+    monkeypatch.setattr(sys, "stdout", object())  # typed in a terminal: runs right there
+    assert desktop.hand_over_to_hidden_console([]) is False

@@ -34,7 +34,43 @@ def free_port():
 
 
 # The .exe the Desktop and Start menu shortcuts open has no terminal: stdout and stderr are None.
-CONSOLE = sys.stdout is not None
+# On Windows that start hands over to a copy with a hidden console (see hand_over_to_hidden_console),
+# which has streams but nobody watching them, so it counts as having no terminal too.
+RELAUNCHED = bool(os.environ.get("JOBWATCHER_RELAUNCHED"))
+CONSOLE = sys.stdout is not None and not RELAUNCHED
+CREATE_NO_WINDOW = 0x08000000
+CREATE_NEW_PROCESS_GROUP = 0x00000200
+
+
+def hand_over_to_hidden_console(argv):
+    """Windows, started from the Desktop or Start menu (jobwatcher-app.exe, no terminal): start the
+    terminal version (jobwatcher.exe) instead, with its console window hidden, and step aside. Typed
+    in a terminal the app opens fine, but without one its window could close before it appeared;
+    this way a click runs exactly what the terminal runs. Its errors go to job_watcher_errors.log.
+    Returns True when the other copy was started."""
+    if sys.platform != "win32" or sys.stdout is not None or RELAUNCHED:
+        return False
+    scripts = Path(sys.executable).parent
+    console = scripts / "jobwatcher.exe"
+    if console.exists():
+        cmd = [str(console), *argv]
+    else:
+        python = scripts / "python.exe"
+        if not python.exists():
+            return False
+        cmd = [str(python), str(Path(__file__).resolve().parent.parent / "app.py"), *argv]
+    from .base import BASE
+    errors = errors_file(redirect=False)
+    env = {**os.environ, "JOBWATCHER_RELAUNCHED": "1"}
+    try:
+        child = subprocess.Popen(cmd, cwd=str(BASE), env=env, stdin=subprocess.DEVNULL,
+                                 stdout=subprocess.DEVNULL, stderr=errors,
+                                 creationflags=CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP)
+    except OSError as exc:
+        errors.write(f"Could not start the app with a hidden console ({exc}); opening it directly.\n")
+        return False
+    errors.write(f"Handed over to the app with a hidden console (process {child.pid}).\n")
+    return True
 
 
 def no_console_streams():
@@ -47,10 +83,10 @@ def no_console_streams():
         sys.stderr = errors_file()
 
 
-def errors_file():
+def errors_file(redirect=True):
     """job_watcher_errors.log in the data folder: what a terminal would have shown. On Windows the
-    process's own error handle points there too, so a crash of the window itself (the .NET runtime
-    prints it to stderr, then the app closes) is written down instead of lost."""
+    process's own error handle points there too (unless redirect is False), so a crash of the window
+    itself (the .NET runtime prints it to stderr, then the app closes) is written down, not lost."""
     try:
         from .base import BASE
         path = BASE / "job_watcher_errors.log"
@@ -59,7 +95,7 @@ def errors_file():
         stream = open(path, "a", encoding="utf-8", buffering=1)  # noqa: SIM115 (open for the app's lifetime)
         stream.write(f"\n{time.strftime('%Y-%m-%d %H:%M:%S')}  Opened without a terminal (process {os.getpid()}).\n")
         stream.flush()
-        if sys.platform == "win32":
+        if redirect and sys.platform == "win32":
             import ctypes
             import msvcrt
             os.dup2(stream.fileno(), 2)
@@ -95,6 +131,8 @@ def running_instance():
 
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
+    if hand_over_to_hidden_console(argv):
+        return None
     if argv and argv[0] == "run":
         from .cli import main as run_main
         sys.argv = ["jobwatcher run", *argv[1:]]
