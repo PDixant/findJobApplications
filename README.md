@@ -36,9 +36,30 @@ Most job sites show you a posting a day or two after it went up, next to everyon
 
 1. **Get the folder.** Download this repository (green **Code** button, **Download ZIP**) or `git clone` it.
 2. **Double-click `Install Job Watcher`.** It sets everything up in a private Python environment (installing Python first if you need it) and adds Job Watcher to your Start menu and Desktop.
-3. **Open Job Watcher.** A few welcome steps ask for the job titles, places and skills you want, then it runs. That's it: it keeps running by the clock from then on.
+3. **Open Job Watcher.** A few welcome steps ask for the job titles, places and skills you want, then it runs. While it's open it also runs by itself a few times a day. Close the window and it quits completely.
 
 On a Mac or Linux, run `sh install.sh` instead. Prefer a terminal? `pip install -r requirements-app.txt`, then `python app.py`.
+
+## Open it with one click, or one command
+
+Once **Install Job Watcher** has run (step 2 above), you never need this folder or Python again:
+
+| Do this | From where |
+|---|---|
+| **Click Job Watcher** | The Desktop shortcut or the Start menu |
+| **Type `jobwatcher`** | Any terminal, in any folder. Open a *new* terminal after installing so it picks up the command |
+
+If it's already open, clicking or typing `jobwatcher` again just brings the window to the front. Closing the window quits Job Watcher: nothing keeps running in the background unless you ask it to (see *Running in the background* below). More from the same command:
+
+| Command | What it does |
+|---|---|
+| `jobwatcher` | Open the app |
+| `jobwatcher --browser` | Open it in your web browser instead of its own window |
+| `jobwatcher run` | A run in the terminal, with the same options as `python job_watcher.py` (for example `jobwatcher run --refilter`) |
+| `jobwatcher outreach` | The same as `python outreach.py` |
+| `jobwatcher folder` | Open the folder with your settings and data |
+
+`jobwatcher` not found? Close the terminal and open a new one. Still not found? Double-click **Install Job Watcher** again. **Uninstall Job Watcher** removes the shortcuts and the command, and keeps your data.
 
 > **Tip:** add your keys under **Settings, Keys and accounts** (all optional): Serper for finding new companies, Anthropic for Claude's help, Hunter for recruiter emails. They're kept in Windows Credential Manager, never in a file that goes to git.
 
@@ -222,7 +243,7 @@ Edit them in the app's **Settings** screen (it keeps the file's notes, and shows
 | `[career_sites]` | Reading companies' own careers websites |
 | `[tracker]` | File names, pop-ups, since-last-check by default, `--loop` timing |
 | `[outreach]` | Resume, tailored resumes folder, about-me file, contacts per company, Hunter limits, follow-up timing |
-| `[schedule]` | Automatic runs while the app is open or in the tray |
+| `[schedule]` | Automatic runs while the app is open, and whether it stays in the tray after you close it (`keep_in_tray`, off by default) |
 | `[ai]` | Claude: fit scores on new matches, monthly limit, model, base resume and rules files |
 | `[alerts]` | The ntfy server for phone alerts |
 | `[advanced]` | Request pacing, retries, Workday search terms. Commented out, showing defaults |
@@ -285,7 +306,9 @@ It follows each site's `robots.txt` and spaces requests at least a second apart.
 <details>
 <summary><strong>Running in the background</strong></summary>
 
-The app runs on its own at the times under **Settings, Automatic runs** (8:00, 12:00, 16:00 and 20:00 to start). On Windows, closing the window keeps it running in the tray; right-click the icon to open it, run now, pause or quit. Turn on **Start when you sign in** and you never have to open it. A run missed while the computer slept happens once when it wakes (within 12 hours).
+**By default nothing runs in the background.** Job Watcher runs only while its window is open, and closing the window quits it (a run that's going finishes the boards it's reading and saves first). While it's open, it also runs on its own at the times under **Settings, Automatic runs** (8:00, 12:00, 16:00 and 20:00 to start), plus once to catch up if a time passed in the last 12 hours. Turn **Run automatically** off if you'd rather only run it yourself.
+
+**Want it checking all day without the window open?** Turn on **Settings, Automatic runs, Keep running after closing** and reopen Job Watcher. On Windows, closing the window then leaves it in the tray by the clock; right-click the icon to open it, run now, pause or quit. **Start when you sign in** (under Running in the background) then opens it quietly in the tray each time you sign in. Turning **Keep running after closing** off again also turns that off.
 
 Have an old Windows scheduled task for `job_watcher.py`? **Settings, Running in the background** finds it and turns it off so runs don't double up. Without the app, a scheduled task or cron job running `jobwatcher run` every 30 minutes works too, as does `python job_watcher.py --loop`.
 

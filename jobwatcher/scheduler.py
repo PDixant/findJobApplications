@@ -1,4 +1,4 @@
-"""Automatic runs while the app is open or in the tray, at the times set under [schedule].
+"""Automatic runs while the app is open (or in the tray, if you turned that on), at the times set under [schedule].
 
 A run that was missed because the computer was asleep or off happens once when the app is
 next running, if the missed time was within the last 12 hours. Nothing runs before your

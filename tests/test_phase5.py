@@ -109,3 +109,9 @@ def test_keys_never_reach_the_log(monkeypatch, caplog):
     finally:
         jw.log.removeHandler(handler)
     assert seen == ["Hunter said bad key ****"]
+
+
+def test_closing_the_window_quits_by_default():
+    from jobwatcher import desktop
+    assert jw.load_config()["schedule"]["keep_in_tray"] is False
+    assert desktop.keep_in_tray() is False

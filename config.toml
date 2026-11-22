@@ -244,7 +244,22 @@ drafts_folder = "[Gmail]/Drafts"
 
 
 # ---------------------------------------------------------------------
-# 7. AI help (Claude): fit scores and tailored resumes
+# 7. Automatic runs (in the desktop app)
+# ---------------------------------------------------------------------
+[schedule]
+
+# Run at these times while Job Watcher is open.
+enabled = true
+times = ["08:00", "12:00", "16:00", "20:00"]
+
+# false: closing the window quits Job Watcher completely.
+# true: closing the window keeps it running by the clock (Windows tray), so the
+# times above still run, and it can start quietly when you sign in.
+keep_in_tray = false
+
+
+# ---------------------------------------------------------------------
+# 8. AI help (Claude): fit scores and tailored resumes
 # ---------------------------------------------------------------------
 # Uses your own Anthropic API key (set it in the app under Settings, Keys).
 # Each request sends one posting, your resume and about_me.md to Anthropic.
@@ -266,7 +281,7 @@ resume_rules = "resume_rules.md"
 
 
 # ---------------------------------------------------------------------
-# 8. Phone alerts for new matches (ntfy.sh, free, no account)
+# 9. Phone alerts for new matches (ntfy.sh, free, no account)
 # ---------------------------------------------------------------------
 # Install the ntfy app and subscribe to a long topic name only you know. Save
 # that name in the app under Settings, Keys and accounts (or NTFY_TOPIC=... in
@@ -277,7 +292,7 @@ ntfy_server = "https://ntfy.sh"
 
 
 # ---------------------------------------------------------------------
-# 9. Advanced: most people never change these
+# 10. Advanced: most people never change these
 # ---------------------------------------------------------------------
 # Remove the # at the start of a line to change it. The value shown is
 # the default.

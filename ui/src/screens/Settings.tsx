@@ -20,7 +20,7 @@ const LABELS: Record<string, string> = {
   retry_board_search_hours: "Board guessing every (hours)", check_every_minutes: "Minutes between checks (--loop)",
   resume: "Resume file", about_me: "About-me file", contacts_per_company: "Contacts per company", departments: "Hunter departments",
   verify_emails: "Verify addresses", monthly_hunter_credit_limit: "Monthly Hunter limit", follow_up_after_days: "Follow up after (days)",
-  model: "Claude model", times: "Run at", score_new_matches: "Score new matches", monthly_limit: "Monthly Claude limit",
+  model: "Claude model", times: "Run at", keep_in_tray: "Keep running after closing", score_new_matches: "Score new matches", monthly_limit: "Monthly Claude limit",
   resume_tex: "Base resume (.tex)", resume_rules: "Resume rules file", ntfy_topic: "ntfy topic", ntfy_server: "ntfy server",
   tailored_resumes_folder: "Tailored resumes folder",
 };
@@ -350,9 +350,9 @@ function Background() {
       <p className="hint">
         {s.tray
           ? "Closing the window keeps Job Watcher running by the clock, so automatic runs happen. Quit it from that icon."
-          : "Automatic runs happen while Job Watcher is open."}
+          : "Job Watcher runs only while its window is open. Closing the window quits it, so automatic runs happen only while it's open."}
       </p>
-      {s.startup_supported && (
+      {s.startup_supported && s.keep_in_tray && (
         <div className="field">
           <div className="field-label"><span>Start when you sign in</span>
             <small>Opens quietly by the clock, so automatic runs happen without you opening it</small></div>

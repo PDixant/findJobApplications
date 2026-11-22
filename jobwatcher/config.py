@@ -65,7 +65,7 @@ DEFAULTS = {
         "imap_server": "imap.gmail.com", "drafts_folder": "[Gmail]/Drafts", "model": "claude-sonnet-5-5",
     },
     # 8. Automatic runs while the desktop app is open (or in the tray)
-    "schedule": {"enabled": True, "times": ["08:00", "12:00", "16:00", "20:00"]},
+    "schedule": {"enabled": True, "times": ["08:00", "12:00", "16:00", "20:00"], "keep_in_tray": False},
     # 9. Claude: fit scores and tailored resumes (needs ANTHROPIC_API_KEY)
     "ai": {"score_new_matches": True, "monthly_limit": 300, "model": "claude-sonnet-5-5",
            "resume_tex": "resume.tex", "resume_rules": "resume_rules.md"},

@@ -326,7 +326,7 @@ export type RunRecord = {
 
 export type ScheduleStatus = {
   enabled: boolean; times: string[]; paused: boolean; next: string | null; running_in_app: boolean;
-  startup_supported: boolean; startup: boolean; tray: boolean;
+  startup_supported: boolean; startup: boolean; tray: boolean; keep_in_tray: boolean;
 };
 
 export type UpdateInfo = { current: string; latest: string | null; url: string | null; newer: boolean; installed: boolean };

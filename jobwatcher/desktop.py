@@ -127,6 +127,8 @@ def open_app(argv):
             say("Job Watcher is already open; brought it to the front.")
             return None
 
+    if args.tray and not keep_in_tray():
+        return None  # started at sign-in, but you'd rather it only runs while you have it open
     load_env()
     token = secrets.token_urlsafe(24)
     app = create_app(token, dev=args.dev, schedule=not args.dev)
@@ -208,7 +210,7 @@ def open_window(url, app, runs, base, start_hidden=False):
         wait_forever()
         return
 
-    tray = Tray(app, runs) if Tray.available() else None
+    tray = Tray(app, runs) if Tray.available() and (start_hidden or keep_in_tray()) else None
     window = webview.create_window("Job Watcher", url, width=1340, height=880, min_size=(1000, 640),
                                    background_color="#F4F6FA", text_select=True,
                                    hidden=bool(start_hidden and tray))
@@ -226,8 +228,8 @@ def open_window(url, app, runs, base, start_hidden=False):
     app.state.focus = bring_forward
 
     def on_closing():
-        if tray and not tray.quitting:
-            window.hide()  # keep running in the tray; scheduled runs carry on
+        if tray and not tray.quitting and keep_in_tray():
+            window.hide()  # you asked for it to keep running in the tray; scheduled runs carry on
             tray.hidden_once()
             return False
         if not runs.active():
@@ -250,9 +252,19 @@ def open_window(url, app, runs, base, start_hidden=False):
             tray.stop()
 
 
+def keep_in_tray():
+    """Settings, Automatic runs, 'keep running after closing'. Off by default: closing the window
+    quits Job Watcher."""
+    from .config import ConfigError, load_config
+    try:
+        return bool(load_config()["schedule"].get("keep_in_tray"))
+    except ConfigError:
+        return False
+
+
 class Tray:
-    """The icon by the clock: Job Watcher keeps running there when you close the window, so
-    scheduled runs happen. Windows only for now."""
+    """The icon by the clock, only when you turn on 'keep running after closing': Job Watcher then
+    keeps running there when you close the window, so scheduled runs happen. Windows only for now."""
 
     @staticmethod
     def available():

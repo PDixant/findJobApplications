@@ -53,8 +53,11 @@ FIELDS = {
         ("model", "text", "The Claude model that writes drafts"),
     ],
     "schedule": [
-        ("enabled", "bool", "Run automatically while Job Watcher is open or in the tray"),
+        ("enabled", "bool", "Run automatically at these times while Job Watcher is open"),
         ("times", "list", "When to run each day, as 24-hour times such as 08:00 or 17:30"),
+        ("keep_in_tray", "bool", "When you close the window, keep Job Watcher running by the clock (Windows tray) so "
+                                 "automatic runs still happen. Off: closing the window quits it. Takes effect the next "
+                                 "time you open Job Watcher"),
     ],
     "ai": [
         ("score_new_matches", "bool", "Ask Claude for a fit score on each new match (needs your Anthropic key)"),

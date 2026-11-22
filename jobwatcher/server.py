@@ -859,6 +859,12 @@ def create_app(token, dev=False, schedule=False):
         except ConfigError as exc:
             raise HTTPException(400, str(exc)) from None
         files.forget("config")
+        if not cfg["schedule"].get("keep_in_tray") and system.startup_supported():
+            try:
+                if system.startup_enabled():
+                    system.set_startup(False)  # it only opens at sign-in to sit in the tray
+            except (RuntimeError, OSError):
+                pass
         hub.publish("settings_changed", {})
         return {**settings_module.current(cfg), "explain": describe_config(cfg)}
 
@@ -1034,7 +1040,8 @@ def create_app(token, dev=False, schedule=False):
     def schedule_status():
         cfg = config_or_fail()
         return {**scheduler.status(cfg), "startup_supported": system.startup_supported(),
-                "startup": system.startup_enabled(), "tray": bool(getattr(app.state, "tray", False))}
+                "startup": system.startup_enabled(), "tray": bool(getattr(app.state, "tray", False)),
+                "keep_in_tray": bool(cfg["schedule"].get("keep_in_tray"))}
 
     @app.post("/api/schedule/pause")
     def schedule_pause(body: dict = Body(...)):
