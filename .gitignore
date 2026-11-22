@@ -43,3 +43,8 @@ config.json
 *.db-journal
 *.log
 .pytest_cache/
+
+# Shortcuts Install Job Watcher puts at the top of this folder
+/Job Watcher.lnk
+/Job Watcher.app
+/Job Watcher.desktop

@@ -425,3 +425,32 @@ def test_a_click_hands_over_to_a_hidden_console(monkeypatch, tmp_path):
     monkeypatch.setattr(desktop, "RELAUNCHED", False)
     monkeypatch.setattr(sys, "stdout", object())  # typed in a terminal: runs right there
     assert desktop.hand_over_to_hidden_console([]) is False
+
+
+def test_installer_puts_a_shortcut_at_the_top_of_the_folder(monkeypatch, tmp_path):
+    """Nobody should have to dig into .venv\\Scripts for the app: on Windows the installer adds a
+    Job Watcher shortcut to the Job Watcher folder itself, as well as the Start menu and Desktop."""
+    inst = _load("install/install.py", "jw_install_shortcuts")
+    inst.configure(tmp_path)
+    monkeypatch.setattr(inst, "windows_folder", lambda name: tmp_path / name)
+    folders = inst.windows_shortcut_folders()
+    assert tmp_path.resolve() in folders and tmp_path / "Programs" in folders and tmp_path / "Desktop" in folders
+
+
+def test_uninstall_removes_a_link_to_the_app_but_not_the_app(tmp_path):
+    inst = _load("install/install.py", "jw_install_remove")
+    bundle = tmp_path / "Applications" / "Job Watcher.app"
+    (bundle / "Contents").mkdir(parents=True)
+    link = tmp_path / "Job Watcher.app"
+    try:
+        link.symlink_to(bundle, target_is_directory=True)
+    except OSError:  # Windows without symlink rights; the Mac installer is the one that makes these
+        pytest.skip("can't make symbolic links here")
+    shortcut = tmp_path / "Job Watcher.lnk"
+    shortcut.write_bytes(b"lnk")
+    inst.remove_shortcut(link)
+    inst.remove_shortcut(shortcut)
+    assert not link.exists() and not link.is_symlink() and not shortcut.exists()
+    assert (bundle / "Contents").is_dir()  # removing the link left the app itself alone
+    inst.remove_shortcut(bundle)
+    assert not bundle.exists()
