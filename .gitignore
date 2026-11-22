@@ -9,6 +9,7 @@ all_postings.csv
 *.tmp
 __pycache__/
 .env
+resume/
 about_me.md
 outreach/
 resume.pdf
