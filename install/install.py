@@ -5,7 +5,7 @@ Run by "Install Job Watcher.bat" (Windows) or install.sh (Mac and Linux). It:
      else on the computer is changed,
   2. installs Job Watcher and the app's packages into it,
   3. adds "Job Watcher" to the Start menu and the Desktop (Mac: Applications; Linux: the
-     app menu), with its icon,
+     app menu), with its icon, and a "Job Watcher" shortcut at the top of this folder too,
   4. adds the `jobwatcher` command to your PATH, so it works in any terminal from any folder.
 
 Your settings and data stay where they are. Run it again any time to repair or update.
@@ -87,6 +87,12 @@ def edit_user_path(folder, add):
 
 
 # ----------------------------------------------------------------- install
+def windows_shortcut_folders():
+    """Where the Windows shortcuts go: the Start menu, the Desktop, and the top of the Job Watcher
+    folder itself, so nobody has to dig into .venv\\Scripts for the app."""
+    return [windows_folder("Programs"), windows_folder("Desktop"), ROOT]
+
+
 def store_python(executable=None, base_prefix=None):
     """The Microsoft Store build of Python. Files it writes under AppData go to a private copy that
     only it can see, so the jobwatcher command and the Start menu shortcut would be invisible to the
@@ -147,9 +153,9 @@ def install(minimal=False):
     icon_ico = ROOT / "jobwatcher" / "assets" / "icon.ico"
     icon_png = ROOT / "jobwatcher" / "assets" / "icon.png"
 
-    step("Adding Job Watcher to your menu and Desktop")
+    step("Adding Job Watcher to your menu, your Desktop and this folder")
     if WINDOWS:
-        for folder in (windows_folder("Programs"), windows_folder("Desktop")):
+        for folder in windows_shortcut_folders():
             link = folder / f"{NAME}.lnk"
             powershell(
                 "$s = (New-Object -ComObject WScript.Shell).CreateShortcut(" + ps_quote(link) + "); "
@@ -173,6 +179,12 @@ def install(minimal=False):
             "<key>CFBundlePackageType</key><string>APPL</string></dict></plist>\n")
         made["shortcuts"].append(str(bundle))
         print(f"   {bundle}")
+        here = ROOT / f"{NAME}.app"  # the same app, at the top of this folder
+        if here.is_symlink() or here.exists():
+            remove_shortcut(here)
+        here.symlink_to(bundle, target_is_directory=True)
+        made["shortcuts"].append(str(here))
+        print(f"   {here}")
     else:
         apps = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share") / "applications"
         apps.mkdir(parents=True, exist_ok=True)
@@ -181,6 +193,11 @@ def install(minimal=False):
                          f"Path={ROOT}\nIcon={icon_png}\nCategories=Office;\nTerminal=false\n")
         made["shortcuts"].append(str(entry))
         print(f"   {entry}")
+        here = ROOT / f"{NAME}.desktop"  # the same launcher, at the top of this folder
+        shutil.copy2(entry, here)
+        here.chmod(0o755)
+        made["shortcuts"].append(str(here))
+        print(f"   {here}")
 
     step("Adding the jobwatcher command for any terminal")
     if WINDOWS:
@@ -214,6 +231,20 @@ def install(minimal=False):
 
 
 # ----------------------------------------------------------------- uninstall
+def remove_shortcut(path):
+    """A .lnk, a .desktop file, an app bundle, or a link to one (removing a link leaves its target)."""
+    path = Path(path)
+    if path.is_symlink():
+        try:
+            path.unlink()
+        except OSError:  # Windows removes a link to a folder like a folder
+            os.rmdir(path)
+    elif path.is_file():
+        path.unlink()
+    elif path.is_dir():
+        shutil.rmtree(path, ignore_errors=True)
+
+
 def uninstall():
     made = {}
     if MANIFEST.exists():
@@ -221,10 +252,7 @@ def uninstall():
     step("Removing the shortcuts and the jobwatcher command")
     for item in made.get("shortcuts", []):
         path = Path(item)
-        if path.is_dir():
-            shutil.rmtree(path, ignore_errors=True)
-        elif path.exists():
-            path.unlink()
+        remove_shortcut(path)
         print(f"   removed {path}")
     if made.get("command"):
         Path(made["command"]).unlink(missing_ok=True)

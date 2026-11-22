@@ -35,8 +35,8 @@ Most job sites show you a posting a day or two after it went up, next to everyon
 ## Quick start
 
 1. **Get the folder.** Download this repository (green **Code** button, **Download ZIP**) or `git clone` it.
-2. **Double-click `Install Job Watcher`.** It sets everything up in a private Python environment and adds Job Watcher to your Start menu and Desktop, plus a `jobwatcher` command for any terminal. It needs Python 3.10 or newer from python.org and installs it for you if it isn't there (see *Python from the Microsoft Store* below).
-3. **Open Job Watcher.** A few welcome steps ask for the job titles, places and skills you want, then it runs. While it's open it also runs by itself a few times a day. Close the window and it quits completely.
+2. **Double-click `Install Job Watcher`.** It sets everything up in a private Python environment and adds a **Job Watcher** shortcut to the top of this folder, your Start menu and your Desktop, plus a `jobwatcher` command for any terminal. It needs Python 3.10 or newer from python.org and installs it for you if it isn't there (see *Python from the Microsoft Store* below).
+3. **Double-click the Job Watcher shortcut** (right here in this folder, next to Install Job Watcher). A few welcome steps ask for the job titles, places and skills you want, then it runs. While it's open it also runs by itself a few times a day. Close the window and it quits completely.
 
 On a Mac or Linux, run `sh install.sh` instead. Prefer a terminal? `pip install -r requirements-app.txt`, then `python app.py`.
 
@@ -46,10 +46,10 @@ Once **Install Job Watcher** has run (step 2 above), you don't need to open this
 
 | Do this | From where | What you see |
 |---|---|---|
-| **Click Job Watcher** | The Desktop shortcut or the Start menu | Just the app window |
+| **Double-click Job Watcher** | The shortcut at the top of this folder, on your Desktop, or in the Start menu | Just the app window |
 | **Type `jobwatcher`** | Any terminal, in any folder. Open a *new* terminal after installing so it picks up the command | The app window, with its log in the terminal. Closing the terminal closes the app |
 
-**Where is the .exe?** There isn't one at the top of this folder. The installer builds two inside it, in `.venv\Scripts`: `jobwatcher-app.exe` is what the Desktop and Start menu shortcuts open, and `jobwatcher.exe` is the terminal version behind the `jobwatcher` command. Both run the same app; the shortcut starts the terminal version with its console window hidden. Keep the folder where it is: if you move or rename it, double-click **Install Job Watcher** again so the shortcuts and the command follow.
+**Where is the .exe?** You don't need to find it: the **Job Watcher** shortcut at the top of this folder opens it. (The installer builds two in `.venv\Scripts`: `jobwatcher-app.exe`, which every Job Watcher shortcut opens, and `jobwatcher.exe`, the terminal version behind the `jobwatcher` command. Both run the same app; the shortcut starts the terminal version with its console window hidden.) Keep the folder where it is: if you move or rename it, double-click **Install Job Watcher** again so the shortcuts and the command follow.
 
 If it's already open, clicking or typing `jobwatcher` again just brings the window to the front. Closing the window quits Job Watcher: nothing keeps running in the background unless you ask it to (see *Running in the background* below). More from the same command:
 

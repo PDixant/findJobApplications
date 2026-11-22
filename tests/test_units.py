@@ -322,11 +322,9 @@ def test_window_icon_is_an_ico_on_windows():
 
 
 def test_app_starts_without_a_terminal(monkeypatch):
-    """The .exe behind the Desktop and Start menu shortcuts has no stdout or stderr. uvicorn's
-    console logging setup crashed on that before anything was logged, so clicking did nothing."""
+    """The .exe behind the Desktop and Start menu shortcuts has no stdout or stderr. Without
+    stand-ins, uvicorn's console logging setup crashed on that before anything was logged."""
     import sys
-
-    import uvicorn
 
     from jobwatcher import desktop
 
@@ -335,14 +333,20 @@ def test_app_starts_without_a_terminal(monkeypatch):
     monkeypatch.setattr(sys, "platform", "linux")  # on Windows it would also redirect pytest's own stderr
     desktop.no_console_streams()
     assert sys.stdout is not None and sys.stderr is not None
-    config = desktop.server_config(uvicorn, lambda scope, receive, send: None, 1)
-    assert config.log_config is None
     # What a terminal would have shown is kept in job_watcher_errors.log instead of lost.
     print("a problem worth reading", file=sys.stderr)
     sys.stderr.flush()
     from jobwatcher.base import BASE
     text = (BASE / "job_watcher_errors.log").read_text(encoding="utf-8")
     assert "Opened without a terminal" in text and "a problem worth reading" in text
+
+
+def test_server_skips_uvicorns_console_logging():
+    uvicorn = pytest.importorskip("uvicorn")  # the app's packages; CI's first pass runs without them
+    from jobwatcher import desktop
+
+    config = desktop.server_config(uvicorn, lambda scope, receive, send: None, 1)
+    assert config.log_config is None
 
 
 def test_a_failed_start_is_shown_not_silent(monkeypatch):
