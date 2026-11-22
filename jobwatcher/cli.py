@@ -46,6 +46,7 @@ def main():
                         handlers=[logging.FileHandler(LOG_PATH, encoding="utf-8"),
                                   logging.StreamHandler(sys.stdout)])
     load_env()
+    guard_logs()
 
     def settings():
         try:

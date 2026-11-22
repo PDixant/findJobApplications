@@ -47,7 +47,7 @@ except ImportError:  # pragma: no cover
 #   JOBWATCHER_HOME if set; otherwise the source folder when running from it (as always);
 #   otherwise, for the installed app, the user's app-data folder, set up with the defaults.
 SOURCE_DIR = Path(__file__).resolve().parent.parent
-DEFAULT_FILES = ("config.toml", "companies.csv", "about_me.example.md", ".env.example")
+DEFAULT_FILES = ("config.toml", "companies.csv", "about_me.example.md", ".env.example", "resume_rules.example.md")
 
 
 def user_data_dir():
@@ -520,6 +520,42 @@ class RunLock:
 
 class Busy(Exception):
     """A run already holds the lock."""
+
+
+# ----------------------------------------------------------------- keep secrets out of logs
+SECRET_NAMES = ("ANTHROPIC_API_KEY", "SERPER_API_KEY", "BRAVE_API_KEY", "SERPAPI_API_KEY", "HUNTER_API_KEY",
+                "GMAIL_APP_PASSWORD", "NTFY_TOPIC")
+_SECRET_PARAM = re.compile(r"((?:api_key|apikey|token|key|password)=)[^&\s\"']+", re.I)
+
+
+def redact(text):
+    """The text with API keys, passwords and app tokens replaced by ****."""
+    text = str(text)
+    for name in SECRET_NAMES:
+        value = os.environ.get(name, "").strip()
+        if len(value) >= 6:
+            text = text.replace(value, "****")
+            if name == "GMAIL_APP_PASSWORD":
+                text = text.replace(value.replace(" ", ""), "****")
+    return _SECRET_PARAM.sub(r"\1****", text)
+
+
+class Redact(logging.Filter):
+    """Every log line passes through redact(), so a key can never land in job_watcher.log or the
+    app's Activity screen, even from a library's debug output."""
+
+    def filter(self, record):
+        message = record.getMessage()
+        clean = redact(message)
+        if clean != message:
+            record.msg, record.args = clean, None
+        return True
+
+
+def guard_logs(*handlers):
+    for h in handlers or logging.getLogger().handlers:
+        if not any(isinstance(f, Redact) for f in h.filters):
+            h.addFilter(Redact())
 
 
 __all__ = [n for n in list(globals()) if not n.startswith("__")]

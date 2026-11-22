@@ -740,6 +740,7 @@ def main():
                         handlers=[logging.FileHandler(jw.LOG_PATH, encoding="utf-8"),
                                   logging.StreamHandler(sys.stdout)])
     jw.load_env()
+    jw.guard_logs()
     try:
         cfg = jw.load_config()
         if args.make_drafts:

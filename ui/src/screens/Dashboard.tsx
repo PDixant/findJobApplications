@@ -8,6 +8,8 @@ import { ago, minutes, n, plural, when } from "../format";
 import { useLive } from "../live";
 import { PREVIOUS_VISIT, useCompanies, useJobs, useMeta, useSummary } from "../queries";
 import { go } from "../router";
+import { FitBadge } from "../components/Fit";
+import { usePipeline } from "./Pipeline";
 
 export function Dashboard() {
   const summary = useSummary();
@@ -78,6 +80,8 @@ export function Dashboard() {
           )}
         </section>
 
+        <div className="side-stack">
+        <ToDo jobs={jobs.data ?? []} />
         <section className="panel side" aria-labelledby="month-title">
           <h2 id="month-title">This month</h2>
           {s && (
@@ -117,9 +121,37 @@ export function Dashboard() {
             </>
           )}
         </section>
+        </div>
       </div>
 
     </div>
+  );
+}
+
+/** What to do next: follow-ups that are due, and strong fits you haven't applied to. */
+function ToDo({ jobs }: { jobs: Job[] }) {
+  const pipeline = usePipeline();
+  const best = jobs.filter((j) => j.open && j.fit?.verdict === "APPLY" && (j.status || "New") === "New")
+    .sort((a, b) => (b.fit?.score ?? 0) - (a.fit?.score ?? 0)).slice(0, 4);
+  const due = pipeline.data?.follow_ups ?? [];
+  if (!best.length && !due.length) return null;
+  return (
+    <section className="panel side todo" aria-labelledby="todo-title">
+      <h2 id="todo-title">Next up</h2>
+      {due.length > 0 && (
+        <button className="todo-line" onClick={() => go("pipeline")}>
+          {plural(due.length, "follow-up")} due
+        </button>
+      )}
+      {best.map((j) => (
+        <div key={j.key} className="todo-job">
+          <External href={j.url}>{j.title}</External>
+          <span className="quiet">{j.company}</span>
+          <FitBadge fit={j.fit} />
+        </div>
+      ))}
+      {best.length > 0 && <p className="hint">Claude rates these Apply and you haven't acted on them yet.</p>}
+    </section>
   );
 }
 

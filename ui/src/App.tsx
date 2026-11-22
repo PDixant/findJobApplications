@@ -14,6 +14,7 @@ import { Jobs, Postings } from "./screens/Jobs";
 import { Settings } from "./screens/Settings";
 import { Activity } from "./screens/Activity";
 import { Outreach, useOutreach } from "./screens/Outreach";
+import { Pipeline, usePipeline } from "./screens/Pipeline";
 
 export function App() {
   const route = useRoute();
@@ -23,6 +24,7 @@ export function App() {
   const companies = useCompanies();
   const meta = useMeta();
   const outreach = useOutreach();
+  const pipeline = usePipeline();
   const setup = useQuery({ queryKey: ["setup"], queryFn: () => api<{ needed: boolean; companies: number }>("setup") });
   const update = useQuery({ queryKey: ["update"], queryFn: () => api<UpdateInfo>("update"), staleTime: Infinity });
   const [dismissed, setDismissed] = useState(() => {
@@ -66,6 +68,7 @@ export function App() {
   const nav: { screen: Screen; label: string; count?: number; also?: Screen }[] = [
     { screen: "dashboard", label: "Dashboard" },
     { screen: "jobs", label: "Jobs", count: summary.data?.jobs.open, also: "postings" },
+    { screen: "pipeline", label: "Pipeline", count: pipeline.data?.follow_ups.length || undefined },
     { screen: "outreach", label: "Outreach",
       count: outreach.data?.companies.filter((c) => ["to_write", "follow_up", "drafts"].includes(c.stage)).length || undefined },
     { screen: "companies", label: "Companies", count: companies.data?.length },
@@ -123,6 +126,7 @@ export function App() {
         {route.screen === "companies" && <Companies />}
         {route.screen === "settings" && <Settings />}
         {route.screen === "outreach" && <Outreach />}
+        {route.screen === "pipeline" && <Pipeline />}
         {route.screen === "activity" && <Activity />}
       </main>
       {setup.data?.needed && !welcomed && (

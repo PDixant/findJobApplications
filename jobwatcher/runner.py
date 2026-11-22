@@ -420,6 +420,7 @@ def _run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, o
                 "level": level_for(m["title"]), "posted": m["posted"].isoformat() if m["posted"] else None,
                 "allowed_age_h": round(max_age.total_seconds() / 3600, 1)}
             new_jobs.append(f"{m['company']}: {m['title']} ({m['region']})")
+            summary.setdefault("new_keys", []).append(m["key"])
         status = store.status_of(state["jobs"].keys())  # keep open/closed in step with the boards
         for key, j in state["jobs"].items():
             if key in status:
@@ -476,6 +477,9 @@ def _run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, o
     for line in new_jobs:
         log.info("  NEW  %s", line)
         emit("new_match", text=line)
+    if new_jobs and not offline:
+        from .alerts import new_matches as phone_alert
+        phone_alert(cfg, [state["jobs"][k] for k in summary.get("new_keys", [])] or new_jobs)
     if window_start:
         log.info("CHECK  %d posting%s since your last check:", len(report), "" if len(report) == 1 else "s")
         for j in report:

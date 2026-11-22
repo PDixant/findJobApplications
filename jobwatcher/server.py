@@ -28,7 +28,7 @@ from .tracked import *  # noqa: F401,F403
 from .discovery import add_company, import_companies
 from .runner import run_once, refresh_scores
 from .scheduler import Scheduler
-from . import outreach_app, system, updates
+from . import ai, alerts, outreach_app, referrals, signals, system, updates
 from . import __version__
 from . import keys as keystore
 from . import settings as settings_module
@@ -191,6 +191,7 @@ class Runs:
         self.thread = None
         self.current = None
         self.notify = None  # set by the desktop app when it has a tray icon
+        self.scoring = None
         on_event(self._on_event)
 
     def active(self):
@@ -264,10 +265,26 @@ class Runs:
             if found and self.notify:
                 self.notify(f"{len(found)} new {'match' if len(found) == 1 else 'matches'}",
                             "\n".join(f"{m['company']}: {m['title']}" if isinstance(m, dict) else str(m) for m in found[:4]))
+            if found and mode != "refilter":
+                started = self.current["started"] if self.current else ""
+                keys = [k for k, j in load_jobs(cfg).items() if j.get("open") and (j.get("found") or "") >= started]
+                self.score(cfg, keys)
         except Busy:
             pass
         except Exception:
             log.exception("Run failed")
+
+    def score(self, cfg, keys):
+        """Claude fit scores for these matches on a side thread (a new run can start meanwhile)."""
+        if not keys or not cfg["ai"]["score_new_matches"] or not os.environ.get("ANTHROPIC_API_KEY"):
+            return
+        with self.lock:
+            if self.scoring and self.scoring.is_alive():
+                return
+            def work():
+                ai.score_new(cfg, keys, on_each=lambda key: self.hub.publish("job_changed", {"key": key}))
+            self.scoring = threading.Thread(target=work, name="jobwatcher-fit", daemon=True)
+            self.scoring.start()
 
     def _on_event(self, kind, data):
         with self.lock:
@@ -297,16 +314,99 @@ class Runs:
         self.hub.publish(kind, data)
 
 
+# ----------------------------------------------------------------- signals from descriptions
+class Signals:
+    """Pay, work authorization, workplace and relocation read from each saved description, kept
+    until the description changes."""
+
+    def __init__(self):
+        self._cache = {}
+        self._lock = threading.Lock()
+
+    def for_jobs(self, cfg, jobs):
+        db = postings_db(cfg)
+        if db is None:
+            return {}, {}
+        out = {}
+        try:
+            keys = list(jobs)
+            for i in range(0, len(keys), 500):
+                chunk = keys[i:i + 500]
+                for r in db.execute(f"SELECT key, text FROM postings WHERE key IN ({','.join('?' * len(chunk))})", chunk):
+                    blob = r["text"]
+                    stamp = zlib.crc32(blob) if blob is not None else None
+                    with self._lock:
+                        hit = self._cache.get(r["key"])
+                    if hit and hit[0] == stamp:
+                        out[r["key"]] = hit[1]
+                        continue
+                    text = zlib.decompress(blob).decode("utf-8", "replace") if blob is not None else ""
+                    value = signals.read(jobs[r["key"]], text)
+                    with self._lock:
+                        self._cache[r["key"]] = (stamp, value)
+                    out[r["key"]] = value
+            history = signals.posting_history(db, list(jobs.values()))
+        finally:
+            db.close()
+        return out, history
+
+
+def follow_ups(cfg, jobs, now=None):
+    """Applications and emails that are due a nudge."""
+    now = now or dt.datetime.now(dt.timezone.utc)
+    days = int(cfg["outreach"]["follow_up_after_days"])
+    due = []
+    for j in jobs.values():
+        if not j.get("open"):
+            continue
+        applied = parse_date(j.get("applied"))
+        if j.get("status") == "Applied" and applied and now - applied >= dt.timedelta(days=days):
+            changed = parse_date(j.get("status_changed")) or applied
+            if now - changed >= dt.timedelta(days=days):
+                due.append({"key": j["key"], "company": j.get("company", ""), "title": j.get("title", ""),
+                            "kind": "application", "days": (now - applied).days})
+        sent = parse_date(j.get("outreach_sent"))
+        if j.get("outreach") == "Sent" and sent and not j.get("outreach_followup") and now - sent >= dt.timedelta(days=days):
+            due.append({"key": j["key"], "company": j.get("company", ""), "title": j.get("title", ""),
+                        "kind": "email", "days": (now - sent).days})
+    return sorted(due, key=lambda d: -d["days"])
+
+
+def pipeline_stats(jobs, now=None):
+    now = now or dt.datetime.now(dt.timezone.utc)
+    by_status = Counter(j.get("status") or "New" for j in jobs.values())
+    applied = [parse_date(j.get("applied")) for j in jobs.values() if j.get("applied")]
+    applied = [a for a in applied if a]
+    weeks = []
+    start = (now - dt.timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    for back in range(7, -1, -1):
+        lo = start - dt.timedelta(weeks=back)
+        weeks.append({"week": lo.date().isoformat(), "applied": sum(1 for a in applied if lo <= a < lo + dt.timedelta(weeks=1))})
+    heard = sum(by_status.get(s, 0) for s in ("Interviewing", "Offer", "Rejected"))
+    sent = len(applied)
+    fits = Counter((j.get("fit") or {}).get("verdict") for j in jobs.values() if j.get("open") and j.get("fit"))
+    return {"by_status": {s: by_status.get(s, 0) for s in STATUSES}, "applied_total": sent,
+            "applied_weeks": weeks, "heard_back": heard,
+            "response_rate": round(heard / sent * 100) if sent else None,
+            "fit": {"APPLY": fits.get("APPLY", 0), "STRETCH": fits.get("STRETCH", 0), "SKIP": fits.get("SKIP", 0)}}
+
+
+def _inside(folder, name):
+    target = (BASE / name).resolve()
+    return target if target.is_file() and folder.resolve() in target.parents else None
+
+
 # ----------------------------------------------------------------- the app
 def create_app(token, dev=False, schedule=False):
     hub, files, companies_file = EventHub(), Files(), CompaniesFile()
-    runs = Runs(hub)
+    runs, job_signals = Runs(hub), Signals()
     imports = {}  # spreadsheet previews waiting for confirmation
     try:
         use_app_for_edits(load_config())  # from now on the app is where you edit
     except ConfigError:
         pass  # the window shows the settings problem
     log_handler = LogToEvents(hub)
+    guard_logs(log_handler)
     log.addHandler(log_handler)
     if log.getEffectiveLevel() > logging.INFO:  # the window shows progress lines even if nothing else logs
         log.setLevel(logging.INFO)
@@ -418,10 +518,18 @@ def create_app(token, dev=False, schedule=False):
     def jobs():
         cfg = config_or_fail()
         scores = {r["company"]: (r.get("score", ""), r.get("tier", "")) for r in files.company_rows(cfg)}
+        tracked = files.jobs(cfg)
+        found, history = job_signals.for_jobs(cfg, tracked)
+        known = referrals.counts(cfg, {j.get("company", "") for j in tracked.values()})
         out = []
-        for j in files.jobs(cfg).values():
+        for j in tracked.values():
             score, tier = scores.get(j.get("company"), ("", ""))
-            out.append({
+            sig = found.get(j["key"]) or {}
+            fit = j.get("fit") or {}
+            out.append({**{k: sig.get(k) for k in ("pay", "work_auth", "workplace", "relocation")},
+                **(history.get(j["key"]) or {}), "connections": known.get(j.get("company", ""), 0),
+                "fit": {k: fit.get(k) for k in ("verdict", "score", "summary")} if fit else None,
+                "tailored": bool(j.get("tailored")),
                 "key": j["key"], "company": j.get("company", ""), "title": j.get("title", ""),
                 "url": j.get("url", ""), "locations": j.get("locations") or [], "region": j.get("region", ""),
                 "level": j.get("level", ""), "stack": j.get("stack") or [], "provider": j.get("provider", ""),
@@ -445,6 +553,128 @@ def create_app(token, dev=False, schedule=False):
             raise HTTPException(400, str(exc)) from None
         hub.publish("job_changed", {"key": key})
         return {k: job.get(k) for k in ("key", "status", "notes", "outreach", "outreach_sent")}
+
+    def ai_problem(fn, *args):
+        try:
+            return fn(*args)
+        except ai.AIProblem as exc:
+            raise HTTPException(400, str(exc)) from None
+
+    @app.get("/api/jobs/details")
+    def job_details(key: str):
+        cfg = config_or_fail()
+        job = files.jobs(cfg).get(key)
+        if not job:
+            raise HTTPException(404, "That job is not in your tracker.")
+        return {"key": key, "fit": job.get("fit"), "tailored": job.get("tailored"),
+                "people": referrals.people_at(cfg, job.get("company", ""))[:25]}
+
+    @app.post("/api/jobs/fit")
+    def job_fit(key: str):
+        result = ai_problem(ai.fit, config_or_fail(), key)
+        hub.publish("job_changed", {"key": key})
+        return result
+
+    @app.post("/api/jobs/fit/unscored")
+    def fit_unscored():
+        cfg = config_or_fail()
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            raise HTTPException(400, "Add your Anthropic API key in Settings, Keys and accounts.")
+        keys = [k for k, j in files.jobs(cfg).items() if j.get("open") and not j.get("fit")]
+        left = max(0, int(cfg["ai"]["monthly_limit"]) - ai.used_this_month(cfg)) if int(cfg["ai"]["monthly_limit"]) else len(keys)
+        keys = keys[:left]
+        if keys:
+            runs.score({**cfg, "ai": {**cfg["ai"], "score_new_matches": True}}, keys)
+        return {"queued": len(keys)}
+
+    @app.post("/api/jobs/followed-up")
+    def followed_up(key: str):
+        """You nudged them: the follow-up clock starts again."""
+        cfg = config_or_fail()
+        if key not in files.jobs(cfg):
+            raise HTTPException(404, "That job is not in your tracker.")
+        update_job(cfg, key, {"status_changed": dt.datetime.now(dt.timezone.utc).isoformat()})
+        hub.publish("job_changed", {"key": key})
+        return {"ok": True}
+
+    @app.post("/api/jobs/tailor")
+    def job_tailor(key: str):
+        result = ai_problem(ai.tailor, config_or_fail(), key)
+        hub.publish("job_changed", {"key": key})
+        return result
+
+    @app.post("/api/files/open")
+    def open_file(body: dict = Body(...)):
+        """Open a tailored resume (only files inside the tailored resumes folder)."""
+        cfg = config_or_fail()
+        folder = BASE / (cfg["outreach"]["tailored_resumes_folder"] or "resumes")
+        target = _inside(folder, str(body.get("path") or ""))
+        if not target:
+            raise HTTPException(404, "That file is no longer there.")
+        from .desktop import open_folder
+        open_folder(target if not body.get("folder") else target.parent)
+        return {"opened": target.name}
+
+    @app.get("/api/ai")
+    def ai_status():
+        cfg = config_or_fail()
+        a = cfg["ai"]
+        tex = Path(a["resume_tex"])
+        tex = tex if tex.is_absolute() else BASE / tex
+        name, _exe = ai.compiler()
+        jobs_ = files.jobs(cfg)
+        return {"key_set": bool(os.environ.get("ANTHROPIC_API_KEY")), "used": ai.used_this_month(cfg),
+                "limit": a["monthly_limit"], "model": a["model"], "score_new_matches": a["score_new_matches"],
+                "resume_tex": tex.name, "resume_tex_found": tex.exists(), "latex": name,
+                "rules_found": (BASE / a["resume_rules"]).exists(),
+                "unscored": sum(1 for j in jobs_.values() if j.get("open") and not j.get("fit")),
+                "scoring": bool(runs.scoring and runs.scoring.is_alive())}
+
+    @app.get("/api/connections")
+    def connections():
+        cfg = config_or_fail()
+        rows = files.company_rows(cfg)
+        return {"total": referrals.total(cfg),
+                "companies": referrals.counts(cfg, [r["company"] for r in rows])}
+
+    @app.post("/api/connections/import")
+    async def connections_import(request: Request):
+        cfg = config_or_fail()
+        data = await request.body()
+        if not data or len(data) > 30_000_000:
+            raise HTTPException(400, "The file is empty or larger than 30 MB.")
+        try:
+            saved = referrals.import_csv(cfg, data)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from None
+        hub.publish("job_changed", {})
+        return {"saved": saved}
+
+    @app.delete("/api/connections")
+    def connections_clear():
+        referrals.clear(config_or_fail())
+        hub.publish("job_changed", {})
+        return {"saved": 0}
+
+    @app.post("/api/alerts/test")
+    def alerts_test():
+        cfg = config_or_fail()
+        if not os.environ.get("NTFY_TOPIC", "").strip():
+            raise HTTPException(400, "Save your ntfy topic first (Settings, Keys and accounts).")
+        if not alerts.send(cfg, "Job Watcher test", "Phone alerts work. New matches will show up here."):
+            raise HTTPException(400, "ntfy didn't accept the alert. Check the topic and server.")
+        return {"sent": True}
+
+    @app.get("/api/alerts/topic")
+    def alerts_topic():
+        return {"topic": alerts.suggest_topic()}
+
+    @app.get("/api/pipeline")
+    def pipeline():
+        cfg = config_or_fail()
+        jobs_ = files.jobs(cfg)
+        return {**pipeline_stats(jobs_), "follow_ups": follow_ups(cfg, jobs_)[:30],
+                "follow_up_after_days": cfg["outreach"]["follow_up_after_days"]}
 
     @app.get("/api/description")
     def description(key: str):

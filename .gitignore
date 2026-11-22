@@ -25,3 +25,20 @@ build/
 dist/
 packaging/Output/
 *.egg-info/
+
+# Personal files for Claude's help (never in git)
+resume.tex
+resume_rules.md
+*.resume.tex
+Connections.csv
+connections*.csv
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Old settings file (replaced by config.toml) and other local leftovers
+config.json
+*.db-journal
+*.log
+.pytest_cache/

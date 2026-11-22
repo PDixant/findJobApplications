@@ -8,6 +8,7 @@ import { useRunActions } from "../components/RunControls";
 import { ErrorNote } from "../components/bits";
 import { toast } from "../live";
 import { hex } from "../format";
+import { ClaudeHelp, Connections, PhoneAlerts } from "./SettingsExtras";
 
 const LABELS: Record<string, string> = {
   titles: "Job titles", skip_titles: "Skip titles with", must_mention: "Stack keywords", max_age_hours: "Posted within (hours)",
@@ -19,7 +20,9 @@ const LABELS: Record<string, string> = {
   retry_board_search_hours: "Board guessing every (hours)", check_every_minutes: "Minutes between checks (--loop)",
   resume: "Resume file", about_me: "About-me file", contacts_per_company: "Contacts per company", departments: "Hunter departments",
   verify_emails: "Verify addresses", monthly_hunter_credit_limit: "Monthly Hunter limit", follow_up_after_days: "Follow up after (days)",
-  model: "Claude model", times: "Run at",
+  model: "Claude model", times: "Run at", score_new_matches: "Score new matches", monthly_limit: "Monthly Claude limit",
+  resume_tex: "Base resume (.tex)", resume_rules: "Resume rules file", ntfy_topic: "ntfy topic", ntfy_server: "ntfy server",
+  tailored_resumes_folder: "Tailored resumes folder",
 };
 const SWATCHES = ["C6EFCE", "DDEBF7", "D9F2F2", "FCE4D6", "E4DFEC", "FFF2CC", "F8CBAD", "EDEDED"];
 
@@ -113,8 +116,11 @@ export function Settings() {
                 <Field key={f.key} field={f} value={value(s.id, f)} changed={Boolean(changes[s.id] && f.key in changes[s.id])}
                   onChange={(v) => set(s.id, f.key, v)} />
               ))}
+              {s.id === "alerts" && <PhoneAlerts />}
             </section>
           ))}
+          <ClaudeHelp />
+          <Connections />
           <Background />
           <Keys />
         </div>

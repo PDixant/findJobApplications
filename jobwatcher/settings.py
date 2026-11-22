@@ -56,10 +56,20 @@ FIELDS = {
         ("enabled", "bool", "Run automatically while Job Watcher is open or in the tray"),
         ("times", "list", "When to run each day, as 24-hour times such as 08:00 or 17:30"),
     ],
+    "ai": [
+        ("score_new_matches", "bool", "Ask Claude for a fit score on each new match (needs your Anthropic key)"),
+        ("monthly_limit", "number", "Never use more Claude requests than this in a month (fit scores and tailored resumes)"),
+        ("model", "text", "The Claude model for fit scores and tailored resumes"),
+        ("resume_tex", "text", "Your base LaTeX resume, in the Job Watcher folder"),
+        ("resume_rules", "text", "Your rules for tailoring it (a text file; built-in rules if missing)"),
+    ],
+    "alerts": [
+        ("ntfy_server", "text", "The ntfy server (leave as https://ntfy.sh unless you run your own)"),
+    ],
 }
 SECTION_TITLES = {"jobs": "Which jobs", "places": "Where", "search": "Finding new companies",
                   "career_sites": "Careers websites", "tracker": "Runs and alerts", "outreach": "Recruiter emails",
-                  "schedule": "Automatic runs"}
+                  "schedule": "Automatic runs", "ai": "AI help (Claude)", "alerts": "Phone alerts"}
 
 
 def _value(cfg, section, key):

@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jobwatcher"
-version = "0.5.0"
+version = "0.6.0"
 description = "Finds fresh software jobs on company job boards, tracks them, and helps you reach the people hiring."
 readme = "README.md"
 requires-python = ">=3.10"

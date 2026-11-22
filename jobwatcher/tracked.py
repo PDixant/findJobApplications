@@ -16,7 +16,8 @@ from .base import *  # noqa: F401,F403
 from .config import *  # noqa: F401,F403
 from .tracker import read_excel_edits, apply_excel_edits
 
-USER_FIELDS = ("status", "notes", "outreach", "outreach_sent", "applied", "outreach_prepared", "outreach_followup")
+USER_FIELDS = ("status", "notes", "outreach", "outreach_sent", "applied", "outreach_prepared", "outreach_followup",
+               "fit", "tailored", "status_changed")
 BACKUP_NAME = "job_watcher_state.before-database.json"
 
 
@@ -175,6 +176,8 @@ def edit_job(cfg, key, changes):
                     raise ValueError(f"Status must be one of {', '.join(STATUSES)}")
                 if changes["status"] == "Applied" and not job.get("applied"):
                     job["applied"] = now  # when you applied, for follow-ups and stats
+                if changes["status"] != job.get("status"):
+                    job["status_changed"] = now
                 job["status"] = changes["status"]
             if "notes" in changes:
                 job["notes"] = str(changes["notes"] or "")[:5000]

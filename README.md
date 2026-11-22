@@ -1,408 +1,335 @@
-# Job Watcher
+<h1 align="center">Job Watcher</h1>
 
-Finds fresh software jobs before most people see them, keeps them in one Excel tracker, and helps you reach the people hiring for them.
+<p align="center">
+  <strong>Catch software jobs the hour they go up. Know which ones are worth it. Show up with a tailored resume and someone who knows you.</strong>
+</p>
 
-- **Reads job boards directly.** Greenhouse, Ashby, Lever, Workday, SmartRecruiters and Workable, through their public feeds, plus companies' own careers websites. Every company is checked on every run.
-- **Filters for you.** Title, seniority, location regions and tech stack, posted within the last 24 hours. Rules live in a commented `config.toml`.
-- **Finds companies you didn't know about.** A twice-daily web search for new postings on Ashby, Greenhouse and Lever adds every new company to `companies.csv`. You can also import company lists from spreadsheets.
-- **Scores companies.** Stock trend, growth, layoffs and funding stage become a 0 to 100 "worth applying" score.
-- **Has a desktop app.** `python app.py` opens a window with a Dashboard that shows every company being checked live, your matches with their descriptions, all saved postings and every company's last result (section 14). The command line keeps working exactly as before.
-- **Prepares recruiter emails.** `outreach.py` finds a recruiter and an engineering leader at each company you pick and hands everything to your Claude agent, which writes short, factual emails as drafts. Nothing is ever sent for you.
+<p align="center">
+  <a href="https://github.com/PDixant/findJobApplications/actions/workflows/tests.yml"><img alt="tests" src="https://github.com/PDixant/findJobApplications/actions/workflows/tests.yml/badge.svg"></a>
+  <img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-1f3864">
+  <img alt="Windows, macOS, Linux" src="https://img.shields.io/badge/runs%20on-Windows%20%7C%20macOS%20%7C%20Linux-2a4a80">
+  <img alt="Your data stays local" src="https://img.shields.io/badge/your%20data-stays%20on%20your%20computer-3f9a6a">
+</p>
 
-Only postings that went up in the last 24 hours are added. Anything older, or already in your tracker, is ignored.
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" alt="The Dashboard: new matches since you last looked, one square per company filling in as each job board is read, and what to do next" width="900">
+</p>
 
-**Two lists.** Each run downloads every board's full list (normally one request per board) and keeps it locally:
-- `postings.db` and `all_postings.csv`: every open posting from every board. Open the CSV in Excel to browse everything.
-- `job_tracker.xlsx`: only the postings that pass your filters.
+Most job sites show you a posting a day or two after it went up, next to everyone else. Job Watcher goes to the source instead: it reads about a thousand companies' own job boards several times a day, keeps only the roles that fit you, and helps you act on them while they're fresh.
 
-Filtering happens on your computer against the saved list, so changing your rules never costs extra requests. After editing `config.toml`, run `python job_watcher.py --refilter` to re-apply your filters instantly with no requests at all.
+## What it does
 
-## Commands at a glance
+| | |
+|---|---|
+| 🛰️ **Reads the boards directly** | Greenhouse, Ashby, Lever, Workday, SmartRecruiters, Workable, Amazon, Oracle Recruiting, Eightfold, iCIMS and plain careers websites. Every company, every run. |
+| 🎯 **Filters for you** | Title, seniority, regions, tech stack and freshness (posted in the last 24 hours, by default). Change a rule and re-filter instantly, with no new requests. |
+| 🧭 **Finds companies you didn't know** | A twice-daily web search adds new companies to your list on its own. Paste any job link or import a spreadsheet to add more. |
+| 🤖 **Tells you if it's worth applying** | Claude reads each new match against your resume and says **Apply**, **Stretch** or **Skip**, with what you have and what's missing. |
+| 📄 **Tailors your resume** | One button rewrites your LaTeX resume for that posting, using only facts already in it, and makes the PDF. |
+| 💸 **Reads the fine print** | Pay range, remote or hybrid, relocation help, "no visa sponsorship", security clearance, reposted roles and roles open for months. |
+| 🤝 **Shows who you know** | Import your LinkedIn connections and every match shows the people you know at that company. |
+| 📬 **Drafts recruiter emails** | Finds a recruiter and an engineering lead, and Claude drafts short, factual emails. You send them. Nothing is ever sent for you. |
+| 🗂️ **Tracks your pipeline** | Drag applications from Applied to Interviewing to Offer, see your weekly pace, and get nudged when it's time to follow up. |
+| 📱 **Pings your phone** | New matches arrive as phone notifications through ntfy (free, no account). |
+
+## Quick start
+
+1. **Get the folder.** Download this repository (green **Code** button, **Download ZIP**) or `git clone` it.
+2. **Double-click `Install Job Watcher`.** It sets everything up in a private Python environment (installing Python first if you need it) and adds Job Watcher to your Start menu and Desktop.
+3. **Open Job Watcher.** A few welcome steps ask for the job titles, places and skills you want, then it runs. That's it: it keeps running by the clock from then on.
+
+On a Mac or Linux, run `sh install.sh` instead. Prefer a terminal? `pip install -r requirements-app.txt`, then `python app.py`.
+
+> **Tip:** add your keys under **Settings, Keys and accounts** (all optional): Serper for finding new companies, Anthropic for Claude's help, Hunter for recruiter emails. They're kept in Windows Credential Manager, never in a file that goes to git.
+
+## A quick tour
+
+**Jobs.** Every match with its fit score, pay, workplace and flags. Click one for the full picture: Claude's read on your fit, your tailored resume, people you know there and the description.
+
+<img src="docs/screenshots/job-details.png" alt="The Jobs screen with a match open: an Apply 86 fit score, the requirements you meet, pay and workplace" width="900">
+
+**Pipeline.** Where every application stands, how many you sent each week, how often you hear back, and who's due a follow-up.
+
+<img src="docs/screenshots/pipeline.png" alt="The Pipeline board: New, Applied, Interviewing, Offer, Rejected and Skipped columns, weekly application bars and follow-ups due" width="900">
+
+**Companies.** Every company's last result in plain words (read, paused by a rate limit, nothing readable, no board found), its board, open postings and a 0 to 100 "worth applying" score.
+
+<img src="docs/screenshots/companies.png" alt="The Companies screen listing each company's result, board and score" width="900">
+
+The screenshots use made-up companies.
+
+## Your data stays yours
+
+Job Watcher runs on your computer. The app's window talks to a small server on 127.0.0.1 that only answers requests carrying a code the window gets at launch, so other programs and websites can't use it.
+
+| What | Where it goes |
+|---|---|
+| Your settings, company list, tracker, saved postings, resumes, about-me and LinkedIn connections | Stay in your Job Watcher folder |
+| API keys, the Gmail app password and your ntfy topic | Windows Credential Manager (Keychain on a Mac) or `.env`. Masked in the app and scrubbed from every log line |
+| A posting, your resume and `about_me.md` | Sent to Anthropic only when Claude scores a fit, tailors a resume or drafts an email, with a monthly cap you set |
+| Search queries | Your search service (Serper, Brave or SerpApi) |
+| A company's email domain | Hunter, when you look for a recruiter |
+| Company, title and link of new matches | Your private ntfy topic, if you turn on phone alerts |
+
+Everything personal is in `.gitignore`, so it never reaches GitHub. Requests to job sites are spaced out, back off when a site asks, follow `robots.txt`, and say honestly that they come from a personal job-search tool.
+
+## Reference
+
+Everything below is optional reading. Open a section when you need it.
+
+<details>
+<summary><strong>Commands</strong></summary>
 
 | Command | What it does |
 |---|---|
-| Double-click **Install Job Watcher** | One time: Start menu and Desktop shortcuts, and the `jobwatcher` command for any terminal (section 15) |
-| `jobwatcher` | Open the desktop app from any folder (`python app.py` from this folder does the same; `--browser` opens it in your web browser) |
-| `jobwatcher run [options]` | The same as `python job_watcher.py [options]`, from any folder |
+| Double-click **Install Job Watcher** | One time: Start menu and Desktop shortcuts, and the `jobwatcher` command for any terminal |
+| `jobwatcher` | Open the app from any folder (or bring it forward). `--browser` opens it in your web browser |
+| `jobwatcher run [options]` | A run, with the same options as `python job_watcher.py` |
+| `jobwatcher outreach [options]` | The same as `python outreach.py` |
+| `jobwatcher folder` | Show and open the folder with your settings and data |
 | `python job_watcher.py` | One full run: search for new companies if due, read every board and careers page, update the tracker |
 | `python job_watcher.py --loop` | Keep running, every `check_every_minutes` |
 | `python job_watcher.py --since-last-check` | Report only postings that appeared since your last check (`--hours 72` for a fixed window) |
-| `python job_watcher.py --refilter` | Re-apply your filters to saved postings and rebuild the tracker; makes no requests |
+| `python job_watcher.py --refilter` | Re-apply your filters to saved postings and rebuild the tracker, with no requests |
 | `python job_watcher.py --show-config` | Explain your settings in plain English, including the exact search queries |
 | `python job_watcher.py --search` | Run the new-company web search now (`--look-back week` to search wider once) |
 | `python job_watcher.py --no-search` | Skip the web search for this run |
-| `python job_watcher.py --import list.xlsx` | Add the companies in spreadsheets (.xlsx or .csv) to `companies.csv` |
-| `python job_watcher.py --add <link>` | Watch a company from any job posting, job board or careers page link (`--name` to set its name) |
-| `python job_watcher.py --find-career-pages` | Use web search to find careers pages for companies with no job board found |
+| `python job_watcher.py --import list.xlsx` | Add the companies in spreadsheets (.xlsx or .csv) |
+| `python job_watcher.py --add <link>` | Watch a company from any job posting, job board or careers page link (`--name` to name it) |
+| `python job_watcher.py --find-career-pages` | Use web search to find careers pages for companies with no board found |
 | `python job_watcher.py --verify` | Re-check every company, including ones marked `not_found` |
-| `python job_watcher.py --refresh-metrics` | Refresh stock metrics and company scores now, then exit |
-| `python outreach.py` | Prepare recruiter emails for jobs marked `Email` in the tracker's Outreach column |
-| `python outreach.py --follow-ups` | Prepare one follow-up for emails marked `Sent` with no reply after 5 days |
-| `python outreach.py --export-drafts <folder>` | Turn a packet's `emails.json` into `.md` and `.eml` draft files |
-| `python outreach.py --make-drafts <folder>` | Put a packet's `emails.json` into Gmail Drafts, resume attached |
-| `python outreach.py --credits` | Show Hunter credits used and left this month |
+| `python job_watcher.py --refresh-metrics` | Refresh stock metrics and company scores, then exit |
+| `python outreach.py` | Prepare recruiter emails for jobs marked `Email` |
+| `python outreach.py --follow-ups` | Prepare one follow-up for emails marked `Sent` with no reply |
+| `python outreach.py --export-drafts <folder>` | Turn a packet's `emails.json` into `.md` and `.eml` drafts |
+| `python outreach.py --make-drafts <folder>` | Put a packet's emails into Gmail Drafts, resume attached |
+| `python outreach.py --credits` | Hunter credits used and left this month |
 
-## Files
+</details>
+
+<details>
+<summary><strong>Files, and which ones go to git</strong></summary>
 
 | File | What it is | In git? |
 |---|---|---|
-| `job_watcher.py` | The watcher's command line | Yes |
-| `app.py` | Opens the desktop app (section 14) | Yes |
-| `Install Job Watcher.bat`, `Uninstall Job Watcher.bat`, `install.sh`, `install/` | One-click setup and removal (section 15) | Yes |
-| `pyproject.toml`, `packaging/` | Makes `jobwatcher` a command, and builds the Windows installer (section 15) | Yes |
-| `.venv/` | The private Python environment the installer makes | No |
-| `ui/` | The app's interface source (React and TypeScript) | Yes |
-| `jobwatcher/ui_dist/` | The app's built interface, so you don't need Node to run the app | Yes |
-| `.app_window/` | The app window's saved filters, last visit and spreadsheets waiting to be imported | No |
-| `jobwatcher/` | The watcher's code, as a package (section 13) | Yes |
-| `outreach.py` | Recruiter email prep (section 11) | Yes |
-| `tests/`, `requirements*.txt`, `.github/` | Tests, dependencies and the GitHub test workflow | Yes |
-| `config.toml` | Your settings, with a note above each one | Yes |
+| `job_watcher.py`, `app.py`, `outreach.py`, `jobwatcher/` | The program | Yes |
+| `ui/`, `jobwatcher/ui_dist/` | The app's interface source, and the built copy (so you don't need Node) | Yes |
+| `Install Job Watcher.bat`, `Uninstall Job Watcher.bat`, `install.sh`, `install/`, `pyproject.toml`, `packaging/` | Setup, the `jobwatcher` command and the Windows installer build | Yes |
+| `tests/`, `requirements*.txt`, `.github/`, `docs/` | Tests, dependencies, the test workflow and README pictures | Yes |
+| `config.toml` | Your settings, with a note above each one. Never holds a key | Yes |
 | `companies.csv` | The companies to watch; grows by itself | Yes |
-| `about_me.example.md` | Template for `about_me.md` | Yes |
-| `.env.example` | Template for `.env` | Yes |
-| `.env` | Your API keys and app password | No |
-| `about_me.md`, `resume.pdf`, `resumes/` | Your details and resumes for emails | No |
-| `outreach/` | Prepared email packets, drafts and the contacts cache | No |
-| `job_tracker.xlsx`, `all_postings.csv`, `postings.db` (with `-wal` and `-shm` files while in use), `job_watcher_state.before-database.json`, `job_watcher_state.json`, `job_watcher.log`, `job_watcher.lock` | Created by the script as it runs | No |
+| `about_me.example.md`, `resume_rules.example.md`, `.env.example` | Templates for your personal files | Yes |
+| `.env` | Keys, if you keep them in a file rather than the password store | No |
+| `about_me.md`, `resume.pdf`, `resume.tex`, `resume_rules.md`, `resumes/` | You, your resumes and your tailoring rules | No |
+| `outreach/` | Email packets, drafts and the contacts cache | No |
+| `job_tracker.xlsx`, `all_postings.csv`, `postings.db`, `job_watcher_state*.json`, `job_watcher.log`, `job_watcher.lock`, `.app_window/` | Made as it runs: your tracker, every saved posting, run history, your LinkedIn connections and the app's remembered filters | No |
 
-Everything marked "No" is listed in `.gitignore`, so your keys, contacts and applications never reach GitHub.
+</details>
 
-## 1. Install (one time)
+<details>
+<summary><strong>How a run works</strong></summary>
 
-1. Install Python 3.11 or newer from python.org (on Windows, tick "Add Python to PATH"). Python 3.10 also works if you add `tomli` to the install line below.
-2. Download or clone this repository into a folder, for example `Documents\JobWatcher`. The scripts, `config.toml` and `companies.csv` need to stay together.
-3. In a terminal, in that folder, run:
-   ```
-   pip install -r requirements.txt
-   ```
-   `yfinance` adds stock metrics and scores for public companies. `plyer` adds desktop pop-ups. Both are optional.
-4. Optional, for finding new companies: copy `.env.example` to `.env` and paste in a search API key (section 7).
-5. Check that your settings say what you mean:
-   ```
-   python job_watcher.py --show-config
-   ```
+**Every company is checked on every run.** Each company's job board is read through its public feed, normally one request per board. For a company whose board isn't known yet, Job Watcher reads its careers page, which usually names the board, and otherwise guesses board names. Found boards are written back to `companies.csv`. Guessing for companies where nothing was found is retried once a day (`retry_board_search_hours`), so runs stay quick and job sites stay friendly.
 
-## 2. First run
+**Two lists.** Every open posting from every board is kept in `postings.db` (and `all_postings.csv` for Excel). Only the ones that pass your filters go to your matches and `job_tracker.xlsx`. Filtering happens on your computer, so changing a rule never costs a request: **Re-filter saved postings** (or `--refilter`) re-applies it instantly.
 
-```
-cd path\to\JobWatcher
-python job_watcher.py
-```
+**One run at a time.** The app, a terminal and an old scheduled task never run together; a second run says so and stops.
 
-**Every company is checked on every run.** Each company's job board and careers page is read every time. For a company whose board is not known yet, the script first reads its careers page, which usually names the board, and otherwise guesses board names (Greenhouse, Ashby, Lever and so on). Found boards are written back into `companies.csv`, after which each board costs one request per run. Guessing for companies where nothing has been found is retried once a day, spread across runs (`retry_board_search_hours`): guessing hundreds of names every 30 minutes would make runs take over an hour and trip the boards' rate limits, which would then hold up the boards you do read. The first run after adding many companies takes longest; the log ends with how long the run took.
+**Being polite.** Requests to each site are spaced out (Workable gets the most room). If a site says "too many requests", Job Watcher waits as long as it asks and leaves the site alone for the rest of the run after three refusals. Those companies show as paused and are read next run.
 
-It creates `job_tracker.xlsx`, `all_postings.csv`, `postings.db`, `job_watcher_state.json` and `job_watcher.log`. Open the **Companies** tab to see which boards were found. Long runs print a progress line every 30 seconds (`...200 of 967 boards read (3.1 min)`).
+**Descriptions.** Workday, SmartRecruiters, Oracle and some Eightfold lists don't include descriptions, so one is fetched only for postings that could match (right title, fresh, in your regions), and only once.
 
-**One run at a time.** If a run is already going (from the scheduled task, another terminal or the app), a new one says so and stops, instead of both writing the same files. The same applies to `--add`, `--import` and `outreach.py` while a run is going.
+**"What did I miss?"** `--since-last-check` (or **Run and list since last check**) reports only postings that went up since your last check, including ones a background run already picked up. `--hours 72` looks back a fixed window instead.
 
-**Being polite to the job boards.** Requests to each site are spaced out (Workable gets the most room, at one every 2 seconds). If a site answers "too many requests", the script waits as long as the site asks, and after three refusals it leaves that site alone for the rest of the run. Those companies show RETRY on the Companies tab and are picked up on the next run, with no errors in the log. The log ends each run with the number of requests made per site.
+</details>
 
-Workday and SmartRecruiters lists do not include job descriptions, so for those sites a description is downloaded only for postings that could match (right title, fresh, in your regions), and only once.
+<details>
+<summary><strong>Claude's help: fit scores and tailored resumes</strong></summary>
 
-## 3. Run it in the background
+Add your Anthropic key under **Settings, Keys and accounts**. Then:
 
-**With the desktop app (easiest):** it runs on its own at the times under Settings, Automatic runs (08:00, 12:00, 16:00 and 20:00 to start), and closing the window keeps it running by the clock on Windows. Tick **Start when you sign in** and you never have to open it. If you set up a Windows scheduled task as described below, the app finds it under Settings, Running in the background, and turns it off for you so runs don't double up. The rest of this section is for running without the app.
+- **Fit scores.** After each run, Claude reads every new match against your resume (`resume.pdf`) and `about_me.md`. It lists the posting's hard requirements, marks each one **Have it**, **Partly** or **Missing**, and gives a verdict: **Apply** (all or nearly all met), **Stretch** (one gap you can credibly bridge) or **Skip** (a domain, language, years or work-permit requirement you can't honestly meet), plus a 0 to 100 chance of getting through a recruiter's first scan. Press **Score my fit** on any match, or **Score open matches** under Settings to catch up.
+- **Tailored resumes.** Put your base LaTeX resume in the folder as `resume.tex`, and optionally your own rules as `resume_rules.md` (start from `resume_rules.example.md`). **Tailor my resume** on a match rewrites it for that posting: the most relevant bullets first, a headline backed by your bullets, the posting's tool names spelled its way, and never a tool, title, date or number you haven't given it. Numbers that would make a bullet stronger come back as a short "numbers to find" list instead of being made up. It saves `resumes/<You>_<Company>_<Title>.tex`, and the PDF too if LaTeX is installed ([MiKTeX](https://miktex.org) or [Tectonic](https://tectonic-typesetting.github.io)). Outreach attaches that PDF when you write to the company.
+- **Cost control.** `monthly_limit` under `[ai]` (300 by default) is a hard stop for fit scores and resumes together, and the Settings screen shows how many you've used. Turn off `score_new_matches` to score only when you ask.
 
-**Windows (Task Scheduler, recommended)**
-1. Open Task Scheduler, choose Create Task.
-2. General: name it "Job Watcher", tick "Run only when user is logged on".
-3. Triggers: New, "At log on", then tick "Repeat task every 30 minutes" for "Indefinitely".
-4. Actions: New, Program = `pythonw` (runs with no window), Arguments = `job_watcher.py`, Start in = your JobWatcher folder.
-5. Settings: tick "Do not start a new instance" if it is already running.
+</details>
 
-**Mac**
-Run `crontab -e` and add (change the path):
-```
-*/30 * * * * cd /Users/you/JobWatcher && /usr/bin/python3 job_watcher.py
-```
+<details>
+<summary><strong>Pay, work permits, workplace and other flags</strong></summary>
 
-**Quick option on any OS:** leave a terminal open running `python job_watcher.py --loop`.
+Read from each posting's description, on your computer:
 
-## 4. "What did I miss?" checks
+- **Pay range**, as more places now require it (BC, Ontario, California, Washington, New York and others). A bare `$` follows where the job is: CAD for Canadian roles, USD otherwise.
+- **Remote, hybrid or on-site**, from the title, locations and description.
+- **Work permit limits**: no visa sponsorship, citizens only, or a security clearance.
+- **Relocation help** offered (or ruled out).
+- **Reposted**: the same title at the same company was posted before. **Open N days**: up for 45 days or more, which can mean hard to fill or stale.
 
-```
-python job_watcher.py --since-last-check
-```
+Filter by any of them in Jobs (**Where** and **Only**).
 
-Each time you run this, the script saves a timestamp. The next time, it reports only postings that went up in between, including ones a background run already picked up. The first time you use it, it looks back 24 hours.
+</details>
 
-- Results open on the **Since Last Check** tab, and are also written to `job_watcher.log` with `CHECK` and `SINCE` lines.
-- A posting shown in one check is never shown again in a later check.
-- `--hours 72` looks back a fixed 72 hours instead, without moving your saved timestamp. It also raises the 24-hour limit for that run, which is useful if your computer was off for a few days.
-- It uses the posting date from the job board. Workday only reports whole days ("Posted Today", "Posted Yesterday"), so "Yesterday" counts as within 24 hours; "30+ Days Ago" is always treated as old.
-- A posting with no date is treated as already up the first time a company is checked, and as new if it appears on a later check.
-- Set `since_last_check_by_default = true` under `[tracker]` in `config.toml` to make every run behave this way.
+<details>
+<summary><strong>People you know (LinkedIn connections)</strong></summary>
 
-## 5. Company scores ("worth applying")
+On LinkedIn, open **Settings, Data privacy, Get a copy of your data**, and pick **Connections**. LinkedIn emails you `Connections.csv` within about 10 minutes. In Job Watcher, **Settings, People you know, Import Connections.csv**. Every match then shows how many people you know at that company, and the match's details list them with links. Company names are matched loosely ("Shopify Inc." matches "Shopify"). The list stays in `postings.db` on your computer; **Remove them** deletes it.
 
-Every company gets a 0 to 100 score and a tier, shown in `companies.csv`, the **Jobs** tab and the **Companies** tab.
+</details>
 
-| Tier | Score | Meaning |
-|---|---|---|
-| A (green) | 65+ | Strong signals |
-| B (yellow) | 50 to 64 | Mixed signals |
-| C (red) | under 50 | Weak signals or recent layoffs |
+<details>
+<summary><strong>Pipeline and follow-ups</strong></summary>
 
-**Public companies** start at 50, then:
-- 12-month share price change: up to plus or minus 15 points
-- Revenue growth: from minus 10 to plus 20 points
-- Profit margin: up to plus or minus 7.5 points
-- Size: plus 5 for over $50B market cap, minus 5 under $1B
+The **Pipeline** screen has a column per status (New, Applied, Interviewing, Offer, Rejected, Skipped). Drag a card or use its menu. New shows open matches you haven't acted on, best fit first. Marking a job Applied records the date.
 
-Metrics come from Yahoo Finance through `yfinance` and refresh weekly on their own, or right away with `python job_watcher.py --refresh-metrics` (it refreshes the metrics, shows progress every 25 companies, and exits; about 2 minutes for 180 companies). Without `yfinance` installed, public companies show no score.
+At the top: how many you've applied to, how often you've heard back, how many are interviewing, and your applications per week for the last 8 weeks. **Time to follow up** lists applications with no news after `follow_up_after_days` and recruiter emails with no reply. **I followed up** resets the clock.
 
-**Private companies** start from their funding stage (Seed 45, Series A 50, Series B 55, Series C 60, Series D+ or Late 64, Unicorn 68). If you fill in `last_raise` (for example `2026-03`), a raise in the last 18 months adds 8 points and one more than 30 months ago subtracts 8.
+</details>
 
-**Layoffs in the last 12 months** subtract 12 points (4 if the entry contains the word `minor`). The list ships with 2026 layoffs from the tech.co layoff tracker. Add or clear entries in the `layoffs_12m` column as news comes out.
+<details>
+<summary><strong>Phone alerts (ntfy)</strong></summary>
 
-## 6. The company list (`companies.csv`)
+1. Install the free [ntfy](https://ntfy.sh) app on your phone.
+2. In Job Watcher, **Settings, Phone alerts, Make me a private topic**. It saves a long random topic name with your keys and shows it to you.
+3. In the ntfy app, tap **+** and subscribe to that name. **Send a test alert** to check.
 
-About 970 companies, sorted by region (Vancouver/BC, Ottawa, Seattle, California, Toronto/GTA, rest of Canada, remote/other US) and alphabetically within each region. A company with offices in several of your regions is placed by the best one; the `hubs` column lists all of them.
+New matches then arrive on your phone with the company, title and a link. Anyone who knows the topic name can read it, which is why it's long, random and never stored in `config.toml`. Running your own ntfy server? Set `ntfy_server` under `[alerts]`.
 
-| Column | Meaning |
-|---|---|
-| `priority`, `region` | Sort order; boards are checked in this order |
-| `company` | Display name in the tracker |
-| `score`, `tier` | Filled in by the script (see section 5) |
-| `type` | `public`, `private` or `nonprofit` |
-| `ticker` | Stock ticker for public companies (Yahoo Finance format, e.g. `SHOP`, `KXS.TO`) |
-| `stage`, `last_raise` | Funding stage and last raise date for private companies |
-| `layoffs_12m` | Layoffs in the last year; leave blank if none |
-| `board` | `greenhouse`, `ashby`, `lever`, `workday`, `smartrecruiters`, `workable`, `auto` to detect it, or `website` / `other` for companies with their own careers site |
-| `slug` | The company's ID on that board (optional with `auto`, empty for `website`) |
-| `careers_url` | The company's careers page. Read directly for `website` and `other` companies (section 8), and tried when no job board is found |
-| `domain` | The company's email domain, used by `outreach.py` (filled in for you when found) |
-| `ats` | Optional hint about the job board the company uses (`greenhouse`, `ashby`, `internal`...). Limits board guessing to that one, or none for `internal` |
-| `enabled` | `no` to stop watching without deleting the row |
-| `status`, `verified` | Filled in by the script: `ok` or `not_found`, and when |
-| metrics columns | Filled in by the script from Yahoo Finance |
+</details>
 
-Most rows are set to `auto`: the script detects the board on the first run and writes it back. These columns (`stage`, the hubs, board guesses) come from research and general knowledge as of mid-2026, so treat them as a starting point and correct anything you know better.
+<details>
+<summary><strong>Recruiter emails</strong></summary>
 
-**Companies with their own careers site** (Amazon, Google, Microsoft, Apple, Meta, RBC and others) are marked `other` or `website`. Their careers page is read directly (section 8). They still get a score, and the Companies tab links to their careers page.
+Applying and then writing to a recruiter or the hiring team usually gets more attention than applying alone.
 
-**Companies marked `not_found`** usually use a system the script does not support, or have no careers page listed. `--find-career-pages` can look up their careers pages for you (section 8).
+**In the app:** set Outreach to **Email** on a job, open **Outreach**, press **Find people** (one Hunter credit, kept for 60 days), tick who to write to (a recruiter and an engineering lead are picked for you; executives are flagged and left out), and press **Write drafts with Claude**. Claude writes each email from your `about_me.md`, resume and the job description, and is told never to invent experience, numbers or connections. Edit a draft, then **Open in mail app** (a ready-to-send draft with your resume attached) or **Gmail draft**. Press **I sent it** after sending; after `follow_up_after_days` it moves to **Follow-ups due**, where Claude drafts a short reply. **They replied** closes it. If you know someone at the company, Outreach says so: a referral usually beats a cold email.
 
-**Importing company lists:** any spreadsheet with a `Company` column works, and a careers page column is used when present (as are location, `ATS Platform`, sector and stack columns):
-```
-python job_watcher.py --import bc-tech-companies.xlsx us-companies.csv
-```
-Every sheet in a workbook is read. Companies you already have are matched by name (including names in brackets, so "Slack (Salesforce)" matches Salesforce), careers page or job board, and only get missing details filled in. Links to job aggregators such as Built In are ignored.
+**Set up once:** a free [Hunter](https://hunter.io) key (50 credits a month), and `about_me.md` filled in from `about_me.example.md` (your name, signature, what you're looking for, work authorization and a few real achievements). Put your resume in the folder as `resume.pdf`.
 
-**The list grows by itself.** The web search (section 7) adds new companies at the bottom with region `Found by search`, and fills in the board for listed companies that had none.
+**Without an Anthropic key**, `python outreach.py` (or the Outreach screen) writes a packet folder under `outreach/` with everything your Claude agent needs, plus `INSTRUCTIONS.md`. Tell your agent: *Read outreach/&lt;folder&gt;/INSTRUCTIONS.md and follow it to create my draft emails.* `--make-drafts` puts the results in Gmail Drafts with your resume (needs `GMAIL_ADDRESS` and a Gmail app password), and `--export-drafts` makes `.eml` drafts for Outlook or Thunderbird.
 
-**Adding a company:** the quickest way is to paste any job posting, job board or careers page link:
-```
-python job_watcher.py --add https://jobs.lever.co/acme/1234
-python job_watcher.py --add https://careers.acme.com --name "Acme"
-```
-Or add a row yourself. Copy the slug from its careers URL if you know it:
-- `job-boards.greenhouse.io/acme` → board `greenhouse`, slug `acme`
-- `jobs.ashbyhq.com/Rose Rocket` → board `ashby`, slug `Rose Rocket`
-- `jobs.lever.co/acme` → board `lever`, slug `acme`
-- `jobs.smartrecruiters.com/Acme` → board `smartrecruiters`, slug `Acme` (case-sensitive)
-- `apply.workable.com/acme` → board `workable`, slug `acme`
-- `acme.wd5.myworkdayjobs.com/en-US/External` → board `workday`, slug: paste the whole URL
-- Not sure? Set board to `auto` and leave the slug blank.
+</details>
 
-**How Workday sites are read:** Workday has no way to sort by date, and its keyword search ranks by relevance, which buries today's postings under older ones. So the script reads each company's full list newest first and stops at the first postings older than your window, usually after one to three pages. The Companies tab notes how each site was read. If a site turns out not to be in date order, the script reads further and adds keyword searches as a backup, and the note says so. Large SmartRecruiters employers are read the same way.
+<details>
+<summary><strong>Settings (<code>config.toml</code>)</strong></summary>
 
-For Workday, a slug with just the company name (like `amd`) makes the script try the most common site names. If the Companies tab shows NOT FOUND for a Workday company, open its careers page, click any job, and paste that URL into `slug`.
-
-Close `companies.csv` before a run if you want the script to save updates into it. If it is open, the update waits until the next run.
-
-## 7. Finding new companies with web search
-
-Your list only covers the companies in `companies.csv`. To find the rest, the script runs the same kind of search you would type into Google, once per job site:
-
-```
-site:jobs.ashbyhq.com (intitle:"Software Engineer" OR intitle:"Software Developer" OR intitle:"Web Developer") ("Toronto" OR "Vancouver" OR "Ottawa" OR "Canada") -India
-```
-
-limited to the past day. Every result link names the company's job board (`jobs.ashbyhq.com/acme/...` means Ashby, slug `acme`). Companies you are not watching yet are added to `companies.csv` with region `Found by search`, and from that run on their whole board is read directly, so you get the real posting date, the full description for your stack filter, and every later posting too. A listed company with no board found yet gets the board from the search instead. The log shows each one as `ADDED` or `BOARD`.
-
-**Set it up (one time):**
-1. Sign up at [serper.dev](https://serper.dev) (Google results, 2,500 free queries when you sign up, no card needed).
-2. Copy `.env.example` to `.env` in the same folder and paste your key after `SERPER_API_KEY=`.
-3. Run `python job_watcher.py --show-config` and check it says the key was found.
-
-Google's own search API is closed to new sign-ups and shuts down on January 1, 2027, and google.com blocks scripts, so a search service is needed. Brave (`BRAVE_API_KEY`, its own index) and SerpAPI (`SERPAPI_API_KEY`, 250 free a month) also work: set `provider` under `[search]` in `config.toml`.
-
-**What it costs:** each search uses up to sites x `pages_per_query` queries (3 x 3 = 9 by default, usually fewer, because it stops when a page comes back short). Twice a day is about 500 queries a month at most. `monthly_query_limit` (default 1,000) is a hard stop, and the log reports how many have been used this month.
-
-**Useful commands:**
-- `python job_watcher.py --search` searches now, even if it is not due.
-- `python job_watcher.py --search --look-back week` searches the past week once, which is a good way to fill your list the first time.
-- `python job_watcher.py --no-search` skips the search for that run.
-
-Set `new_companies = "review"` under `[search]` if you would rather approve new companies yourself: they are added with `enabled = no`, and you switch on the ones you want.
-
-## 8. Company careers websites
-
-For companies with `board` set to `website` or `other` and a `careers_url` (and for any company whose job board could not be found but has a `careers_url`), the script reads the careers page itself:
-
-1. **Is it really a job board?** Many careers pages are a Greenhouse, Lever, Ashby, Workable, SmartRecruiters or Workday board inside the company's own site. If so, the company is switched to that board in `companies.csv` (the log says `BOARD`) and read through its feed from then on.
-2. **Otherwise it reads the job pages.** It collects the job links from the careers page (or the site's sitemap, if the page has none), skips any whose title does not match your `titles`, and opens the rest, a few per run (`new_pages_per_site_per_run`, default 15). Each page is only ever opened once. From each page it reads the standard job details that sites publish for Google Jobs: title, posting date, location and description. Your usual filters then apply.
-
-It follows each site's `robots.txt` rules and spaces requests to each site at least a second apart.
-
-**Do postings appear on the company website first?** Not usually. For companies that use Greenhouse, Lever, Ashby, Workday and the like, the careers page is just a window onto that board, so the board's feed (which this script already reads) is the original and is never later than the website. Sites like LinkedIn and Indeed get postings after both. The website matters for companies with their own hiring system, which is what this section covers.
-
-**What it cannot read:** some big companies' careers sites (Microsoft, Google, Apple and Meta, for example) build the job list with JavaScript in the browser, so there is nothing for a script to read. Those show `NO JOBS READ` on the Companies tab with a note, are rechecked once a day, and still need a manual look.
-
-**Find careers pages for companies with no board:** `python job_watcher.py --find-career-pages` searches `"Company" careers jobs` for up to 25 companies that have no board and no `careers_url`, and fills in the careers page (or the job board it points to). It uses one search query per company, and each company is looked up at most once every 60 days.
-
-## 9. Your settings (`config.toml`)
-
-All settings are in `config.toml`, in plain sections with a note above each line:
+Edit them in the app's **Settings** screen (it keeps the file's notes, and shows what your settings mean in plain words as you type), or in `config.toml` itself:
 
 | Section | What it controls |
 |---|---|
-| `[jobs]` | `titles` to include, `skip_titles`, the `must_mention` stack keywords (an empty list turns this off) and `max_age_hours` |
-| `[places]` | Locations to `skip`, and your `[[places.region]]` blocks: a name, an optional Excel colour and the place names to match |
-| `[search]` | The web search: on or off, `provider`, how often, which sites, title words, places, words to leave out, query budget, and whether new companies are watched or held for review |
-| `[career_sites]` | Reading companies' own careers websites: on or off, and pages per site per run |
-| `[tracker]` | File names, desktop pop-ups, `since_last_check_by_default`, minutes between checks with `--loop`, `check_all_companies_every_run` and `retry_board_search_hours` |
-| `[outreach]` | Recruiter emails (section 11): your resume, tailored resumes folder, `about_me` file, contacts per company, Hunter departments and monthly credit limit, follow-up timing |
-| `[advanced]` | Request pacing, retry timing, Workday search terms and quick extra companies. Each line is commented out and shows its default; remove the `#` to change it |
+| `[jobs]` | `titles` to include, `skip_titles`, `must_mention` stack keywords and `max_age_hours` |
+| `[places]` | Places to `skip`, and your regions: a name, a colour and the place names to match |
+| `[search]` | The new-company web search: service, how often, sites, title words, places, query budget, and whether new companies are watched or held for review |
+| `[career_sites]` | Reading companies' own careers websites |
+| `[tracker]` | File names, pop-ups, since-last-check by default, `--loop` timing |
+| `[outreach]` | Resume, tailored resumes folder, about-me file, contacts per company, Hunter limits, follow-up timing |
+| `[schedule]` | Automatic runs while the app is open or in the tray |
+| `[ai]` | Claude: fit scores on new matches, monthly limit, model, base resume and rules files |
+| `[alerts]` | The ntfy server for phone alerts |
+| `[advanced]` | Request pacing, retries, Workday search terms. Commented out, showing defaults |
 
-Changes apply on the next run, no restart needed. A setting you delete falls back to its default. A misspelled setting is reported in the log instead of being silently ignored, and a typo such as a missing comma stops the run with the line number.
+A deleted setting falls back to its default, a misspelled one is reported, and a typo such as a missing comma stops the run with the line number. **Keys never go in `config.toml`**: it's shared in git.
 
-Run `python job_watcher.py --show-config` to see your settings described in plain English, including the exact search queries.
+</details>
 
-API keys never go in `config.toml`. Enter them in the app's Settings screen, which saves them in Windows Credential Manager (the Keychain on a Mac), or put them in `.env`, which is in `.gitignore` so it is never committed. Real environment variables come first, then the password store, then `.env`.
+<details>
+<summary><strong>The company list (<code>companies.csv</code>) and company scores</strong></summary>
 
-**Upgrading from `config.json`:** if both files exist, `config.toml` is used and `config.json` is ignored, so you can delete it. A folder with only `config.json` still works.
+About 970 companies, sorted by region and name. Add more by pasting a link in **Companies, Add companies** (or `--add`), or by importing a spreadsheet with a Company column (or `--import`). The web search adds the companies it finds at the bottom, with region `Found by search`.
 
-## 10. Using the tracker
+| Column | Meaning |
+|---|---|
+| `priority`, `region`, `hubs` | Sort order, the region it's listed under, and every place it has offices |
+| `board`, `slug` | `greenhouse`, `ashby`, `lever`, `workday`, `smartrecruiters`, `workable`, `auto` to detect it, or `website` / `other` for its own careers site, and the company's ID on that board |
+| `careers_url`, `domain`, `ats` | Its careers page, email domain (for outreach) and a hint about its hiring system |
+| `type`, `ticker`, `stage`, `last_raise`, `layoffs_12m` | For the score |
+| `enabled` | `no` to stop watching without deleting the row |
+| `score`, `tier`, `status`, `verified`, metrics | Filled in for you |
 
-**Once you have opened the desktop app, edit there** (section 14): Status, Notes and Outreach are saved in `postings.db`, and `job_tracker.xlsx` becomes a copy that every run rewrites, so edits typed into it are no longer read. If you never open the app, everything below works as before.
+**Scores** run 0 to 100: A (65+), B (50 to 64), C (under 50). Public companies start at 50 and move with their 12-month share price, revenue growth, profit margin and size (from Yahoo Finance, weekly). Private companies start from their funding stage, with a bonus for a recent raise. Layoffs in the last year subtract 12 points.
 
-- **Jobs tab:** click a title to open the posting. Set the Status dropdown and type in Notes; both are kept when the script refreshes the file. Filter or sort by the Score column to focus on stronger companies.
-- **Close Excel to let a run update the file.** If it is open, that run's update waits until the next run. Nothing is lost.
-- **Outreach column:** set it to `Email` for jobs you want a recruiter email for (section 11). The script fills in `Prepared`, `No contact` and `Follow-up`; you set `Sent` once you send an email and `Replied` when someone answers.
-- **Colours:** green Found cell = discovered in the last 24 hours; Score cells use the tier colours; Region and Level cells are colour-coded; Status and Outreach have their own colours; grey italic rows are Rejected, Skipped, or no longer posted. The Legend tab lists every colour.
+**Slugs by hand:** `job-boards.greenhouse.io/acme` is greenhouse `acme`; `jobs.ashbyhq.com/Rose Rocket` is ashby `Rose Rocket`; `jobs.lever.co/acme` is lever `acme`; `apply.workable.com/acme` is workable `acme`; for Workday paste the whole careers URL. Not sure? Set board to `auto`.
 
-## 11. Recruiter emails (`outreach.py`)
+</details>
 
-**In the app (Outreach screen):** set Outreach to Email on a job, open Outreach, press **Find people** (one Hunter credit, kept for 60 days), check who to write to (a recruiter and an engineering lead are ticked for you; executives are flagged and left out), and press **Write drafts with Claude**. Claude writes each email from your `about_me.md`, your resume and the job description, under the rules below, using your own Anthropic API key (Settings, Keys and accounts; a batch costs a few cents). Edit a draft right there, then **Open in mail app** to get it as a ready-to-send draft in Outlook or your default mail app, resume attached, or **Gmail draft**. Press **I sent it** after sending: the follow-up clock starts, and after `follow_up_after_days` the company moves to **Follow-ups due**, where Claude writes a short follow-up as a reply. **They replied** closes it. Without an Anthropic key, the Outreach screen makes the packet for your Claude agent and loads its `emails.json` back in. The command-line steps below still work.
+<details>
+<summary><strong>Finding new companies with web search</strong></summary>
 
-Applying and then writing to a recruiter or the hiring team usually gets more attention than applying alone. `outreach.py` does the legwork: it finds the right people at each company, gathers everything needed to write to them, and hands it to your Claude agent, which writes the emails and creates them as **drafts** in your mailbox. Nothing is ever sent: you read, edit and send each draft yourself.
+Your list only covers the companies in `companies.csv`. To find the rest, Job Watcher runs the search you'd type into Google, once per job site, limited to the past day:
 
-**Set up (one time):**
-1. Get a free key at [hunter.io](https://hunter.io) (50 credits a month) and add `HUNTER_API_KEY=...` to `.env`.
-2. Copy `about_me.example.md` to `about_me.md` and fill it in: your name, signature, what you are looking for, work authorization and a few real achievements. The email writer only uses what is in this file and your resume. `about_me.md` stays private (it is in `.gitignore`).
-3. Put your resume PDF in this folder as `resume.pdf`, or set `resume` under `[outreach]` in `config.toml`. If you keep tailored resumes, set `tailored_resumes_folder`; a PDF whose name contains the company name is attached for that company.
-4. Connect Gmail to your Claude agent (in Claude, the Gmail connector), so it can create drafts.
+```
+site:jobs.ashbyhq.com (intitle:"Software Engineer" OR intitle:"Software Developer") ("Toronto" OR "Vancouver" OR "Canada") -India
+```
 
-**Each time:**
-1. In the app's Jobs screen (or, if you don't use the app, the Outreach column of `job_tracker.xlsx`), set Outreach to `Email` for the jobs you want. Applying first is best, and set Status to `Applied` when you have, so the email can say so. Save and close the file.
-2. Run `python outreach.py`. For each company it finds a recruiter and an engineering leader through Hunter (one credit per company, reused for 60 days), checks the addresses, and writes a packet folder under `outreach/`: one file per company with the roles, job descriptions, contacts and the resume to attach, plus `INSTRUCTIONS.md` with the writing rules and your `about_me.md`.
-3. Tell your Claude agent: *Read outreach/<folder>/INSTRUCTIONS.md in my job watcher folder and follow it to create my draft emails.* It writes one short email per contact (and a LinkedIn note for each) and creates them as Gmail drafts.
-4. Review the drafts in Gmail, attach the resume if your agent's Gmail tool could not, and send. Set the Outreach column to `Sent`.
+Every result link names the company's board, so new companies are added and read directly from then on, with real posting dates and full descriptions.
 
-**Follow-ups:** `python outreach.py --follow-ups` prepares a short follow-up for emails marked `Sent` more than 5 days ago (`follow_up_after_days`) that are not marked `Replied`. Your agent drafts them as replies in the original thread. Only one follow-up is ever suggested per email.
+1. Sign up at [serper.dev](https://serper.dev) (2,500 free queries when you sign up, no card).
+2. Paste the key under **Settings, Keys and accounts** (or `SERPER_API_KEY=` in `.env`).
 
-**Drafts with the resume attached, without a Gmail connector:** if your agent cannot create Gmail drafts, the instructions tell it to save the emails to `emails.json` in the packet folder. Then run `python outreach.py --make-drafts outreach/<folder>`, which puts them in your Gmail Drafts folder with the resume attached. This needs `GMAIL_ADDRESS` and a `GMAIL_APP_PASSWORD` (from myaccount.google.com/apppasswords, with 2-Step Verification on) in `.env`.
+Brave and SerpApi work too (`provider` under `[search]`). Twice a day uses about 500 queries a month at most, and `monthly_query_limit` is a hard stop. `--search --look-back week` once is a good way to fill your list the first time.
 
-**Draft files for a desktop mail app (Outlook, Thunderbird):** `python outreach.py --export-drafts outreach/<folder>` writes a `drafts` folder in the packet with two files per email: a `.md` file to read or copy from (with the LinkedIn note), and an `.eml` file that opens as an unsent draft from your own mail account when you double-click it, with the resume attached. The new Outlook for Windows sometimes drops the attachment from such drafts, so check it before sending.
+</details>
 
-`python outreach.py --credits` shows how many Hunter credits are used and left this month.
+<details>
+<summary><strong>Careers websites and big employers' job systems</strong></summary>
 
-## 12. Privacy and good manners
+For companies with their own careers site, Job Watcher reads the careers page:
 
-- Requests to job boards and careers sites are spaced out, back off when a site asks, and follow each site's `robots.txt`. The script identifies itself honestly as a personal job-search tool.
-- Hunter, Serper and Gmail keys stay in `.env` on your computer. Contacts, packets and drafts stay in `outreach/`. Neither is committed.
-- `outreach.py` never sends email. Every message is a draft that you read, edit and send yourself, and the email writer is told never to invent experience, numbers or connections.
+1. **Is it really a job board?** Many careers pages are a Greenhouse, Lever, Ashby, Workable, SmartRecruiters or Workday board inside the company's site. Then the company is switched to that board.
+2. **Is it a big employer's job system?** Amazon, Oracle Recruiting, Eightfold (used by Microsoft and others) and iCIMS load their jobs with JavaScript, so the page itself shows nothing. Job Watcher reads their job search directly instead.
+3. **Otherwise it reads the job pages** linked from the careers page (or its sitemap), a few new ones per run, each only once, using the job details sites publish for Google Jobs.
 
-## 13. For developers
+It follows each site's `robots.txt` and spaces requests at least a second apart. A few sites (Google, Apple, Meta and others) still can't be read; they show **Nothing readable** with a note and need a manual look. **Find careers pages** (or `--find-career-pages`) looks up careers pages for companies with no board, one search each.
 
-- The code lives in the `jobwatcher` package: `base` (shared helpers, progress events, the run lock), `config`, `boards` (the job-board readers), `website` (careers sites), `companies`, `store`, `filters`, `discovery` (search, `--add`, `--import`), `tracker` (Excel), `runner` (one run) and `cli`. `job_watcher.py` is a thin wrapper, so scheduled tasks and `outreach.py` keep working.
-- `JOBWATCHER_HOME` sets the folder for settings and data (default: this folder).
-- A run reports progress as events: `jobwatcher.on_event(listener)` receives `run_started`, `boards_started`, `board_done`, `new_match`, `run_finished` and others. Setting `jobwatcher.CANCEL` stops a run after the boards being read.
-- Tests use fake job boards, fake search results and careers pages served from your own machine, so they make no outside requests:
+</details>
+
+<details>
+<summary><strong>Running in the background</strong></summary>
+
+The app runs on its own at the times under **Settings, Automatic runs** (8:00, 12:00, 16:00 and 20:00 to start). On Windows, closing the window keeps it running in the tray; right-click the icon to open it, run now, pause or quit. Turn on **Start when you sign in** and you never have to open it. A run missed while the computer slept happens once when it wakes (within 12 hours).
+
+Have an old Windows scheduled task for `job_watcher.py`? **Settings, Running in the background** finds it and turns it off so runs don't double up. Without the app, a scheduled task or cron job running `jobwatcher run` every 30 minutes works too, as does `python job_watcher.py --loop`.
+
+</details>
+
+<details>
+<summary><strong>The Excel tracker</strong></summary>
+
+`job_tracker.xlsx` is rewritten after every run as a copy of your matches, with colours for region, level, status and score, a Companies tab and a legend. Once you've opened the app, edit Status, Notes and Outreach there: edits typed into the Excel file are no longer read. Never opened the app? The Excel tracker works as before, as long as it's closed when a run saves.
+
+</details>
+
+<details>
+<summary><strong>The Windows installer (no Python needed)</strong></summary>
+
+`packaging/` builds `JobWatcherSetup.exe`: no Python, no admin prompt, Start menu and Desktop shortcuts, and optionally the `jobwatcher` command. An installed copy keeps its data in `%APPDATA%\JobWatcher`, starting from this repository's `config.toml` and `companies.csv`, and uninstalling keeps it. To publish one, copy `packaging/release.yml` to `.github/workflows/` and push a version tag:
+
+```
+git tag v0.6.0
+git push origin v0.6.0
+```
+
+GitHub builds the installer and attaches it to a Release. It isn't code-signed yet, so Windows SmartScreen shows "Windows protected your PC" the first time: **More info**, then **Run anyway**. The app checks for new releases twice a day.
+
+</details>
+
+<details>
+<summary><strong>For developers</strong></summary>
+
+- The code is the `jobwatcher` package: `base` (helpers, events, run lock, log redaction), `config`, `boards`, `systems` (Amazon, Oracle, Eightfold, iCIMS), `website`, `companies`, `store`, `filters`, `discovery`, `tracker`, `tracked` (`postings.db`), `runner`, `signals` (pay, permits, workplace), `ai` (fit and resumes), `referrals`, `alerts`, `outreach_app`, `scheduler`, `server` (the app's local API), `desktop` and `cli`.
+- `JOBWATCHER_HOME` sets the data folder (default: this folder, or `%APPDATA%\JobWatcher` for an installed copy).
+- Runs report progress as events: `jobwatcher.on_event(listener)` gets `run_started`, `board_done`, `new_match`, `run_finished` and more. Setting `jobwatcher.CANCEL` stops a run after the boards in flight.
+- Tests use fake job boards, fake search results, a fake Claude and pages served from your own machine, so they make no outside requests:
   ```
   pip install -r requirements-dev.txt
   python -m pytest -q tests
   ```
-  GitHub Actions runs them on Windows and Linux for every push.
-- The desktop app is a FastAPI server (`jobwatcher/server.py`) and a React interface (`ui/`), shown in a pywebview window by `app.py`. To change the interface you need Node 20 or newer:
+- The interface is React and TypeScript in `ui/` (Node 20+):
   ```
   cd ui
   npm install
-  npm run dev            # in a second terminal, from the main folder: python app.py --dev
-  npm run build          # writes jobwatcher/ui_dist; commit it with your change
+  npm run dev        # and, from the main folder: python app.py --dev
+  npm run build      # writes jobwatcher/ui_dist; commit it with your change
   ```
-  `python app.py --dev` prints a link with the window's token; open it after `npm run dev` starts. The server only answers on 127.0.0.1, refuses other host names, and needs the per-launch token on every `/api` call. The API docs are at `/api/docs` in dev mode.
+  The server only answers on 127.0.0.1, refuses other host names, and needs the per-launch token on every `/api` call. API docs are at `/api/docs` in dev mode.
 
-## 14. The desktop app
-
-The app is a window on the same watcher: runs started there are the same runs as `python job_watcher.py`, use your `config.toml` and `companies.csv`, and write the same tracker.
-
-**Install it once:**
-```
-pip install -r requirements-app.txt
-```
-This adds FastAPI, Uvicorn, pywebview, tomlkit (saving settings with their notes) and keyring (saving keys in Windows Credential Manager). On Windows the window uses Microsoft Edge WebView2, which Windows 10 and 11 already have.
-
-**Open it:** from the Start menu or Desktop shortcut once you've run the installer (section 15), or type `jobwatcher` in any terminal, or `python app.py` in this folder. `--browser` opens it in your web browser instead, if the window won't start. Opening it again while it's open brings the open window to the front.
-
-**What's in it:**
-
-| Screen | What you see there |
-|---|---|
-| Dashboard | New matches since you last looked; a map with one square per company, coloured by what happened on the last run, that fills in live as each board is read; this month's search and Hunter credits; the activity log |
-| Jobs | Your matches with filters for region, level, status and outreach; click one to read its description. A second tab searches all saved postings (every posting from every board, matched or not) |
-| Outreach | Companies to write to, follow-ups due, drafts to send and replies (section 11) |
-| Companies | Every company's last result (read, paused by a rate limit, nothing readable, no board found), why, its board, open postings and score. **Check this company now**, **Find careers pages** (for companies with no board, or a careers page with nothing readable) and **Refresh scores** |
-| Activity | Every run, from the app, the schedule or a terminal: how long it took, boards read, pauses, new matches, and the log |
-
-**Run now** reads every company. **Re-filter saved postings** re-applies your settings with no requests, like `--refilter`. **Search the web, then run** is `--search`. **Run and list since last check** is `--since-last-check`. **Cancel run** finishes the boards being read at that moment, saves everything, and leaves the rest for the next run.
-
-**One run at a time.** If your scheduled task or a terminal is running, the app says so and waits; the scheduled task likewise skips its turn while the app is running. Closing the window during a run asks first, then saves before the app exits.
-
-**Edit in the app.** Opening the app makes it the place you edit:
-- **Jobs:** set Status and Outreach right in the table, and type Notes in a job's details. Edits save at once, even while a run is going: a run that finishes afterwards keeps them. `job_tracker.xlsx` is rewritten after every run as a copy, and edits typed into it are no longer read. The first time the app opens, your tracked jobs move from `job_watcher_state.json` into `postings.db`, with your latest Excel edits; a copy of the old file is kept as `job_watcher_state.before-database.json`.
-- **Companies:** open a company to change its board, careers page, region, priority, email domain or notes, or to stop watching it. **Add companies** takes a job posting, job board or careers page link (like `--add`), or a spreadsheet with a Company column (like `--import`), which shows what would be added before anything is saved. Changes made while a run is going are applied when the run saves; adding and importing wait for the run to finish.
-- **Settings:** every section of `config.toml` as forms: titles and keywords as lists, a region editor, search, careers sites, runs and outreach. A plain-English summary updates as you type, and saving keeps the file's notes. After saving, **Re-filter saved postings** applies new filters right away with no requests.
-- **Keys and accounts:** paste your Serper, Hunter and Gmail details, test them (the Hunter check uses no credits; the Serper check uses one search), or remove them. They're saved in Windows Credential Manager and taken out of `.env`; the scheduled task and the command line read them from there too.
-
-**Automatic runs and the tray.** The app runs on its own at the times under Settings, Automatic runs. A run missed while the computer slept happens once when the app is next running (if it was within 12 hours). On Windows, closing the window keeps Job Watcher running by the clock; right-click that icon to open it, run now, pause automatic runs or quit. **Start when you sign in** (Settings, Running in the background) opens it quietly at sign-in. That section also finds a Windows scheduled task that runs `job_watcher.py` and turns it off, since the app's schedule replaces it.
-
-**Undo.** Changing a Status or Outreach shows a confirmation with **Undo**. Marking a job Applied records the date.
-
-**Welcome steps.** A new setup (no runs yet) opens with a few steps: job titles, places, skills, optional keys and when to run, then the first run.
-
-**Updates.** The app checks GitHub for a newer release twice a day and shows a note with a link when there is one.
-
-**Private by design.** The window talks to a server on your own computer (127.0.0.1) that only answers requests carrying a code the window gets at launch, so other programs and websites can't use it. Nothing leaves your computer except the job-board reads a run already makes.
-
-## 15. Open it with one click, or with `jobwatcher` from anywhere
-
-**On your own computer (Windows):** double-click **Install Job Watcher** in this folder. It:
-1. finds Python 3.10 or newer, or installs Python 3.12 for you through Windows' package manager,
-2. makes a private Python environment (`.venv`) here, so nothing else on your computer changes,
-3. adds **Job Watcher** to the Start menu and the Desktop, with its icon,
-4. adds the `jobwatcher` command, so any new terminal, in any folder, can run it.
-
-It takes a few minutes the first time. Run it again whenever you update, to refresh the environment. **Uninstall Job Watcher** removes the shortcuts, the command and `.venv`; your settings, companies and tracker stay. On a Mac or Linux, run `sh install.sh` (it adds the app to Applications or the app menu, and `jobwatcher` to `~/.local/bin`).
-
-**The command:**
-
-| Command | What it does |
-|---|---|
-| `jobwatcher` | Open the app (or bring it forward if it's open) |
-| `jobwatcher --browser` | Open it in your web browser |
-| `jobwatcher run [options]` | A run, with the same options as `python job_watcher.py`, for example `jobwatcher run --refilter` |
-| `jobwatcher outreach [options]` | The same as `python outreach.py` |
-| `jobwatcher folder` | Show and open the folder with your settings and data |
-
-Your scheduled task can call `jobwatcher run` instead of `python job_watcher.py`; both use the same folder.
-
-**For people without Python or this folder:** `packaging/` builds a normal Windows installer, `JobWatcherSetup.exe`. It needs no Python: it installs for the current user (no admin prompt), adds Start menu and Desktop shortcuts and, if ticked, the `jobwatcher` command. An installed copy keeps its settings and data in `%APPDATA%\JobWatcher`, starting from this repository's `config.toml` and `companies.csv`; uninstalling keeps them. To publish one, copy `packaging/release.yml` to `.github/workflows/`, then push a version tag:
-```
-git tag v0.4.0
-git push origin v0.4.0
-```
-GitHub builds the installer on Windows and attaches it to a Release that anyone can download. The installed copy leaves out stock metrics (yfinance) to stay small; company scores use the other signals. It isn't code-signed yet, so Windows SmartScreen shows "Windows protected your PC" the first time: click **More info**, then **Run anyway**.
+</details>

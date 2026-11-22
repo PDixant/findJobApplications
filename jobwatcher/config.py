@@ -59,13 +59,18 @@ DEFAULTS = {
     "retry_board_search_hours": 24,
     # 7. Recruiter outreach (outreach.py)
     "outreach": {
-        "resume": "resume.pdf", "tailored_resumes_folder": "", "about_me": "about_me.md",
+        "resume": "resume.pdf", "tailored_resumes_folder": "resumes", "about_me": "about_me.md",
         "contacts_per_company": 2, "departments": ["hr", "it", "management", "executive"],
         "verify_emails": True, "monthly_hunter_credit_limit": 50, "follow_up_after_days": 5,
         "imap_server": "imap.gmail.com", "drafts_folder": "[Gmail]/Drafts", "model": "claude-sonnet-5-5",
     },
     # 8. Automatic runs while the desktop app is open (or in the tray)
     "schedule": {"enabled": True, "times": ["08:00", "12:00", "16:00", "20:00"]},
+    # 9. Claude: fit scores and tailored resumes (needs ANTHROPIC_API_KEY)
+    "ai": {"score_new_matches": True, "monthly_limit": 300, "model": "claude-sonnet-5-5",
+           "resume_tex": "resume.tex", "resume_rules": "resume_rules.md"},
+    # 10. Phone alerts for new matches (ntfy.sh)
+    "alerts": {"ntfy_server": "https://ntfy.sh"},
     # 6. Advanced
     "postings_db": "postings.db",
     "all_postings_csv": "all_postings.csv",
@@ -103,6 +108,8 @@ CONFIG_LAYOUT = {
                 "retry_board_search_hours": "retry_board_search_hours"},
     "outreach": {k: ("outreach", k) for k in DEFAULTS["outreach"]},
     "schedule": {k: ("schedule", k) for k in DEFAULTS["schedule"]},
+    "ai": {k: ("ai", k) for k in DEFAULTS["ai"]},
+    "alerts": {k: ("alerts", k) for k in DEFAULTS["alerts"]},
     "advanced": {"parallel_requests": "parallel_requests",
                  "recheck_not_found_days": "recheck_not_found_days",
                  "max_detections_per_run": "max_detections_per_run",
@@ -339,6 +346,12 @@ def describe_config(cfg):
     lines.append(f"Company careers websites: {'ON' if c['enabled'] else 'OFF'}"
                  + (f", up to {c['max_new_pages_per_site']} new job pages per site per run."
                     if c["enabled"] else "."))
+    a, al = cfg.get("ai", DEFAULTS["ai"]), cfg.get("alerts", DEFAULTS["alerts"])
+    lines.append(f"Claude fit scores for new matches: {'ON' if a['score_new_matches'] else 'OFF'}"
+                 + (f", at most {a['monthly_limit']} Claude requests a month." if a["monthly_limit"] else ".")
+                 + ("" if os.environ.get("ANTHROPIC_API_KEY") else " (No Anthropic key yet, so nothing is sent.)"))
+    lines.append("Phone alerts: " + ("ON (ntfy topic saved with your keys)." if os.environ.get("NTFY_TOPIC") else
+                                     "OFF. Save an ntfy topic under Keys and accounts to get them."))
     lines.append(f"Tracker: {cfg['excel_file']}   Companies list: {cfg['companies_file']}")
     return "\n".join(lines)
 

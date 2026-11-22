@@ -100,7 +100,7 @@ def open_app(argv):
 
     try:
         import uvicorn
-        from .base import BASE, CANCEL, LOG_PATH, log
+        from .base import BASE, CANCEL, LOG_PATH, guard_logs, log
         from .config import load_env
         from .server import create_app
     except ImportError as exc:
@@ -114,6 +114,7 @@ def open_app(argv):
     logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(message)s", datefmt="%Y-%m-%d %H:%M",
                         handlers=handlers)
     logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
+    guard_logs()
 
     if not (args.new or args.dev):
         open_one = running_instance()

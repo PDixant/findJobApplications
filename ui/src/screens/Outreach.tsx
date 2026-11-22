@@ -5,6 +5,7 @@ import { Chip, Empty, ErrorNote, External } from "../components/bits";
 import { ago, day, n, plural } from "../format";
 import { toast } from "../live";
 import { go, useRoute } from "../router";
+import { useJobs } from "../queries";
 
 const STAGES: { id: OutreachCompany["stage"]; title: string; hint: string }[] = [
   { id: "follow_up", title: "Follow-ups due", hint: "Sent a while ago with no reply" },
@@ -113,6 +114,7 @@ async function attempt<T>(fn: () => Promise<T>, done?: string): Promise<T | unde
 }
 
 function Workspace({ c, data }: { c: OutreachCompany; data: OutreachData }) {
+  const jobs = useJobs();
   const refresh = useRefresh();
   const followUp = c.stage === "follow_up";
   const open = c.drafts.filter((d) => d.status === "draft" || d.status === "opened");
@@ -146,6 +148,7 @@ function Workspace({ c, data }: { c: OutreachCompany; data: OutreachData }) {
   }
 
   const canWrite = followUp || c.stage === "to_write" || (c.stage === "drafts" && !open.length);
+  const known = Math.max(0, ...(jobs.data ?? []).filter((j) => j.company === c.company).map((j) => j.connections));
   return (
     <section className="panel workspace" aria-label={c.company}>
       <div className="panel-head">
@@ -156,6 +159,12 @@ function Workspace({ c, data }: { c: OutreachCompany; data: OutreachData }) {
           </button>
         )}
       </div>
+      {known > 0 && (
+        <p className="known-note">
+          You know {plural(known, "person", "people")} at {c.company} on LinkedIn. A referral usually beats a cold email;
+          see who in Jobs (open a {c.company} match).
+        </p>
+      )}
       <ul className="plain-list job-lines">
         {c.jobs.map((j) => (
           <li key={j.key}>

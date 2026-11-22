@@ -354,7 +354,7 @@ def _call_claude(api_key, payload):
 
 def _tidy(text):
     """The rules ask for no em dashes; take out any that slip through."""
-    return re.sub(r"\s*—\s*", ", ", str(text or "")).strip()
+    return re.sub(r"\s*\u2014\s*", ", ", str(text or "")).strip()
 
 
 # ----------------------------------------------------------------- after writing

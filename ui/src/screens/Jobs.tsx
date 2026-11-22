@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import { api, type Job, type JobEdit, type Meta, type PostingPage } from "../api";
+import { api, send, type AiStatus, type Fit, type Job, type JobDetailsData, type JobEdit, type Meta, type PostingPage,
+  type Tailored } from "../api";
 import { Chip, Drawer, Empty, ErrorNote, External } from "../components/bits";
+import { FitBadge, Flags, payText, WORKPLACES } from "../components/Fit";
+import { toast } from "../live";
 import { Table } from "../components/Table";
 import { ago, day, hex, n, when } from "../format";
 import { loadPrefs, savePrefs, useEditJob, useJobs, useMeta, useSummary } from "../queries";
@@ -31,9 +34,22 @@ type Filters = {
   level: string;
   status: string;
   outreach: string;
+  fit: string;
+  workplace: string;
+  only: string;
   closed: boolean;
 };
-const NO_FILTERS: Filters = { text: "", regions: [], level: "", status: "", outreach: "", closed: false };
+const NO_FILTERS: Filters = {
+  text: "", regions: [], level: "", status: "", outreach: "", fit: "", workplace: "", only: "", closed: false,
+};
+const FIT_CHOICES: Record<string, string> = { APPLY: "Apply", STRETCH: "Stretch", SKIP: "Skip", none: "Not scored" };
+const ONLY: Record<string, (j: Job) => boolean> = {
+  "With a pay range": (j) => Boolean(j.pay),
+  "Where you know someone": (j) => j.connections > 0,
+  "No work permit limits": (j) => !(j.work_auth ?? []).length,
+  "Relocation help": (j) => j.relocation === true,
+  "Fresh (not reposted)": (j) => !j.reposted && !j.long_open,
+};
 
 export function Jobs() {
   const jobs = useJobs();
@@ -51,6 +67,9 @@ export function Jobs() {
       if (filters.level && j.level !== filters.level) return false;
       if (filters.status && j.status !== filters.status) return false;
       if (filters.outreach && (j.outreach || "None") !== filters.outreach) return false;
+      if (filters.fit && (j.fit?.verdict ?? "none") !== filters.fit) return false;
+      if (filters.workplace && j.workplace !== filters.workplace) return false;
+      if (filters.only && ONLY[filters.only] && !ONLY[filters.only](j)) return false;
       const hay = `${j.title} ${j.company} ${j.locations.join(" ")} ${j.stack.join(" ")}`.toLowerCase();
       return words.every((w) => hay.includes(w));
     });
@@ -85,6 +104,11 @@ export function Jobs() {
             options={meta.data?.statuses ?? []} />
           <Select label="Outreach" value={filters.outreach} onChange={(outreach) => set({ outreach })}
             options={["None", ...(meta.data?.outreach ?? [])]} />
+          <Select label="Fit" value={filters.fit} onChange={(fit) => set({ fit })} options={Object.keys(FIT_CHOICES)}
+            labels={FIT_CHOICES} />
+          <Select label="Where" value={filters.workplace} onChange={(workplace) => set({ workplace })}
+            options={Object.keys(WORKPLACES)} labels={WORKPLACES} />
+          <Select label="Only" value={filters.only} onChange={(only) => set({ only })} options={Object.keys(ONLY)} />
           <label className="check">
             <input type="checkbox" checked={filters.closed} onChange={(e) => set({ closed: e.target.checked })} />
             Show closed
@@ -143,8 +167,8 @@ export function Jobs() {
   );
 }
 
-function Select({ label, value, options, onChange }: {
-  label: string; value: string; options: string[]; onChange: (v: string) => void;
+function Select({ label, value, options, onChange, labels }: {
+  label: string; value: string; options: string[]; onChange: (v: string) => void; labels?: Record<string, string>;
 }) {
   return (
     <label className="select">
@@ -152,7 +176,7 @@ function Select({ label, value, options, onChange }: {
       <select value={value} onChange={(e) => onChange(e.target.value)}>
         <option value="">Any</option>
         {options.map((o) => (
-          <option key={o} value={o}>{o}</option>
+          <option key={o} value={o}>{labels?.[o] ?? o}</option>
         ))}
       </select>
     </label>
@@ -195,7 +219,7 @@ function jobColumns(meta: Meta | undefined, onEdit: (key: string, c: JobEdit) =>
       cell: (c) => <span className="quiet" title={when(c.row.original.found)}>{day(c.row.original.found)}</span>,
     },
     {
-      id: "company", header: "Company", accessorFn: (j) => j.company.toLowerCase(), size: 150,
+      id: "company", header: "Company", accessorFn: (j) => j.company.toLowerCase(), size: 140,
       cell: (c) => (
         <span className="company-cell">
           {c.row.original.company}
@@ -206,20 +230,24 @@ function jobColumns(meta: Meta | undefined, onEdit: (key: string, c: JobEdit) =>
     },
     {
       id: "title", header: "Title", accessorFn: (j) => j.title.toLowerCase(),
-      cell: (c) => <External href={c.row.original.url}>{c.row.original.title}</External>,
+      cell: (c) => (
+        <span className="title-cell">
+          <External href={c.row.original.url}>{c.row.original.title}</External>
+          <Flags job={c.row.original} />
+        </span>
+      ),
     },
     {
-      id: "region", header: "Region", accessorKey: "region", size: 150,
+      id: "fit", header: "Fit", accessorFn: (j) => j.fit?.score ?? -1, size: 104, sortDescFirst: true,
+      cell: (c) => <FitBadge fit={c.row.original.fit} />,
+    },
+    {
+      id: "pay", header: "Pay", accessorFn: (j) => j.pay?.max ?? -1, size: 132, sortDescFirst: true,
+      cell: (c) => <span className="num pay" title={c.row.original.pay?.text}>{payText(c.row.original.pay)}</span>,
+    },
+    {
+      id: "region", header: "Region", accessorKey: "region", size: 140,
       cell: (c) => <Chip color={regionColor.get(c.row.original.region)}>{c.row.original.region}</Chip>,
-    },
-    {
-      id: "level", header: "Level", accessorKey: "level", size: 100,
-      cell: (c) => c.row.original.level === "Unlabelled" ? <span className="quiet">Unlabelled</span>
-        : <Chip color={meta?.colors.level[c.row.original.level]}>{c.row.original.level}</Chip>,
-    },
-    {
-      id: "stack", header: "Stack match", accessorFn: (j) => j.stack.length, size: 140,
-      cell: (c) => <span className="quiet">{c.row.original.stack.join(", ")}</span>,
     },
     {
       id: "status", header: "Status", accessorKey: "status", size: 124,
@@ -265,7 +293,18 @@ function JobDetails({ job, meta, onEdit }: { job: Job; meta?: Meta; onEdit: (c: 
           onBlur={() => notesChanged && onEdit({ notes })} />
       </label>
       {notesChanged && <p className="hint">Saved when you click outside the box.</p>}
+      <FitPanel job={job} />
       <dl className="facts">
+        {job.pay && <div><dt>Pay</dt><dd>{payText(job.pay)} <span className="quiet">({job.pay.text})</span></dd></div>}
+        {job.workplace && <div><dt>Where you work</dt><dd>{WORKPLACES[job.workplace]}</dd></div>}
+        {job.relocation != null && <div><dt>Relocation</dt><dd>{job.relocation ? "Help offered" : "Not offered"}</dd></div>}
+        {(job.work_auth ?? []).length > 0 && (
+          <div><dt>Work permit</dt><dd>{job.work_auth!.map((a) => a.label).join(", ")}</dd></div>
+        )}
+        {(job.reposted || job.long_open) && (
+          <div><dt>History</dt><dd>{[job.reposted && "Posted here before under the same title",
+            job.long_open && `Open for ${job.open_days} days`].filter(Boolean).join(". ")}</dd></div>
+        )}
         <div><dt>Location</dt><dd>{job.locations.join("; ") || "Not listed"}</dd></div>
         <div><dt>Posted</dt><dd>{job.posted ? `${when(job.posted)} (${ago(job.posted)})` : "No date on the posting"}</dd></div>
         <div><dt>Found</dt><dd>{when(job.found)}</dd></div>
@@ -275,6 +314,8 @@ function JobDetails({ job, meta, onEdit }: { job: Job; meta?: Meta; onEdit: (c: 
       <p className="actions">
         <External href={job.url}>Open the posting</External>
       </p>
+      <ResumePanel job={job} />
+      <PeoplePanel job={job} />
       <h3>Description</h3>
       {description.isLoading && <p className="quiet">Loading the description</p>}
       <ErrorNote error={description.error} />
@@ -282,6 +323,142 @@ function JobDetails({ job, meta, onEdit }: { job: Job; meta?: Meta; onEdit: (c: 
         ? <div className="description">{tidy(description.data.text)}</div>
         : <p className="quiet">The description was not downloaded. Open the posting to read it.</p>)}
     </div>
+  );
+}
+
+// ------------------------------------------------------------------ Claude and people you know
+
+const STATUS_WORD = { MET: "Have it", PARTIAL: "Partly", MISSING: "Missing" } as const;
+
+function useDetails(job: Job) {
+  return useQuery({
+    queryKey: ["job-details", job.key, job.fit?.score, job.tailored, job.connections],
+    queryFn: () => api<JobDetailsData>(`jobs/details?key=${encodeURIComponent(job.key)}`),
+  });
+}
+
+function useAi() {
+  return useQuery({ queryKey: ["ai"], queryFn: () => api<AiStatus>("ai"), staleTime: 30_000 });
+}
+
+function useClaude(job: Job, what: "fit" | "tailor") {
+  const client = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  async function run() {
+    setBusy(true);
+    try {
+      await send<Fit | Tailored>(`jobs/${what}?key=${encodeURIComponent(job.key)}`, "POST");
+      await client.invalidateQueries({ queryKey: ["jobs"] });
+      client.invalidateQueries({ queryKey: ["ai"] });
+      client.invalidateQueries({ queryKey: ["job-details", job.key] });
+      toast(what === "fit" ? `Fit scored for ${job.title}.` : `Tailored resume saved for ${job.company}.`, "good");
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Claude could not do that.", "bad");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return { busy, run };
+}
+
+function FitPanel({ job }: { job: Job }) {
+  const details = useDetails(job);
+  const ai = useAi();
+  const { busy, run } = useClaude(job, "fit");
+  const fit = details.data?.fit;
+  return (
+    <section className="ai-panel" aria-labelledby="fit-title">
+      <div className="ai-head">
+        <h3 id="fit-title">Fit for you</h3>
+        {job.fit && <FitBadge fit={job.fit} large />}
+      </div>
+      {fit ? (
+        <>
+          <p className="fit-summary">{fit.summary}</p>
+          {fit.requirements.length > 0 && (
+            <ul className="reqs">
+              {fit.requirements.map((r) => (
+                <li key={r.text} className={`req req-${r.status.toLowerCase()}`}>
+                  <span className="req-status">{STATUS_WORD[r.status]}</span>{r.text}
+                </li>
+              ))}
+            </ul>
+          )}
+          {fit.gaps.length > 0 && <p className="hint">Gaps: {fit.gaps.join("; ")}</p>}
+        </>
+      ) : (
+        <p className="hint">
+          {ai.data && !ai.data.key_set
+            ? "Add your Anthropic key in Settings, Keys and accounts, and Claude scores how well each match fits your resume."
+            : "Claude reads the posting and your resume and says Apply, Stretch or Skip, with what you have and what is missing."}
+        </p>
+      )}
+      <button className="button" onClick={run} disabled={busy || (ai.data ? !ai.data.key_set : false)}>
+        {busy ? "Reading the posting" : fit ? "Score again" : "Score my fit"}
+      </button>
+    </section>
+  );
+}
+
+function ResumePanel({ job }: { job: Job }) {
+  const details = useDetails(job);
+  const ai = useAi();
+  const { busy, run } = useClaude(job, "tailor");
+  const t = details.data?.tailored;
+  const open = (path: string, folder = false) =>
+    send("files/open", "POST", { path, folder }).catch((e) => toast(e instanceof Error ? e.message : "Could not open it.", "bad"));
+  const ready = ai.data?.key_set && ai.data.resume_tex_found;
+  return (
+    <section className="ai-panel" aria-labelledby="resume-title">
+      <div className="ai-head"><h3 id="resume-title">Tailored resume</h3></div>
+      {t ? (
+        <>
+          <p className="hint">Made {new Date(t.at).toLocaleDateString()}. {t.notes}</p>
+          <p className="file-actions">
+            {t.pdf && <button className="button" onClick={() => open(t.pdf!)}>Open the PDF</button>}
+            <button className="button" onClick={() => open(t.tex)}>Open the .tex</button>
+            <button className="text-button" onClick={() => open(t.tex, true)}>Show in folder</button>
+          </p>
+          {t.problem && <p className="hint">{t.problem}</p>}
+          {t.numbers_to_find.length > 0 && (
+            <div className="numbers">
+              <p className="hint">Numbers that would make it stronger, if you have them:</p>
+              <ul>{t.numbers_to_find.map((x) => <li key={x}>{x}</li>)}</ul>
+            </div>
+          )}
+          {t.pdf && <p className="hint">Outreach attaches this PDF for {job.company}.</p>}
+        </>
+      ) : (
+        <p className="hint">
+          {ai.data && !ai.data.resume_tex_found
+            ? `Put your base LaTeX resume in the Job Watcher folder as ${ai.data.resume_tex} and Claude rewrites it for this posting.`
+            : "Claude rewrites your base LaTeX resume for this posting, using only facts already in it, and saves a .tex (and a PDF when LaTeX is installed)."}
+        </p>
+      )}
+      <button className="button" onClick={run} disabled={busy || !ready}>
+        {busy ? "Writing your resume (about a minute)" : t ? "Tailor again" : "Tailor my resume"}
+      </button>
+    </section>
+  );
+}
+
+function PeoplePanel({ job }: { job: Job }) {
+  const details = useDetails(job);
+  const people = details.data?.people ?? [];
+  if (!job.connections || !people.length) return null;
+  return (
+    <section className="ai-panel" aria-labelledby="people-title">
+      <div className="ai-head"><h3 id="people-title">People you know at {job.company}</h3></div>
+      <ul className="people">
+        {people.map((p) => (
+          <li key={p.url || p.first + p.last}>
+            {p.url ? <External href={p.url}>{p.first} {p.last}</External> : `${p.first} ${p.last}`}
+            <span className="quiet"> {p.position}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="hint">A referral from someone you know beats a cold application. Ask before the recruiter email.</p>
+    </section>
   );
 }
 

@@ -16,9 +16,10 @@ KEYS = {
     "BRAVE_API_KEY": "Brave Search",
     "SERPAPI_API_KEY": "SerpApi",
     "HUNTER_API_KEY": "Hunter (finds recruiters)",
-    "ANTHROPIC_API_KEY": "Anthropic (writes email drafts)",
+    "ANTHROPIC_API_KEY": "Anthropic (Claude: fit scores, resumes, email drafts)",
     "GMAIL_ADDRESS": "Gmail address",
     "GMAIL_APP_PASSWORD": "Gmail app password",
+    "NTFY_TOPIC": "ntfy topic (phone alerts)",
 }
 SOURCES = {}  # name -> "environment", "password store" or ".env", filled by load_keys
 
@@ -157,6 +158,11 @@ def test_key(name, cfg=None):
             searches = (data.get("requests") or {}).get("searches") or {}
             return True, (f"Works. {searches.get('used', 0)} of {searches.get('available', '?')} searches used this "
                           f"month{', resets ' + data['reset_date'] if data.get('reset_date') else ''}.")
+        if name == "NTFY_TOPIC":
+            from .alerts import send
+            ok = send({"alerts": {**((cfg or {}).get("alerts") or {}), "ntfy_topic": value}},
+                      "Job Watcher test", "Phone alerts work. New matches will show up here.")
+            return (True, "Sent a test alert. Check your phone.") if ok else (False, "ntfy didn't accept the alert.")
         if name == "ANTHROPIC_API_KEY":
             r = requests.get("https://api.anthropic.com/v1/models", timeout=15,
                              headers={"x-api-key": value, "anthropic-version": "2023-06-01"})

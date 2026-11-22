@@ -131,6 +131,47 @@ export type Job = {
   score: string;
   tier: string;
   applied: string | null;
+  pay: Pay | null;
+  work_auth: { id: string; label: string }[] | null;
+  workplace: "remote" | "hybrid" | "on-site" | null;
+  relocation: boolean | null;
+  reposted?: boolean;
+  open_days?: number | null;
+  long_open?: boolean;
+  connections: number;
+  fit: { verdict: Verdict; score: number; summary: string } | null;
+  tailored: boolean;
+};
+
+export type Pay = { min: number; max: number; currency: string; period: "year" | "hour"; text: string };
+export type Verdict = "APPLY" | "STRETCH" | "SKIP";
+
+export type Fit = {
+  verdict: Verdict; score: number; summary: string; strengths: string[]; gaps: string[];
+  requirements: { text: string; status: "MET" | "PARTIAL" | "MISSING" }[]; at: string; model: string;
+};
+
+export type Tailored = {
+  tex: string; pdf: string | null; compiler: string | null; problem: string | null; verdict: Verdict | null;
+  numbers_to_find: string[]; notes: string; at: string;
+};
+
+export type Connection = { first: string; last: string; url: string; position: string; connected: string };
+
+export type JobDetailsData = { key: string; fit: Fit | null; tailored: Tailored | null; people: Connection[] };
+
+export type AiStatus = {
+  key_set: boolean; used: number; limit: number; model: string; score_new_matches: boolean;
+  resume_tex: string; resume_tex_found: boolean; latex: string | null; rules_found: boolean;
+  unscored: number; scoring: boolean;
+};
+
+export type FollowUp = { key: string; company: string; title: string; kind: "application" | "email"; days: number };
+
+export type Pipeline = {
+  by_status: Record<string, number>; applied_total: number; applied_weeks: { week: string; applied: number }[];
+  heard_back: number; response_rate: number | null; fit: Record<Verdict, number>;
+  follow_ups: FollowUp[]; follow_up_after_days: number;
 };
 
 export type Company = {

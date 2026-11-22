@@ -37,7 +37,8 @@ def fake_greenhouse(slug, host=None, auto=False):
         time.sleep(0.4)
     if slug == "maple":
         return jw.result(slug, board("maple", 1, "Senior Frontend Developer", "Vancouver, BC",
-                                     "React and TypeScript on the web app"))
+                                     "React and TypeScript on the web app. The salary range is $120,000 to "
+                                     "$150,000 CAD. Hybrid, 3 days a week in the office."))
     if slug.startswith("filler"):
         return jw.result(slug, board(slug, 1, "Accountant", "Toronto, ON", "Excel"))
     return None
@@ -404,7 +405,7 @@ def test_outreach_from_contacts_to_follow_up(client, monkeypatch):
         prompts.append(payload)
         text = payload["messages"][0]["content"][-1]["text"]
         people = re.findall(r"<([^>]+)>", text)
-        return [{"to": p, "subject": "Senior Frontend Developer (0) - Sam Lee", "body": f"Hi — about the role. {p}",
+        return [{"to": p, "subject": "Senior Frontend Developer (0) - Sam Lee", "body": f"Hi \u2014 about the role. {p}",
                  "linkedin_note": "Hi!"} for p in people]
     monkeypatch.setattr(outreach_app, "_call_claude", fake_claude)
 
@@ -422,7 +423,7 @@ def test_outreach_from_contacts_to_follow_up(client, monkeypatch):
     made = client.post("/api/outreach/write", json={"company": "Maple Co",
                                                      "emails": ["rita@maple.example", "eli@maple.example"]}).json()
     assert [d["to_email"] for d in made] == ["rita@maple.example", "eli@maple.example"]
-    assert "—" not in made[0]["body"]  # no em dashes
+    assert "\u2014" not in made[0]["body"]  # no em dashes
     assert "## Rules for the emails" in prompts[0]["system"] and "Never invent" in prompts[0]["system"]
     assert client.get("/api/jobs").json()[0]["outreach"] == "Prepared"
 
@@ -480,3 +481,89 @@ def test_schedule_setup_and_updates(client, monkeypatch, tmp_path):
         assert "--tray" in (tmp_path / "autostart" / "jobwatcher.desktop").read_text()
         assert client.post("/api/startup", json={"on": False}).json() == {"startup": False}
     assert client.get("/api/system/old-tasks").json()["tasks"] == []
+
+
+def test_signals_fit_tailor_and_pipeline(client, monkeypatch):
+    from jobwatcher import ai
+    jobs = client.get("/api/jobs").json()
+    maple = next(j for j in jobs if j["company"] == "Maple Co")
+    assert maple["pay"]["min"] == 120000 and maple["pay"]["currency"] == "CAD"
+    assert maple["workplace"] == "hybrid" and maple["fit"] is None and maple["connections"] == 0
+
+    # Claude: no key, then a fake answer
+    r = client.post("/api/jobs/fit", params={"key": maple["key"]})
+    assert r.status_code == 400 and "Anthropic API key" in r.json()["detail"]
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    calls = []
+
+    def fake(payload, timeout=180):
+        calls.append(payload)
+        if payload["tool_choice"]["name"] == "record_fit":
+            return {"verdict": "APPLY", "score": 82, "summary": "Strong React match \u2014 apply.",
+                    "strengths": ["React"], "gaps": [], "requirements": [{"text": "React", "status": "MET"}]}
+        return {"tex": "\\documentclass{article}\\begin{document}Sam \u2014 Lee\\end{document}",
+                "verdict": "APPLY", "numbers_to_find": ["users served"], "notes": "Moved React first."}
+    monkeypatch.setattr(ai, "tool_call", fake)
+    fit = client.post("/api/jobs/fit", params={"key": maple["key"]}).json()
+    assert fit["verdict"] == "APPLY" and fit["score"] == 82 and "\u2014" not in fit["summary"]
+    assert next(j for j in client.get("/api/jobs").json() if j["key"] == maple["key"])["fit"]["score"] == 82
+    assert client.get("/api/ai").json()["used"] == 1
+
+    r = client.post("/api/jobs/tailor", params={"key": maple["key"]})
+    assert r.status_code == 400 and "resume.tex" in r.json()["detail"]
+    (HOME / "resume.tex").write_text("\\documentclass{article}\\begin{document}Base\\end{document}")
+    monkeypatch.setattr(ai, "compiler", lambda: (None, None))
+    t = client.post("/api/jobs/tailor", params={"key": maple["key"]}).json()
+    assert t["tex"].startswith("resumes/") and t["pdf"] is None and t["numbers_to_find"] == ["users served"]
+    made = HOME / t["tex"]
+    assert "\u2014" not in made.read_text() and "Base" in calls[-1]["messages"][0]["content"][0]["text"]
+    assert client.post("/api/files/open", json={"path": "config.toml"}).status_code == 404  # only tailored resumes
+    assert client.post("/api/files/open", json={"path": "resumes/../config.toml"}).status_code == 404
+    details = client.get("/api/jobs/details", params={"key": maple["key"]}).json()
+    assert details["tailored"]["tex"] == t["tex"] and details["fit"]["requirements"][0]["status"] == "MET"
+
+    # the monthly limit stops further requests
+    assert client.put("/api/settings", json={"changes": {"ai": {"monthly_limit": 2}}}).status_code == 200
+    r = client.post("/api/jobs/fit", params={"key": maple["key"]})
+    assert r.status_code == 400 and "limit" in r.json()["detail"]
+    client.put("/api/settings", json={"changes": {"ai": {"monthly_limit": 300}}})
+
+    # a run keeps the fit and tailored resume
+    client.post("/api/runs", json={"mode": "refilter"})
+    wait_for_run(client)
+    again = next(j for j in client.get("/api/jobs").json() if j["key"] == maple["key"])
+    assert again["fit"]["verdict"] == "APPLY" and again["tailored"] is True
+
+    # LinkedIn connections
+    export = ("Notes:\n\"When exporting your connection data, you may notice...\"\n\n"
+              "First Name,Last Name,URL,Email Address,Company,Position,Connected On\n"
+              "Ava,Chen,https://www.linkedin.com/in/ava,,Maple Co Inc.,Engineering Manager,01 Mar 2025\n"
+              "Raj,Patel,https://www.linkedin.com/in/raj,,Other Corp,Designer,02 Mar 2025\n")
+    assert client.post("/api/connections/import", content=export.encode()).json() == {"saved": 2}
+    assert client.post("/api/connections/import", content=b"name,email\n").status_code == 400
+    assert client.get("/api/connections").json()["companies"] == {"Maple Co": 1}
+    assert next(j for j in client.get("/api/jobs").json() if j["key"] == maple["key"])["connections"] == 1
+    people = client.get("/api/jobs/details", params={"key": maple["key"]}).json()["people"]
+    assert people[0]["first"] == "Ava" and people[0]["position"] == "Engineering Manager"
+    client.delete("/api/connections")
+    assert client.get("/api/connections").json()["total"] == 0
+
+    # pipeline and follow-ups
+    client.patch("/api/jobs", params={"key": maple["key"]}, json={"status": "Applied"})
+    with jw.connect(jw.load_config()) as db:
+        row = db.execute("SELECT data FROM jobs WHERE key=?", (maple["key"],)).fetchone()
+        job = json.loads(row["data"])
+        old = (jw.dt.datetime.now(jw.dt.timezone.utc) - jw.dt.timedelta(days=12)).isoformat()
+        job.update(applied=old, status_changed=old)
+        db.execute("UPDATE jobs SET data=? WHERE key=?", (json.dumps(job), maple["key"]))
+    pipe = client.get("/api/pipeline").json()
+    assert pipe["by_status"]["Applied"] >= 1 and pipe["applied_total"] >= 1 and len(pipe["applied_weeks"]) == 8
+    assert any(f["key"] == maple["key"] and f["kind"] == "application" for f in pipe["follow_ups"])
+    assert pipe["fit"]["APPLY"] == 1
+    client.post("/api/jobs/followed-up", params={"key": maple["key"]})
+    assert not any(f["key"] == maple["key"] for f in client.get("/api/pipeline").json()["follow_ups"])
+
+    # phone alerts
+    r = client.post("/api/alerts/test")
+    assert r.status_code == 400 and "topic" in r.json()["detail"]
+    assert client.get("/api/alerts/topic").json()["topic"].startswith("jobwatcher-")

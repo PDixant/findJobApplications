@@ -214,9 +214,10 @@ retry_board_search_hours = 24
 # A path relative to this folder, or a full path.
 resume = "resume.pdf"
 
-# Optional folder of tailored resumes. A PDF whose file name contains the
-# company name (for example Dixant_Patel_Shopify_Frontend.pdf) is used for that company.
-tailored_resumes_folder = ""
+# Folder of tailored resumes. A PDF whose file name contains the company name
+# (for example Your_Name_Shopify_Frontend.pdf) is used for that company.
+# The app's "Tailor my resume" button saves its resumes here too.
+tailored_resumes_folder = "resumes"
 
 # A short file about you that the email writer uses. Start from about_me.example.md.
 about_me = "about_me.md"
@@ -243,7 +244,40 @@ drafts_folder = "[Gmail]/Drafts"
 
 
 # ---------------------------------------------------------------------
-# 7. Advanced: most people never change these
+# 7. AI help (Claude): fit scores and tailored resumes
+# ---------------------------------------------------------------------
+# Uses your own Anthropic API key (set it in the app under Settings, Keys).
+# Each request sends one posting, your resume and about_me.md to Anthropic.
+[ai]
+
+# Ask Claude for an APPLY / STRETCH / SKIP fit score on each new match.
+score_new_matches = true
+
+# Never use more Claude requests than this in a month (fit scores plus tailored resumes).
+monthly_limit = 300
+
+# The Claude model to use.
+model = "claude-sonnet-5-5"
+
+# Your base LaTeX resume and your rules for tailoring it, both in this folder.
+# Without a rules file the built-in rules are used (see resume_rules.example.md).
+resume_tex = "resume.tex"
+resume_rules = "resume_rules.md"
+
+
+# ---------------------------------------------------------------------
+# 8. Phone alerts for new matches (ntfy.sh, free, no account)
+# ---------------------------------------------------------------------
+# Install the ntfy app and subscribe to a long topic name only you know. Save
+# that name in the app under Settings, Keys and accounts (or NTFY_TOPIC=... in
+# .env). It is private, so it never goes in this file. Alerts carry the
+# company, title and link of new matches only.
+[alerts]
+ntfy_server = "https://ntfy.sh"
+
+
+# ---------------------------------------------------------------------
+# 9. Advanced: most people never change these
 # ---------------------------------------------------------------------
 # Remove the # at the start of a line to change it. The value shown is
 # the default.

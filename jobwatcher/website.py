@@ -362,6 +362,17 @@ def fetch_website(url, host=None, auto=False):
                          + (r.get("note") or "")).strip()
             return r
 
+    from .systems import detect, read as read_system
+    system = detect(careers, final, text)
+    if system and system[0] == "icims":  # the jobs are in an iCIMS frame; read the frame's search page
+        page = get_page(system[1]["search"])
+        if page is not None:
+            final, text = page
+    elif system:
+        r = read_system(system[0], system[1], careers)
+        if r is not None:
+            return r
+
     rules = SETTINGS.get("rules")
     title_ok = rules.title_ok if rules else (lambda t: True)
     cache = SETTINGS.setdefault("website_pages", {})  # shared by worker threads; see _PAGES_LOCK

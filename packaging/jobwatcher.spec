@@ -18,7 +18,8 @@ datas = [
     (str(ROOT / "jobwatcher" / "ui_dist"), "jobwatcher/ui_dist"),
     (str(ROOT / "jobwatcher" / "assets"), "jobwatcher/assets"),
 ]
-datas += [(str(ROOT / name), "defaults") for name in ("config.toml", "companies.csv", "about_me.example.md", ".env.example")]
+datas += [(str(ROOT / name), "defaults") for name in ("config.toml", "companies.csv", "about_me.example.md", ".env.example",
+                                                             "resume_rules.example.md")]
 
 hidden = ["outreach", "job_watcher", "tomlkit"]
 hidden += collect_submodules("uvicorn") + collect_submodules("keyring.backends") + collect_submodules("jobwatcher")
