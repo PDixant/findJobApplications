@@ -1,0 +1,5 @@
+-r requirements.txt
+# The desktop app (python app.py)
+fastapi>=0.110
+uvicorn>=0.29
+pywebview>=5.0

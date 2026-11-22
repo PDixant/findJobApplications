@@ -16,3 +16,5 @@ jobs:
       - run: pip install requests openpyxl pytest pyflakes "tomli; python_version < '3.11'"
       - run: python -m pyflakes outreach.py tests
       - run: python -m pytest -q tests
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pyflakes outreach.py app.py tests

@@ -238,6 +238,7 @@ class HostLimiter:
     def cool_down(self, site, seconds):
         with self.lock:
             self.next_slot[site] = max(self.next_slot.get(site, 0.0), time.monotonic() + seconds)
+        emit("rate_limited", site=site, seconds=round(seconds))
 
 
 LIMITER = HostLimiter()
@@ -364,10 +365,24 @@ def load_json(path, default):
         return default
 
 
+def replace_file(tmp, path, wait=3.0):
+    """os.replace, retried for a few seconds. On Windows a file cannot be replaced while another
+    program is reading it (the desktop app, a backup or sync tool), so a short wait usually wins."""
+    deadline = time.monotonic() + wait
+    while True:
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(0.2)
+
+
 def save_json(path, data):
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
-    os.replace(tmp, path)
+    replace_file(tmp, path, wait=15.0)  # losing the state file would lose a whole run
 
 
 def to_local_naive(iso):

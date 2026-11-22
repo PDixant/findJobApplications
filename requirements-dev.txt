@@ -1,3 +1,7 @@
 -r requirements.txt
 pytest>=8
 pyflakes
+# for the app's server tests
+fastapi>=0.110
+uvicorn>=0.29
+httpx

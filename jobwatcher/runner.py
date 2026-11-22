@@ -323,9 +323,12 @@ def _run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, o
     found_dirty = False
     if not offline:  # step 0: look for companies you are not watching yet
         if search is True or (search is None and search_due(cfg, state, now)):
+            emit("phase", name="search")
             found_dirty = run_search(cfg, state, all_rows, now, look_back)
         if find_pages:
+            emit("phase", name="career_pages")
             found_dirty = find_career_pages(cfg, state, all_rows, now) or found_dirty
+        emit("phase", name="metrics")
     csv_dirty = False if offline else refresh_metrics(cfg, all_rows, force=refresh)
     csv_dirty = csv_dirty or found_dirty
     csv_dirty = rescore(all_rows) or csv_dirty
@@ -346,6 +349,7 @@ def _run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, o
             save_company_rows(cfg, all_rows)
 
         # Step 2: filter locally against everything saved.
+        emit("phase", name="filter")
         new_jobs = []
         for m in find_new_matches(store, state, rules, now, max_age, window_start):
             state["jobs"][m["key"]] = {
@@ -385,6 +389,7 @@ def _run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, o
                 j["reported"] = now.isoformat()
     state["last_run"] = now.isoformat()
 
+    emit("phase", name="save")
     save_json(STATE_PATH, state)
     write_excel(excel_path, state, cfg, scores)
 

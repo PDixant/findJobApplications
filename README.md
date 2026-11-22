@@ -6,6 +6,7 @@ Finds fresh software jobs before most people see them, keeps them in one Excel t
 - **Filters for you.** Title, seniority, location regions and tech stack, posted within the last 24 hours. Rules live in a commented `config.toml`.
 - **Finds companies you didn't know about.** A twice-daily web search for new postings on Ashby, Greenhouse and Lever adds every new company to `companies.csv`. You can also import company lists from spreadsheets.
 - **Scores companies.** Stock trend, growth, layoffs and funding stage become a 0 to 100 "worth applying" score.
+- **Has a desktop app.** `python app.py` opens a window with a Dashboard that shows every company being checked live, your matches with their descriptions, all saved postings and every company's last result (section 14). The command line keeps working exactly as before.
 - **Prepares recruiter emails.** `outreach.py` finds a recruiter and an engineering leader at each company you pick and hands everything to your Claude agent, which writes short, factual emails as drafts. Nothing is ever sent for you.
 
 Only postings that went up in the last 24 hours are added. Anything older, or already in your tracker, is ignored.
@@ -20,6 +21,7 @@ Filtering happens on your computer against the saved list, so changing your rule
 
 | Command | What it does |
 |---|---|
+| `python app.py` | Open the desktop app (section 14); `--browser` opens it in your web browser instead |
 | `python job_watcher.py` | One full run: search for new companies if due, read every board and careers page, update the tracker |
 | `python job_watcher.py --loop` | Keep running, every `check_every_minutes` |
 | `python job_watcher.py --since-last-check` | Report only postings that appeared since your last check (`--hours 72` for a fixed window) |
@@ -43,6 +45,10 @@ Filtering happens on your computer against the saved list, so changing your rule
 | File | What it is | In git? |
 |---|---|---|
 | `job_watcher.py` | The watcher's command line | Yes |
+| `app.py` | Opens the desktop app (section 14) | Yes |
+| `ui/` | The app's interface source (React and TypeScript) | Yes |
+| `jobwatcher/ui_dist/` | The app's built interface, so you don't need Node to run the app | Yes |
+| `.app_window/` | The app window's saved filters and last visit | No |
 | `jobwatcher/` | The watcher's code, as a package (section 13) | Yes |
 | `outreach.py` | Recruiter email prep (section 11) | Yes |
 | `tests/`, `requirements*.txt`, `.github/` | Tests, dependencies and the GitHub test workflow | Yes |
@@ -310,3 +316,43 @@ Applying and then writing to a recruiter or the hiring team usually gets more at
   python -m pytest -q tests
   ```
   GitHub Actions runs them on Windows and Linux for every push.
+- The desktop app is a FastAPI server (`jobwatcher/server.py`) and a React interface (`ui/`), shown in a pywebview window by `app.py`. To change the interface you need Node 20 or newer:
+  ```
+  cd ui
+  npm install
+  npm run dev            # in a second terminal, from the main folder: python app.py --dev
+  npm run build          # writes jobwatcher/ui_dist; commit it with your change
+  ```
+  `python app.py --dev` prints a link with the window's token; open it after `npm run dev` starts. The server only answers on 127.0.0.1, refuses other host names, and needs the per-launch token on every `/api` call. The API docs are at `/api/docs` in dev mode.
+
+## 14. The desktop app
+
+The app is a window on the same watcher: runs started there are the same runs as `python job_watcher.py`, use your `config.toml` and `companies.csv`, and write the same tracker.
+
+**Install it once:**
+```
+pip install -r requirements-app.txt
+```
+This adds FastAPI, Uvicorn and pywebview. On Windows the window uses Microsoft Edge WebView2, which Windows 10 and 11 already have.
+
+**Open it:**
+```
+python app.py
+```
+`python app.py --browser` opens it in your web browser instead, if the window won't start. Keep the terminal open while you use it.
+
+**What's in it:**
+
+| Screen | What you see there |
+|---|---|
+| Dashboard | New matches since you last looked; a map with one square per company, coloured by what happened on the last run, that fills in live as each board is read; this month's search and Hunter credits; the activity log |
+| Jobs | Your matches with filters for region, level, status and outreach; click one to read its description. A second tab searches all saved postings (every posting from every board, matched or not) |
+| Companies | Every company's last result (read, paused by a rate limit, nothing readable, no board found), why, its board, open postings and score |
+
+**Run now** reads every company. **Re-filter saved postings** re-applies your settings with no requests, like `--refilter`. **Run and list since last check** is `--since-last-check`. **Cancel run** finishes the boards being read at that moment, saves everything, and leaves the rest for the next run.
+
+**One run at a time.** If your scheduled task or a terminal is running, the app says so and waits; the scheduled task likewise skips its turn while the app is running. Closing the window during a run asks first, then saves before the app exits.
+
+**For now, edit in Excel.** Status, Notes and Outreach are still edited in `job_tracker.xlsx`, and companies in `companies.csv`; the app shows your edits as soon as you save. Editing in the app, settings forms and the Outreach screen come next.
+
+**Private by design.** The window talks to a server on your own computer (127.0.0.1) that only answers requests carrying a code the window gets at launch, so other programs and websites can't use it. Nothing leaves your computer except the job-board reads a run already makes.

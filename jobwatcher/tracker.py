@@ -220,7 +220,7 @@ def write_excel(path, state, cfg, scores):
     tmp = path.with_name(path.stem + ".saving.xlsx")
     try:
         wb.save(tmp)
-        os.replace(tmp, path)
+        replace_file(tmp, path)
         return True
     except PermissionError:
         log.warning("%s is open in Excel; it will be updated on the next run after you close it.",

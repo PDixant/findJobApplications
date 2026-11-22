@@ -98,7 +98,7 @@ class PostingStore:
                                 f"{posted:%Y-%m-%d}" if posted else "", r["company"], r["title"],
                                 "; ".join(json.loads(r["locations"] or "[]")), r["provider"],
                                 "yes" if r["key"] in tracked else "", r["url"]])
-            os.replace(tmp, path)
+            replace_file(tmp, path)
         except PermissionError:
             log.warning("%s is open in another program; it will be updated next run.", path.name)
             tmp.unlink(missing_ok=True)

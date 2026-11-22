@@ -46,7 +46,7 @@ def save_company_rows(cfg, rows):
             writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
             writer.writeheader()
             writer.writerows(file_rows)
-        os.replace(tmp, path)
+        replace_file(tmp, path)
     except PermissionError:
         log.warning("%s is open in another program; updates will be saved next run.", path.name)
         tmp.unlink(missing_ok=True)
