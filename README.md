@@ -48,7 +48,7 @@ Filtering happens on your computer against the saved list, so changing your rule
 | `app.py` | Opens the desktop app (section 14) | Yes |
 | `ui/` | The app's interface source (React and TypeScript) | Yes |
 | `jobwatcher/ui_dist/` | The app's built interface, so you don't need Node to run the app | Yes |
-| `.app_window/` | The app window's saved filters and last visit | No |
+| `.app_window/` | The app window's saved filters, last visit and spreadsheets waiting to be imported | No |
 | `jobwatcher/` | The watcher's code, as a package (section 13) | Yes |
 | `outreach.py` | Recruiter email prep (section 11) | Yes |
 | `tests/`, `requirements*.txt`, `.github/` | Tests, dependencies and the GitHub test workflow | Yes |
@@ -59,7 +59,7 @@ Filtering happens on your computer against the saved list, so changing your rule
 | `.env` | Your API keys and app password | No |
 | `about_me.md`, `resume.pdf`, `resumes/` | Your details and resumes for emails | No |
 | `outreach/` | Prepared email packets, drafts and the contacts cache | No |
-| `job_tracker.xlsx`, `all_postings.csv`, `postings.db`, `job_watcher_state.json`, `job_watcher.log`, `job_watcher.lock` | Created by the script as it runs | No |
+| `job_tracker.xlsx`, `all_postings.csv`, `postings.db` (with `-wal` and `-shm` files while in use), `job_watcher_state.before-database.json`, `job_watcher_state.json`, `job_watcher.log`, `job_watcher.lock` | Created by the script as it runs | No |
 
 Everything marked "No" is listed in `.gitignore`, so your keys, contacts and applications never reach GitHub.
 
@@ -264,11 +264,13 @@ Changes apply on the next run, no restart needed. A setting you delete falls bac
 
 Run `python job_watcher.py --show-config` to see your settings described in plain English, including the exact search queries.
 
-API keys never go in `config.toml`. They go in `.env`, which is in `.gitignore` so it is never committed.
+API keys never go in `config.toml`. Enter them in the app's Settings screen, which saves them in Windows Credential Manager (the Keychain on a Mac), or put them in `.env`, which is in `.gitignore` so it is never committed. Real environment variables come first, then the password store, then `.env`.
 
 **Upgrading from `config.json`:** if both files exist, `config.toml` is used and `config.json` is ignored, so you can delete it. A folder with only `config.json` still works.
 
 ## 10. Using the tracker
+
+**Once you have opened the desktop app, edit there** (section 14): Status, Notes and Outreach are saved in `postings.db`, and `job_tracker.xlsx` becomes a copy that every run rewrites, so edits typed into it are no longer read. If you never open the app, everything below works as before.
 
 - **Jobs tab:** click a title to open the posting. Set the Status dropdown and type in Notes; both are kept when the script refreshes the file. Filter or sort by the Score column to focus on stronger companies.
 - **Close Excel to let a run update the file.** If it is open, that run's update waits until the next run. Nothing is lost.
@@ -286,7 +288,7 @@ Applying and then writing to a recruiter or the hiring team usually gets more at
 4. Connect Gmail to your Claude agent (in Claude, the Gmail connector), so it can create drafts.
 
 **Each time:**
-1. In `job_tracker.xlsx`, set the Outreach column to `Email` for the jobs you want. Applying first is best, and set Status to `Applied` when you have, so the email can say so. Save and close the file.
+1. In the app's Jobs screen (or, if you don't use the app, the Outreach column of `job_tracker.xlsx`), set Outreach to `Email` for the jobs you want. Applying first is best, and set Status to `Applied` when you have, so the email can say so. Save and close the file.
 2. Run `python outreach.py`. For each company it finds a recruiter and an engineering leader through Hunter (one credit per company, reused for 60 days), checks the addresses, and writes a packet folder under `outreach/`: one file per company with the roles, job descriptions, contacts and the resume to attach, plus `INSTRUCTIONS.md` with the writing rules and your `about_me.md`.
 3. Tell your Claude agent: *Read outreach/<folder>/INSTRUCTIONS.md in my job watcher folder and follow it to create my draft emails.* It writes one short email per contact (and a LinkedIn note for each) and creates them as Gmail drafts.
 4. Review the drafts in Gmail, attach the resume if your agent's Gmail tool could not, and send. Set the Outreach column to `Sent`.
@@ -333,7 +335,7 @@ The app is a window on the same watcher: runs started there are the same runs as
 ```
 pip install -r requirements-app.txt
 ```
-This adds FastAPI, Uvicorn and pywebview. On Windows the window uses Microsoft Edge WebView2, which Windows 10 and 11 already have.
+This adds FastAPI, Uvicorn, pywebview, tomlkit (saving settings with their notes) and keyring (saving keys in Windows Credential Manager). On Windows the window uses Microsoft Edge WebView2, which Windows 10 and 11 already have.
 
 **Open it:**
 ```
@@ -353,6 +355,12 @@ python app.py
 
 **One run at a time.** If your scheduled task or a terminal is running, the app says so and waits; the scheduled task likewise skips its turn while the app is running. Closing the window during a run asks first, then saves before the app exits.
 
-**For now, edit in Excel.** Status, Notes and Outreach are still edited in `job_tracker.xlsx`, and companies in `companies.csv`; the app shows your edits as soon as you save. Editing in the app, settings forms and the Outreach screen come next.
+**Edit in the app.** Opening the app makes it the place you edit:
+- **Jobs:** set Status and Outreach right in the table, and type Notes in a job's details. Edits save at once, even while a run is going: a run that finishes afterwards keeps them. `job_tracker.xlsx` is rewritten after every run as a copy, and edits typed into it are no longer read. The first time the app opens, your tracked jobs move from `job_watcher_state.json` into `postings.db`, with your latest Excel edits; a copy of the old file is kept as `job_watcher_state.before-database.json`.
+- **Companies:** open a company to change its board, careers page, region, priority, email domain or notes, or to stop watching it. **Add companies** takes a job posting, job board or careers page link (like `--add`), or a spreadsheet with a Company column (like `--import`), which shows what would be added before anything is saved. Changes made while a run is going are applied when the run saves; adding and importing wait for the run to finish.
+- **Settings:** every section of `config.toml` as forms: titles and keywords as lists, a region editor, search, careers sites, runs and outreach. A plain-English summary updates as you type, and saving keeps the file's notes. After saving, **Re-filter saved postings** applies new filters right away with no requests.
+- **Keys and accounts:** paste your Serper, Hunter and Gmail details, test them (the Hunter check uses no credits; the Serper check uses one search), or remove them. They're saved in Windows Credential Manager and taken out of `.env`; the scheduled task and the command line read them from there too.
+
+The Outreach screen (preparing and editing recruiter emails in the app) comes next.
 
 **Private by design.** The window talks to a server on your own computer (127.0.0.1) that only answers requests carrying a code the window gets at launch, so other programs and websites can't use it. Nothing leaves your computer except the job-board reads a run already makes.

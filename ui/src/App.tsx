@@ -9,6 +9,7 @@ import { go, useRoute, type Screen } from "./router";
 import { Companies } from "./screens/Companies";
 import { Dashboard } from "./screens/Dashboard";
 import { Jobs, Postings } from "./screens/Jobs";
+import { Settings } from "./screens/Settings";
 
 export function App() {
   const route = useRoute();
@@ -55,6 +56,7 @@ export function App() {
     { screen: "dashboard", label: "Dashboard" },
     { screen: "jobs", label: "Jobs", count: summary.data?.jobs.open, also: "postings" },
     { screen: "companies", label: "Companies", count: companies.data?.length },
+    { screen: "settings", label: "Settings" },
   ];
 
   return (
@@ -84,12 +86,16 @@ export function App() {
 
       <main className="content">
         {meta.data?.settings_problem && (
-          <p className="banner">config.toml has a problem: {meta.data.settings_problem}</p>
+          <p className="banner">
+            config.toml has a problem: {meta.data.settings_problem}{" "}
+            {route.screen !== "settings" && <button className="text-button" onClick={() => go("settings")}>Open Settings</button>}
+          </p>
         )}
         {route.screen === "dashboard" && <Dashboard />}
         {route.screen === "jobs" && <Jobs />}
         {route.screen === "postings" && <Postings />}
         {route.screen === "companies" && <Companies />}
+        {route.screen === "settings" && <Settings />}
       </main>
 
       <div className="toasts" aria-live="polite">

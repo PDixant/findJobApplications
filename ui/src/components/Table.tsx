@@ -74,10 +74,12 @@ export function Table<T>({
               className={`${row.id === selected ? "is-selected" : ""} ${rowClass ? rowClass(row.original) : ""}`}
               tabIndex={onOpen ? 0 : undefined}
               onClick={(e) => {
-                if ((e.target as HTMLElement).closest("a")) return; // links open the posting itself
+                // links open the posting; the inline controls edit in place
+                if ((e.target as HTMLElement).closest("a, select, input, textarea, button")) return;
                 onOpen?.(row.original);
               }}
               onKeyDown={(e) => {
+                if (e.target !== e.currentTarget) return;
                 if (e.key === "Enter" && onOpen) onOpen(row.original);
               }}
             >

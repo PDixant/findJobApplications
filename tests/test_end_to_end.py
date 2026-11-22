@@ -157,7 +157,8 @@ def world():
 
 
 def state():
-    return json.loads((HOME / "job_watcher_state.json").read_text())
+    """The saved state with tracked jobs, which live in postings.db."""
+    return jw.load_state(jw.load_config(), excel_edits=False)
 
 
 def companies():
@@ -322,7 +323,7 @@ def test_follow_ups():
         if j["company"] == "Known GH":
             j["outreach"] = "Sent"
             j["outreach_sent"] = (NOW - dt.timedelta(days=6)).isoformat()
-    jw.save_json(jw.STATE_PATH, data)
+    jw.save_state(jw.load_config(), data, since=NOW)
     wb = load_workbook(HOME / "job_tracker.xlsx")
     ws = wb["Jobs"]
     header = [c.value for c in ws[1]]

@@ -210,18 +210,24 @@ def _from_json(doc):
 _config_notice_shown = False
 
 
+def config_from_text(text):
+    """Settings from config.toml text, checked. Returns (cfg, unknown settings)."""
+    if tomllib is None:
+        raise ConfigError("config.toml needs Python 3.11 or newer, or run: pip install tomli")
+    try:
+        doc = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as exc:
+        raise ConfigError(f"config.toml has a typo: {exc}. Check that text is in \"quotes\" "
+                          "and list items are separated by commas.") from None
+    cfg, unknown = _from_toml(doc)
+    return _checked(cfg), unknown
+
+
 def load_config():
     """Read config.toml (or the older config.json). Raises ConfigError with a readable reason."""
     global _config_notice_shown
     if CONFIG_PATH.exists():
-        if tomllib is None:
-            raise ConfigError("config.toml needs Python 3.11 or newer, or run: pip install tomli")
-        try:
-            doc = tomllib.loads(CONFIG_PATH.read_text(encoding="utf-8-sig"))
-        except tomllib.TOMLDecodeError as exc:
-            raise ConfigError(f"config.toml has a typo: {exc}. Check that text is in \"quotes\" "
-                              "and list items are separated by commas.") from None
-        cfg, unknown = _from_toml(doc)
+        cfg, unknown = config_from_text(CONFIG_PATH.read_text(encoding="utf-8-sig"))
         for item in unknown:
             log.warning("config.toml: ignored unknown setting %s (check the spelling).", item)
         if LEGACY_CONFIG_PATH.exists() and not _config_notice_shown:
@@ -235,6 +241,10 @@ def load_config():
     else:
         log.info("No config.toml found; using the built-in defaults.")
         cfg = json.loads(json.dumps(DEFAULTS))
+    return _checked(cfg)
+
+
+def _checked(cfg):
     s = cfg["search"]
     s["provider"] = s["provider"].strip().lower()
     s["look_back"] = s["look_back"].strip().lower()
@@ -254,13 +264,17 @@ def load_config():
 
 
 def load_env(path=ENV_PATH):
-    """Read KEY=value lines from .env into the environment (real environment variables win).
+    """Load API keys: real environment variables win, then the password store the desktop app
+    saves to (Windows Credential Manager or the macOS Keychain), then KEY=value lines in .env.
     Also accepts the .env.txt name Notepad tends to save, and UTF-16 files from PowerShell."""
+    from .keys import load_keys
     if not path.exists() and path.with_name(path.name + ".txt").exists():
         path = path.with_name(path.name + ".txt")
+    values = {}
     try:
         raw = path.read_bytes()
     except FileNotFoundError:
+        load_keys(values)
         return
     if raw[:2] in (b"\xff\xfe", b"\xfe\xff"):
         text = raw.decode("utf-16")
@@ -273,8 +287,9 @@ def load_env(path=ENV_PATH):
         key, value = line.split("=", 1)
         key = key.strip().removeprefix("export ").strip()
         value = value.strip().strip('"').strip("'")
-        if key and value and key not in os.environ:
-            os.environ[key] = value
+        if key and value:
+            values[key] = value
+    load_keys(values)
 
 
 def describe_config(cfg):

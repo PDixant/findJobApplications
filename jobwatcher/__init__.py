@@ -8,6 +8,7 @@ from .store import *  # noqa: F401,F403
 from .filters import *  # noqa: F401,F403
 from .discovery import *  # noqa: F401,F403
 from .tracker import *  # noqa: F401,F403
+from .tracked import *  # noqa: F401,F403
 from .runner import *  # noqa: F401,F403
 from .cli import main  # noqa: F401
 

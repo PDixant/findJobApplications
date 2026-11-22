@@ -16,3 +16,7 @@ resumes/
 job_watcher.lock
 .app_window/
 ui/node_modules/
+postings.db-wal
+postings.db-shm
+job_watcher_state.before-database.json
+*.saving.toml

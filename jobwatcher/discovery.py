@@ -295,7 +295,8 @@ def find_career_pages(cfg, state, rows, now):
 
 
 def add_company(cfg, link, name=None):
-    """--add: watch a company from any job posting, board or careers page link."""
+    """--add: watch a company from any job posting, board or careers page link.
+    Returns a sentence saying what changed (also printed by the command line)."""
     now = dt.datetime.now(dt.timezone.utc)
     today = now.astimezone().date().isoformat()
     state = load_json(STATE_PATH, {"jobs": {}, "resolved": {}, "companies": {}})
@@ -308,10 +309,9 @@ def add_company(cfg, link, name=None):
         if added and name:
             added[0]["company"] = name
         if not (added or updated):
-            print(f"Already watching that board ({b[0]}: {b[1]}).")
-            return
+            return f"Already watching that board ({b[0]}: {b[1]})."
         r = (added or updated)[0]
-        print(f"{'Added' if added else 'Updated'} {r['company']}: {r['board']} board '{r['slug']}'.")
+        message = f"{'Added' if added else 'Updated'} {r['company']}: {r['board']} board '{r['slug']}'."
     else:
         if "://" not in link:
             link = "https://" + link
@@ -328,15 +328,15 @@ def add_company(cfg, link, name=None):
             if no_board:
                 existing.update(board="website", slug="")
             state["companies"].pop(existing["company"], None)
-            print(f"Updated {existing['company']}: careers page {existing['careers_url']}.")
+            message = f"Updated {existing['company']}: careers page {existing['careers_url']}."
         else:
             rows.append({"priority": "8", "region": "Added by you", "company": label, "board": "website",
                          "careers_url": clean_url(link), "enabled": "yes", "notes": f"Added by you {today}"})
-            print(f"Added {label}: careers page {clean_url(link)}. "
-                  "The next run checks whether it uses a job board and reads it.")
+            message = (f"Added {label}: careers page {clean_url(link)}. "
+                       "The next run checks whether it uses a job board and reads it.")
     save_company_rows(cfg, rows)
     save_json(STATE_PATH, state)
-    print(f"Saved to {companies_path(cfg).name}. Run the watcher to read it now.")
+    return message
 
 
 # ----------------------------------------------------------------- importing company lists
@@ -408,8 +408,9 @@ def _column(header, *words, avoid=()):
     return None
 
 
-def import_companies(cfg, paths):
-    """--import: add companies from spreadsheets to companies.csv. Returns (added, updated)."""
+def import_companies(cfg, paths, save=True):
+    """--import: add companies from spreadsheets to companies.csv. Returns (added, updated, rows
+    read). save=False only previews: nothing is written."""
     rows = load_company_rows(cfg)
     file_rows = [r for r in rows if r.get("region") != "From config file"]
     by_key, by_site, by_board = {}, {}, {}
@@ -487,13 +488,15 @@ def import_companies(cfg, paths):
                         by_board[board_key(*board)] = row
                     elif url:
                         by_site.setdefault(site_domain(url), row)
+    if not save:
+        return added, updated, seen
     save_company_rows(cfg, rows)
     print(f"Read {seen} company rows. Added {len(added)} new companies and filled in missing details "
           f"for {len(updated)} you already had. Saved to {companies_path(cfg).name}.")
     regions = Counter(r["region"] for r in added)
     if regions:
         print("New companies by region: " + ", ".join(f"{k} {v}" for k, v in regions.most_common()))
-    return added, updated
+    return added, updated, seen
 
 
 __all__ = [n for n in list(globals()) if not n.startswith("__")]

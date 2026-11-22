@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import { api, type Job, type Meta, type PostingPage } from "../api";
+import { api, type Job, type JobEdit, type Meta, type PostingPage } from "../api";
 import { Chip, Drawer, Empty, ErrorNote, External } from "../components/bits";
 import { Table } from "../components/Table";
 import { ago, day, hex, n, when } from "../format";
-import { loadPrefs, savePrefs, useJobs, useMeta, useSummary } from "../queries";
+import { loadPrefs, savePrefs, useEditJob, useJobs, useMeta, useSummary } from "../queries";
 import { go, type Screen } from "../router";
 
 function Tabs({ active }: { active: Screen }) {
@@ -56,7 +56,9 @@ export function Jobs() {
     });
   }, [jobs.data, filters]);
 
-  const columns = useMemo(() => jobColumns(meta.data), [meta.data]);
+  const editJob = useEditJob();
+  const onEdit = editJob.mutate;
+  const columns = useMemo(() => jobColumns(meta.data, (key, changes) => onEdit({ key, changes })), [meta.data, onEdit]);
   const job = jobs.data?.find((j) => j.key === selected) ?? null;
   const filtered = JSON.stringify(filters) !== JSON.stringify({ ...NO_FILTERS, closed: filters.closed });
 
@@ -135,7 +137,7 @@ export function Jobs() {
         )}
       </div>
       <Drawer open={Boolean(job)} onClose={() => setSelected(null)} title={job?.title ?? ""}>
-        {job && <JobDetails job={job} meta={meta.data} />}
+        {job && <JobDetails job={job} meta={meta.data} onEdit={(changes) => onEdit({ key: job.key, changes })} />}
       </Drawer>
     </div>
   );
@@ -157,16 +159,35 @@ function Select({ label, value, options, onChange }: {
   );
 }
 
-function StatusChip({ status, meta }: { status: string; meta?: Meta }) {
-  const [bg, fg] = meta?.colors.status[status] ?? [];
+function StatusSelect({ job, meta, onEdit, label }: {
+  job: Job; meta?: Meta; onEdit: (c: JobEdit) => void; label?: boolean;
+}) {
+  const [bg, fg] = meta?.colors.status[job.status] ?? [];
   return (
-    <span className="chip" style={bg ? { background: hex(bg), color: hex(fg) } : undefined}>
-      {status}
-    </span>
+    <select className="inline-select" value={job.status} aria-label={label ? undefined : `Status for ${job.title}`}
+      style={bg ? { backgroundColor: hex(bg), color: hex(fg) } : undefined}
+      onChange={(e) => onEdit({ status: e.target.value })}>
+      {(meta?.statuses ?? [job.status]).map((s) => <option key={s} value={s}>{s}</option>)}
+    </select>
   );
 }
 
-function jobColumns(meta?: Meta): ColumnDef<Job, any>[] { // eslint-disable-line @typescript-eslint/no-explicit-any
+function OutreachSelect({ job, meta, onEdit, label }: {
+  job: Job; meta?: Meta; onEdit: (c: JobEdit) => void; label?: boolean;
+}) {
+  const color = meta?.colors.outreach[job.outreach];
+  return (
+    <select className={`inline-select ${job.outreach ? "" : "is-empty"}`} value={job.outreach}
+      aria-label={label ? undefined : `Outreach for ${job.title}`}
+      style={color ? { backgroundColor: hex(color), color: "#1f2a3d" } : undefined}
+      onChange={(e) => onEdit({ outreach: e.target.value })}>
+      <option value="">None</option>
+      {(meta?.outreach ?? []).map((s) => <option key={s} value={s}>{s}</option>)}
+    </select>
+  );
+}
+
+function jobColumns(meta: Meta | undefined, onEdit: (key: string, c: JobEdit) => void): ColumnDef<Job, any>[] { // eslint-disable-line @typescript-eslint/no-explicit-any
   const regionColor = new Map(meta?.regions.map((r) => [r.name, r.color]) ?? []);
   return [
     {
@@ -201,18 +222,20 @@ function jobColumns(meta?: Meta): ColumnDef<Job, any>[] { // eslint-disable-line
       cell: (c) => <span className="quiet">{c.row.original.stack.join(", ")}</span>,
     },
     {
-      id: "status", header: "Status", accessorKey: "status", size: 104,
-      cell: (c) => <StatusChip status={c.row.original.status} meta={meta} />,
+      id: "status", header: "Status", accessorKey: "status", size: 124,
+      cell: (c) => <StatusSelect job={c.row.original} meta={meta} onEdit={(ch) => onEdit(c.row.original.key, ch)} />,
     },
     {
-      id: "outreach", header: "Outreach", accessorKey: "outreach", size: 92,
-      cell: (c) => c.row.original.outreach
-        ? <Chip color={meta?.colors.outreach[c.row.original.outreach]}>{c.row.original.outreach}</Chip> : null,
+      id: "outreach", header: "Outreach", accessorKey: "outreach", size: 116,
+      cell: (c) => <OutreachSelect job={c.row.original} meta={meta} onEdit={(ch) => onEdit(c.row.original.key, ch)} />,
     },
   ];
 }
 
-function JobDetails({ job, meta }: { job: Job; meta?: Meta }) {
+function JobDetails({ job, meta, onEdit }: { job: Job; meta?: Meta; onEdit: (c: JobEdit) => void }) {
+  const [notes, setNotes] = useState(job.notes);
+  useEffect(() => setNotes(job.notes), [job.key, job.notes]);
+  const notesChanged = notes !== job.notes;
   const description = useQuery({
     queryKey: ["description", job.key],
     queryFn: () => api<{ text: string | null }>(`description?key=${encodeURIComponent(job.key)}`),
@@ -229,22 +252,29 @@ function JobDetails({ job, meta }: { job: Job; meta?: Meta }) {
       <div className="details-chips">
         <Chip color={regionColor}>{job.region}</Chip>
         {job.level !== "Unlabelled" && <Chip color={meta?.colors.level[job.level]}>{job.level}</Chip>}
-        <StatusChip status={job.status} meta={meta} />
-        {job.outreach && <Chip color={meta?.colors.outreach[job.outreach]}>Outreach: {job.outreach}</Chip>}
         {!job.open && <Chip>Closed {day(job.closed)}</Chip>}
       </div>
+      <div className="edit-grid">
+        <label>Status <StatusSelect job={job} meta={meta} onEdit={onEdit} label /></label>
+        <label>Outreach <OutreachSelect job={job} meta={meta} onEdit={onEdit} label /></label>
+      </div>
+      <label className="notes-field">
+        <span>Your notes</span>
+        <textarea value={notes} rows={3} placeholder="Who referred you, salary range, next step"
+          onChange={(e) => setNotes(e.target.value)}
+          onBlur={() => notesChanged && onEdit({ notes })} />
+      </label>
+      {notesChanged && <p className="hint">Saved when you click outside the box.</p>}
       <dl className="facts">
         <div><dt>Location</dt><dd>{job.locations.join("; ") || "Not listed"}</dd></div>
         <div><dt>Posted</dt><dd>{job.posted ? `${when(job.posted)} (${ago(job.posted)})` : "No date on the posting"}</dd></div>
         <div><dt>Found</dt><dd>{when(job.found)}</dd></div>
         <div><dt>Stack match</dt><dd>{job.stack.join(", ") || "None"}</dd></div>
         <div><dt>Board</dt><dd>{job.provider}</dd></div>
-        {job.notes && <div><dt>Your notes</dt><dd>{job.notes}</dd></div>}
       </dl>
       <p className="actions">
         <External href={job.url}>Open the posting</External>
       </p>
-      <p className="hint">Status, notes and outreach are edited in job_tracker.xlsx for now. Editing them here comes next.</p>
       <h3>Description</h3>
       {description.isLoading && <p className="quiet">Loading the description</p>}
       <ErrorNote error={description.error} />

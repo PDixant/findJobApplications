@@ -4,7 +4,9 @@ import { RESULT_ORDER, resultInfo, type Company } from "../api";
 import { Drawer, Empty, ErrorNote, External } from "../components/bits";
 import { Table } from "../components/Table";
 import { ago, n, when } from "../format";
-import { useCompanies, useJobs } from "../queries";
+import { useCompanies, useJobs, useSummary } from "../queries";
+import { useLive } from "../live";
+import { AddCompanies, CompanyForm } from "./CompanyEditing";
 import { go, useRoute } from "../router";
 
 function ResultBadge({ result }: { result: string }) {
@@ -25,7 +27,8 @@ function boardOf(c: Company) {
 
 const columns: ColumnDef<Company, any>[] = [ // eslint-disable-line @typescript-eslint/no-explicit-any
   { id: "company", header: "Company", accessorFn: (c) => c.company.toLowerCase(), size: 210,
-    cell: (c) => <span className="company-cell">{c.row.original.company}
+    cell: (c) => <span className={`company-cell ${c.row.original.enabled ? "" : "is-off"}`}>{c.row.original.company}
+      {c.row.original.pending && <span className="pending-mark" title="Edited during a run; applied when it saves">edited</span>}
       {c.row.original.tier && <span className={`tier tier-${c.row.original.tier}`}>{c.row.original.tier}</span>}</span> },
   { id: "region", header: "Region", accessorKey: "region", size: 160,
     cell: (c) => <span className="quiet">{c.row.original.region}</span> },
@@ -49,6 +52,10 @@ export function Companies() {
   const result = route.params.get("result");
   const picked = route.params.get("c");
   const [text, setText] = useState("");
+  const [adding, setAdding] = useState(false);
+  const summary = useSummary();
+  const live = useLive();
+  const locked = live.run?.status === "running" || Boolean(summary.data?.busy_elsewhere);
   const [selected, setSelected] = useState<string | null>(picked);
   useEffect(() => setSelected(picked), [picked]);
 
@@ -75,8 +82,10 @@ export function Companies() {
       <div className="screen-main">
         <header className="screen-head">
           <h1>Companies</h1>
+          {!adding && <button className="button primary" onClick={() => setAdding(true)}>Add companies</button>}
           <p className="lede">Every company is checked on every run. This is what happened to each one last time.</p>
         </header>
+        {adding && <AddCompanies disabled={locked} onClose={() => setAdding(false)} />}
         <div className="filters" role="search">
           <input className="search" type="search" placeholder="Search name, region, notes or board" value={text}
             onChange={(e) => setText(e.target.value)} aria-label="Search companies" />
@@ -106,13 +115,13 @@ export function Companies() {
         )}
       </div>
       <Drawer open={Boolean(company)} onClose={() => setSelected(null)} title={company?.company ?? ""}>
-        {company && <CompanyDetails c={company} />}
+        {company && <CompanyDetails c={company} locked={locked} />}
       </Drawer>
     </div>
   );
 }
 
-function CompanyDetails({ c }: { c: Company }) {
+function CompanyDetails({ c, locked }: { c: Company; locked: boolean }) {
   const jobs = useJobs();
   const theirs = (jobs.data ?? []).filter((j) => j.company === c.company);
   const info = resultInfo(c.result);
@@ -154,7 +163,7 @@ function CompanyDetails({ c }: { c: Company }) {
       ) : (
         <p className="quiet">No matches from this company yet.</p>
       )}
-      <p className="hint">To change a company's board, careers page or score, edit companies.csv for now. Editing here comes next.</p>
+      <CompanyForm c={c} locked={locked} />
     </div>
   );
 }

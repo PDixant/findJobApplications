@@ -10,6 +10,7 @@ from .store import *  # noqa: F401,F403
 from .filters import *  # noqa: F401,F403
 from .discovery import *  # noqa: F401,F403
 from .tracker import *  # noqa: F401,F403
+from .tracked import *  # noqa: F401,F403
 
 
 def fetch_board(row, state, rules, has_text, now, max_age, window_start, known_boards, detail_cap):
@@ -284,9 +285,7 @@ def _run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, o
     rules = Rules(cfg)
     SETTINGS["rules"] = rules
     excel_path = BASE / cfg.get("excel_file", "job_tracker.xlsx")
-    state = load_json(STATE_PATH, {"jobs": {}, "resolved": {}, "companies": {}})
-    for k in ("jobs", "resolved", "companies"):
-        state.setdefault(k, {})
+    state = load_state(cfg)  # tracked jobs come from postings.db; Excel edits apply until the app is used
     SETTINGS["website_pages"] = state.setdefault("website_pages", {})
     state.pop("rejected", None)  # replaced by the local postings store
     since_check = since_check or cfg.get("since_last_check_by_default", False)
@@ -296,7 +295,6 @@ def _run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, o
                  window_start.astimezone().strftime("%Y-%m-%d %H:%M"),
                  to_local_naive(state.get("last_check")) or "never")
 
-    apply_excel_edits(state, read_excel_edits(excel_path), now)
 
     # How old a posting may be when first found. --hours widens it for that run only.
     max_age = rules.max_age
@@ -345,6 +343,7 @@ def _run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, o
         if not offline:  # step 1: download
             changed, stats = fetch_all(cfg, state, store, rows, rules, now, max_age, window_start, verify)
             csv_dirty = changed or csv_dirty
+        csv_dirty = take_pending_company_edits(cfg, all_rows) or csv_dirty  # edits made in the app meanwhile
         if csv_dirty:
             save_company_rows(cfg, all_rows)
 
@@ -390,7 +389,7 @@ def _run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, o
     state["last_run"] = now.isoformat()
 
     emit("phase", name="save")
-    save_json(STATE_PATH, state)
+    save_state(cfg, state, since=now)  # keeps edits made in the app during the run
     write_excel(excel_path, state, cfg, scores)
 
     if offline:

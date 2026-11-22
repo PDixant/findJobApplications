@@ -10,7 +10,7 @@ class PostingStore:
     so changing your rules or re-running the filters never touches the job boards."""
 
     def __init__(self, path):
-        self.db = sqlite3.connect(path)
+        self.db = sqlite3.connect(path, timeout=30)  # the app may be saving an edit
         self.db.row_factory = sqlite3.Row
         self.db.executescript("""
             CREATE TABLE IF NOT EXISTS postings (

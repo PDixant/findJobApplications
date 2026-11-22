@@ -108,6 +108,7 @@ export type Summary = {
   schedule: { runs_per_day: number | null };
   run: Run | null;
   busy_elsewhere: boolean;
+  edits_in: "app" | "excel";
 };
 
 export type Job = {
@@ -153,6 +154,8 @@ export type Company = {
   revenue_growth_pct: string;
   notes: string;
   enabled: boolean;
+  pending: boolean;
+  from_config: boolean;
   result: string;
   why: string;
   checked: string | null;
@@ -203,4 +206,33 @@ export const RESULT_ORDER = ["OK", "RETRY", "NO JOBS READ", "NOT FOUND", "ERROR"
 
 export function resultInfo(result: string) {
   return RESULTS[result] ?? { label: result, tone: "off", explain: "" };
+}
+
+// ------------------------------------------------------------------ editing
+
+export type JobEdit = Partial<Pick<Job, "status" | "notes" | "outreach">>;
+
+export type FieldKind = string; // list, number, bool, text, regions, choice:a,b, choices:a,b
+export type RegionValue = { name: string; color: string; match: string[] };
+export type SettingField = { key: string; kind: FieldKind; help: string; value: unknown };
+export type SettingsSection = { id: string; title: string; fields: SettingField[] };
+export type SettingsData = { sections: SettingsSection[]; explain: string };
+export type Changes = Record<string, Record<string, unknown>>;
+
+export type KeyStatus = { name: string; label: string; set: boolean; source: string | null; preview: string };
+export type KeysData = { store: boolean; search_provider: string; keys: KeyStatus[] };
+
+export type ImportPreview = {
+  id: string;
+  filename: string;
+  rows: number;
+  added: Pick<Company, "company" | "region" | "board" | "slug" | "careers_url" | "notes">[];
+  updated: Pick<Company, "company" | "region" | "board" | "slug" | "careers_url" | "notes">[];
+};
+
+export const send = <T,>(path: string, method: string, body?: unknown) =>
+  api<T>(path, { method, body: body === undefined ? undefined : JSON.stringify(body) });
+
+export async function upload<T>(path: string, file: File): Promise<T> {
+  return api<T>(path, { method: "POST", body: file, headers: { "Content-Type": "application/octet-stream" } });
 }

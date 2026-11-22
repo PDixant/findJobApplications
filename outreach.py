@@ -449,19 +449,18 @@ def tracker_has_outreach_column(path):
 
 
 def load_everything(cfg, now):
-    state = jw.load_json(jw.STATE_PATH, {"jobs": {}, "resolved": {}, "companies": {}})
-    for k in ("jobs", "resolved", "companies"):
-        state.setdefault(k, {})
+    state = jw.load_state(cfg)  # your latest Outreach marks, from the app (or Excel before the app)
     excel = BASE / cfg["excel_file"]
-    jw.apply_excel_edits(state, jw.read_excel_edits(excel), now)  # your latest Outreach marks
     rows = jw.load_company_rows(cfg)
     return state, rows, excel
 
 
-def save_everything(cfg, state, rows, excel, csv_changed):
+def save_everything(cfg, state, rows, excel, csv_changed, since):
+    if jw.take_pending_company_edits(cfg, rows):
+        csv_changed = True
     if csv_changed:
         jw.save_company_rows(cfg, rows)
-    jw.save_json(jw.STATE_PATH, state)
+    jw.save_state(cfg, state, since)
     scores = {r["company"]: (r.get("score", ""), r.get("tier", "")) for r in rows}
     if not jw.write_excel(excel, state, cfg, scores):
         log.info("The Outreach column will show the new values after you close the tracker "
@@ -485,7 +484,10 @@ def prepare(cfg, follow_ups=False):
     else:
         due = [j for j in state["jobs"].values() if (j.get("outreach") or "").lower() == "email"]
         if not due:
-            if not tracker_has_outreach_column(excel):
+            if jw.edits_in(cfg) == "app":
+                print('Nothing to prepare. In the app\'s Jobs screen, set Outreach to "Email" for the jobs '
+                      "you want, then run this again.")
+            elif not tracker_has_outreach_column(excel):
                 print("Your tracker does not have the Outreach column yet: it was made by an older version. "
                       "Close job_tracker.xlsx, run  python job_watcher.py --refilter  (makes no requests) "
                       'to rebuild it, then set Outreach to "Email" on the jobs you want, save, close, '
@@ -571,7 +573,7 @@ def prepare(cfg, follow_ups=False):
         folder=folder.relative_to(BASE).as_posix(), about=about, days=days), encoding="utf-8")
     jw.save_json(folder / "packet.json", {"prepared": now.isoformat(), "follow_ups": follow_ups,
                                           "companies": packet})
-    save_everything(cfg, state, rows, excel, csv_changed)
+    save_everything(cfg, state, rows, excel, csv_changed, since=now)
     if hunter:
         log.info("Hunter credits used this month: %s of %s.", hunter.used.get(hunter.month, 0), hunter.limit)
     if stopped:

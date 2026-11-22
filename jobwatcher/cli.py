@@ -83,7 +83,10 @@ def main():
                     if args.import_files:
                         import_companies(cfg, args.import_files)
                     else:
-                        add_company(cfg, args.add, args.name)
+                        message = add_company(cfg, args.add, args.name)
+                        print(message)
+                        if not message.startswith("Already"):
+                            print(f"Saved to {companies_path(cfg).name}. Run the watcher to read it now.")
             except (ConfigError, Busy) as exc:
                 log.error("%s", exc)
                 sys.exit(1)

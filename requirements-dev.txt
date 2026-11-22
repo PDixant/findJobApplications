@@ -5,3 +5,4 @@ pyflakes
 fastapi>=0.110
 uvicorn>=0.29
 httpx
+tomlkit>=0.12

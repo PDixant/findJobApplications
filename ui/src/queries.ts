@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import { api, type Company, type Job, type Meta, type Summary } from "./api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, send, type Company, type Job, type JobEdit, type Meta, type Summary } from "./api";
+import { toast } from "./live";
 
 export const useMeta = () => useQuery({ queryKey: ["meta"], queryFn: () => api<Meta>("meta"), staleTime: 60_000 });
 
@@ -45,4 +46,26 @@ export function savePrefs(key: string, value: object) {
   } catch {
     /* storage unavailable */
   }
+}
+
+// ------------------------------------------------------------------ edits
+
+/** Save a job's Status, Notes or Outreach. The screen updates at once; a refusal undoes it. */
+export function useEditJob() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ key, changes }: { key: string; changes: JobEdit }) =>
+      send<JobEdit>(`jobs?key=${encodeURIComponent(key)}`, "PATCH", changes),
+    onMutate: async ({ key, changes }) => {
+      await client.cancelQueries({ queryKey: ["jobs"] });
+      const before = client.getQueryData<Job[]>(["jobs"]);
+      client.setQueryData<Job[]>(["jobs"], (jobs) => jobs?.map((j) => (j.key === key ? { ...j, ...changes } : j)));
+      return { before };
+    },
+    onError: (e, _vars, ctx) => {
+      if (ctx?.before) client.setQueryData(["jobs"], ctx.before);
+      toast(e instanceof Error ? e.message : "The change was not saved.", "bad");
+    },
+    onSettled: () => client.invalidateQueries({ queryKey: ["summary"] }),
+  });
 }
