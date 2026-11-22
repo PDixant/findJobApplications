@@ -1,0 +1,227 @@
+"""Unit checks for link recognition, search queries, company matching, page parsing and settings."""
+import datetime as dt
+import json
+
+import pytest
+
+import jobwatcher as jw
+from jobwatcher import discovery
+
+def test_board_from_url():
+    cases = {
+        "https://jobs.ashbyhq.com/ramp/1234-abcd": ("ashby", "ramp"),
+        "https://jobs.ashbyhq.com/Rose%20Rocket/abc/application": ("ashby", "Rose Rocket"),
+        "https://boards.greenhouse.io/stripe/jobs/123": ("greenhouse", "stripe"),
+        "https://job-boards.greenhouse.io/figma/jobs/555?gh_src=x": ("greenhouse", "figma"),
+        "https://boards.greenhouse.io/embed/job_app?for=acme&token=1": ("greenhouse", "acme"),
+        "https://boards.greenhouse.io/embed/job_board/js?for=wealthsimple": ("greenhouse", "wealthsimple"),
+        "https://boards-api.greenhouse.io/v1/boards/acme/jobs": ("greenhouse", "acme"),
+        "https://jobs.lever.co/clio/uuid-1": ("lever", "clio"),
+        "https://jobs.eu.lever.co/acme/uuid": ("lever", "acme"),
+        "https://api.lever.co/v0/postings/acme?mode=json": ("lever", "acme"),
+        "https://apply.workable.com/acme/j/ABC123/": ("workable", "acme"),
+        "https://apply.workable.com/api/v1/widget/accounts/acme": ("workable", "acme"),
+        "https://jobs.smartrecruiters.com/Visa/7438-software-engineer": ("smartrecruiters", "Visa"),
+        "https://acme.wd5.myworkdayjobs.com/en-US/External/job/Toronto/SWE_R1": ("workday", "https://acme.wd5.myworkdayjobs.com/External"),
+        "https://acme.wd1.myworkdayjobs.com/wday/cxs/acme/Careers/jobs": ("workday", "https://acme.wd1.myworkdayjobs.com/Careers"),
+        "//boards.greenhouse.io/acme": ("greenhouse", "acme"),
+        "https:\\/\\/jobs.lever.co\\/acme": ("lever", "acme"),
+    }
+    for url, want in cases.items():
+        assert jw.board_from_url(url) == want, (url, jw.board_from_url(url))
+    for url in ["https://www.greenhouse.io/careers", "https://jobs.ashbyhq.com/", "https://boards.greenhouse.io/embed/job_app",
+                "https://www.workable.com/assets/embed.js", "https://linkedin.com/jobs/view/1", "",
+                "https://myworkdayjobs.com/x", "https://jobs.lever.co/"]:
+        assert jw.board_from_url(url) is None, url
+
+def test_board_key_and_query():
+    assert jw.board_key("ashby", "Ramp") == jw.board_key("ashby", "ramp")
+    assert jw.board_key("workday", "https://acme.wd5.myworkdayjobs.com/External") == jw.board_key("workday", "acme/wd5/External")
+    q = jw.build_query("jobs.ashbyhq.com", ["Software Engineer", "Web Developer"], ["Toronto", "Canada"], ["India", "New Grad"])
+    assert q == 'site:jobs.ashbyhq.com (intitle:"Software Engineer" OR intitle:"Web Developer") ("Toronto" OR "Canada") -India -"New Grad"', q
+
+def test_company_names():
+    assert jw.company_name_for("greenhouse", "wealthsimple", "Job Application for Senior Software Engineer at Wealthsimple") == "Wealthsimple"
+    assert jw.company_name_for("lever", "clio", "Clio - Software Developer") == "Clio"
+    assert jw.company_name_for("ashby", "rose-rocket", "Software Engineer @ Rose Rocket") == "Rose Rocket"
+    # title that doesn't agree with the slug falls back to the slug
+    assert jw.company_name_for("greenhouse", "acme", "Job Application for Dev at Something Else") == "Acme"
+    assert jw.company_name_for("workday", "https://bigco.wd5.myworkdayjobs.com/External", "x") == "Bigco"
+
+def test_merge():
+    rows = [
+        {"company": "Ramp", "board": "ashby", "slug": "ramp", "status": "ok", "region": "Toronto / GTA"},
+        {"company": "Clio", "board": "auto", "slug": "", "status": "not_found", "region": "Vancouver / BC"},
+        {"company": "Shopify", "board": "other", "careers_url": "https://shopify.com/careers", "region": "Toronto / GTA"},
+        {"company": "Stripe", "board": "greenhouse", "slug": "stripe", "status": "ok"},
+    ]
+    state = {"resolved": {"Benchling": {"provider": "greenhouse", "slug": "benchling"}}, "companies": {"Clio": {"result": "NOT FOUND"}}}
+    found = [("ashby", "Ramp", "x", "u"), ("lever", "clio", "Clio - SWE", "u"), ("greenhouse", "benchling", "", "u"),
+             ("greenhouse", "newco", "Job Application for SWE at NewCo", "u"), ("lever", "stripe", "Stripe - SWE", "u"),
+             ("ashby", "newco", "Dev @ NewCo", "u")]
+    added, updated = jw.merge_found_boards(state, rows, found, "2026-11-21")
+    assert [r["company"] for r in updated] == ["Clio"] and rows[1]["board"] == "lever" and rows[1]["status"] == ""
+    assert "Clio" not in state["companies"]
+    names = [r["company"] for r in added]
+    assert names == ["NewCo"], names  # same company on a second board is not added twice
+    assert all(r["region"] == "Found by search" and r["enabled"] == "yes" for r in added)
+    # stripe already has a working greenhouse board: untouched
+    assert rows[3]["board"] == "greenhouse"
+    # second time: nothing new
+    a2, u2 = jw.merge_found_boards(state, rows, found, "2026-11-21")
+    assert not a2 and not u2
+    # review mode
+    a3, _ = jw.merge_found_boards(state, rows, [("lever", "zeta", "", "u")], "d", mode="review")
+    assert a3[0]["enabled"] == "no"
+
+def test_posted_from():
+    d = jw.posted_from("2026-01-05")
+    assert d == dt.datetime(2026, 1, 5, 23, 59, tzinfo=dt.timezone.utc)
+    assert jw.posted_from("2026-01-05T10:00:00-05:00").astimezone(dt.timezone.utc).hour == 15
+    today = dt.datetime.now(dt.timezone.utc).date().isoformat()
+    assert jw.posted_from(today) <= dt.datetime.now(dt.timezone.utc)
+
+JSONLD_PAGE = """<html><head><script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[{"@type":"Organization","name":"X"},
+{"@type":"JobPosting","title":"Senior Software Engineer, Frontend","datePosted":"2026-11-20T14:00:00Z",
+"validThrough":"2099-01-01","description":"&lt;p&gt;We use React and TypeScript&lt;/p&gt;",
+"jobLocation":[{"@type":"Place","address":{"@type":"PostalAddress","addressLocality":"Toronto","addressRegion":"ON","addressCountry":"CA"}}],
+"hiringOrganization":{"name":"X"}}]}
+</script></head><body><a href="/careers/jobs/123-software-engineer">Software Engineer</a></body></html>"""
+
+MICRO_PAGE = """<html><body><div itemscope itemtype="http://schema.org/JobPosting">
+<h1 itemprop="title">Full Stack Developer</h1><meta itemprop="datePosted" content="2026-11-21">
+<div itemprop="jobLocation" itemscope itemtype="http://schema.org/Place"><span itemprop="addressLocality">Vancouver</span>
+<span itemprop="addressRegion">BC</span><meta itemprop="addressCountry" content="CA"></div>
+<div itemprop="description"><p>Node.js and <b>React</b> work</p><div>nested</div></div></div></body></html>"""
+
+def test_jobs_on_page():
+    jobs = jw.jobs_on_page(jw.parse_page(JSONLD_PAGE), "https://x.com/careers/jobs/1")
+    assert len(jobs) == 1
+    j = jobs[0]
+    assert j["title"] == "Senior Software Engineer, Frontend" and j["locations"] == ["Toronto, ON, Canada"]
+    assert "React and TypeScript" in j["text"] and j["posted"].day == 20
+    m = jw.jobs_on_page(jw.parse_page(MICRO_PAGE), "https://y.com/jobs/2")
+    assert m and m[0]["title"] == "Full Stack Developer" and m[0]["locations"] == ["Vancouver, BC, Canada"], m
+    assert "React" in m[0]["text"] and "nested" in m[0]["text"]
+    expired = JSONLD_PAGE.replace("2099-01-01", "2020-01-01")
+    assert jw.jobs_on_page(jw.parse_page(expired), "u") == []
+    remote = '<script type="application/ld+json">{"@type":"JobPosting","title":"Web Developer","jobLocationType":"TELECOMMUTE","applicantLocationRequirements":{"@type":"Country","name":"Canada"}}</script>'
+    r = jw.jobs_on_page(jw.parse_page(remote), "u")
+    assert r[0]["locations"] == ["Remote - Canada"]
+
+def test_links_and_boards():
+    c = "https://careers.acme.com/jobs"
+    assert jw.looks_like_job_link("https://careers.acme.com/jobs/12345/software-engineer", c)
+    assert jw.looks_like_job_link("https://www.acme.com/careers/job/senior-software-engineer-toronto", c)
+    assert not jw.looks_like_job_link("https://careers.acme.com/jobs", c)
+    assert not jw.looks_like_job_link("https://careers.acme.com/benefits", c)
+    assert not jw.looks_like_job_link("https://other.com/jobs/123", c)
+    assert jw.title_from_url("https://x.com/jobs/R12345/Senior-Software-Engineer") == "Senior Software Engineer"
+    assert jw.title_from_url("https://x.com/job/software-engineer-ii/98765") == "software engineer ii"
+    assert jw.title_from_url("https://x.com/jobs/98765") == ""
+    html_ = '<iframe src="https://boards.greenhouse.io/embed/job_board?for=acme"></iframe><a href="https://boards.greenhouse.io/acme/jobs/1">x</a><a href="https://jobs.lever.co/other/1">y</a>'
+    assert jw.find_boards_in_html(html_)[0] == ("greenhouse", "acme")
+    assert jw.find_boards_in_html("<script>window.leverJobsOptions = {accountName: 'leverco', includeCss: true};</script> lever")[0] == ("lever", "leverco")
+    assert jw.clean_url("https://a.com/jobs/1?utm_source=x&id=5#top") == "https://a.com/jobs/1?id=5"
+
+def test_sitemap_parse():
+    idx = '<?xml version="1.0"?><sitemapindex><sitemap><loc>https://a.com/sitemap-jobs.xml</loc></sitemap><sitemap><loc>https://a.com/sitemap-blog.xml</loc></sitemap></sitemapindex>'
+    e = jw.sitemap_entries(idx)
+    assert e[0][0] == "index" and e[0][1].endswith("jobs.xml")
+    urls = '<urlset><url><loc>https://a.com/jobs/1-software-engineer</loc><lastmod>2026-11-20</lastmod></url><url><loc>https://a.com/about</loc></url></urlset>'
+    e = jw.sitemap_entries(urls)
+    assert e[0] == ("url", "https://a.com/jobs/1-software-engineer", jw.parse_date("2026-11-20"))
+
+class FakeResp:
+    def __init__(self, status, data): self.status_code, self._d, self.text = status, data, json.dumps(data)
+    def json(self): return self._d
+
+class FakeSession:
+    def __init__(self, resp): self.resp, self.calls = resp, []
+    def post(self, url, **kw): self.calls.append(("POST", url, kw)); return self.resp
+    def get(self, url, **kw): self.calls.append(("GET", url, kw)); return self.resp
+
+def test_search_page(monkeypatch):
+    if True:
+        fs = FakeSession(FakeResp(200, {"organic": [{"link": "https://jobs.lever.co/a/1", "title": "A &amp; B - SWE"}]}))
+        monkeypatch.setattr(discovery, "session", lambda: fs)
+        out = jw.search_page("serper", "k", "q", 2, "day", "ca")
+        assert out == [("https://jobs.lever.co/a/1", "A & B - SWE")]
+        assert fs.calls[0][2]["json"] == {"q": "q", "num": 10, "page": 2, "tbs": "qdr:d", "gl": "ca"}
+        assert fs.calls[0][2]["headers"]["X-API-KEY"] == "k"
+        fs = FakeSession(FakeResp(200, {"web": {"results": [{"url": "https://jobs.ashbyhq.com/x/1", "title": "t"}]}}))
+        monkeypatch.setattr(discovery, "session", lambda: fs)
+        assert jw.search_page("brave", "k", "q", 1, "week")[0][0].startswith("https://jobs.ashbyhq.com")
+        assert fs.calls[0][2]["params"]["freshness"] == "pw"
+        fs = FakeSession(FakeResp(200, {"organic_results": [{"link": "https://boards.greenhouse.io/z/jobs/1", "title": "t"}]}))
+        monkeypatch.setattr(discovery, "session", lambda: fs)
+        assert jw.search_page("serpapi", "k", "q", 3, "any")[0][0].endswith("/1")
+        assert fs.calls[0][2]["params"]["start"] == 20 and "tbs" not in fs.calls[0][2]["params"]
+        fs = FakeSession(FakeResp(200, {"error": "Google hasn't returned any results for this query."}))
+        monkeypatch.setattr(discovery, "session", lambda: fs)
+        assert jw.search_page("serpapi", "k", "q", 1, "day") == []
+        for code in (401, 429, 500):
+            monkeypatch.setattr(discovery, "session", lambda c=code: FakeSession(FakeResp(c, {"message": "x"})))
+            with pytest.raises(jw.SearchError):
+                jw.search_page("serper", "k", "q", 1, "day")
+
+def test_config_coercion():
+    tomllib = jw.tomllib
+    doc = tomllib.loads('''
+[jobs]
+titles = "React Developer"
+must_mention = []
+max_age_hours = "48"
+tittles = ["typo"]
+[search]
+enabled = "no"
+[places]
+[[places.region]]
+name = "Anywhere"
+match = "Canada"
+[advanced]
+parallel_requests = 4
+''')
+    cfg, unknown = jw._from_toml(doc)
+    assert cfg["titles_include"] == ["React Developer"] and cfg["require_stack_match"] is False
+    assert cfg["max_posted_age_hours"] == 48 and cfg["search"]["enabled"] is False
+    assert cfg["regions"] == [{"name": "Anywhere", "color": None, "match": ["Canada"]}]
+    assert cfg["parallel_requests"] == 4 and unknown == ["tittles in [jobs]"]
+    try:
+        jw._from_toml(tomllib.loads('[jobs]\nmax_age_hours = "soon"'))
+        assert False
+    except jw.ConfigError as e:
+        assert "max_age_hours in [jobs]" in str(e)
+
+
+
+def test_slug_variants_and_names():
+    assert jw.slug_variants("Jane (Jane App)") == ["jane", "janeapp", "jane-app"]
+    assert jw.slug_variants("Rose Rocket") == ["roserocket", "rose-rocket", "Rose Rocket"]
+    assert {"salesforce", "slack"} <= jw.name_keys("Slack (Salesforce)")
+    assert jw.guess_region("Burnaby, BC") == "Vancouver / BC"
+    assert jw.guess_region("San Francisco, CA") == "California"
+
+
+def test_run_lock_is_exclusive(tmp_path):
+    first, second = jw.RunLock(tmp_path / "x.lock"), jw.RunLock(tmp_path / "x.lock")
+    assert first.acquire()
+    assert not second.acquire()
+    with pytest.raises(jw.Busy):
+        with jw.RunLock(tmp_path / "x.lock"):
+            pass
+    first.release()
+    assert second.acquire()
+    second.release()
+
+
+def test_events_reach_listeners():
+    seen = []
+    listener = jw.on_event(lambda kind, data: seen.append((kind, data)))
+    try:
+        jw.emit("progress", done=1, total=2)
+    finally:
+        jw.off_event(listener)
+    jw.emit("progress", done=2, total=2)
+    assert seen == [("progress", {"done": 1, "total": 2})]

@@ -747,8 +747,9 @@ def main():
         elif args.credits:
             show_credits(cfg)
         else:
-            prepare(cfg, follow_ups=args.follow_ups)
-    except (OutreachError, jw.ConfigError) as exc:
+            with jw.RunLock():  # it updates the tracker, so never alongside a run
+                prepare(cfg, follow_ups=args.follow_ups)
+    except (OutreachError, jw.ConfigError, jw.Busy) as exc:
         log.error("%s", exc)
         sys.exit(1)
 

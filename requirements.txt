@@ -1,0 +1,6 @@
+requests>=2.28
+openpyxl>=3.1
+tomli>=2.0; python_version < "3.11"
+# Optional: stock metrics for company scores, and desktop pop-ups
+yfinance
+plyer
