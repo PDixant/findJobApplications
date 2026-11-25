@@ -14,7 +14,7 @@ by [Dixant Patel](https://github.com/PDixant)
 [![Design: Kanso](https://img.shields.io/badge/design-Kanso-111314)](docs/design/README.md)
 [![MIT license](https://img.shields.io/badge/license-MIT-437742)](LICENSE)
 
-[Get started](#get-started) · [What it does](#what-it-does) · [A look inside](#a-look-inside) · [Design](#designed-to-be-calm) · [Full guide](docs/GUIDE.md)
+[Get started](#get-started) · [What it does](#what-it-does) · [A look inside](#a-look-inside) · [Design](#designed-to-be-calm) · [Why I built this](#why-i-built-this) · [Full guide](docs/GUIDE.md)
 
 <img src="docs/screenshots/dashboard.png" alt="Today in Pathfinder: the number of open matches, how the last run went across every company, new matches from your last run and earlier in the day, and what to do next" width="900">
 
@@ -180,6 +180,20 @@ npm run build                    # writes jobwatcher/ui_dist; commit it with you
 More in the [developer notes](docs/GUIDE.md#for-developers).
 
 </details>
+
+## Why I built this
+
+I was job hunting, and the same thing kept happening: I'd find a role I was a good fit for, and it had already been up for days, with plenty of people ahead of me. The postings existed sooner. They were sitting on each company's own job board, and the big job sites just picked them up later.
+
+So I wrote a small Python script that checked those boards directly and dropped new software roles into a spreadsheet. I ran it at night before bed and again in the morning, and it worked well enough that friends started using it too. That changed what it needed to be. A script that only I could run became an app anyone could install, with their own settings, companies and search, kept separate from mine, and an update button so they get fixes without touching Git.
+
+It kept growing from the parts of job hunting I found tiring: deciding whether a role was worth the time, tailoring a resume for each one, remembering who I'd followed up with. Pathfinder is the tool I wanted while I was looking. It runs on your own computer, keeps your data there, and only does things when you ask.
+
+## About me
+
+I'm Dixant Patel, a full-stack software developer with about five years of experience, leaning towards frontend and UX. Most of my work is in React and TypeScript, with C#, ASP.NET and Node.js on the back end. I care about software that feels calm to use, which is why I also designed [Kanso](docs/design/README.md), the design language Pathfinder is built on.
+
+If Pathfinder helps you, or you'd like to talk about a role, I'd love to hear from you on [LinkedIn](https://www.linkedin.com/in/dixantpatel) or [GitHub](https://github.com/PDixant).
 
 ## License
 
