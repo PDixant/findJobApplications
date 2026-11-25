@@ -9,7 +9,7 @@ import { Confirm, ErrorNote, Icon, Skeleton, Tabs } from "../components/bits";
 import { toast } from "../live";
 import { hex, n } from "../format";
 import { go, useRoute } from "../router";
-import { applyTheme, currentChoice, type ThemeChoice } from "../theme";
+import { applyPaint, applyTheme, currentChoice, currentPaint, type PaintChoice, type ThemeChoice } from "../theme";
 import { ClaudeHelp, Connections, PhoneAlerts } from "./SettingsExtras";
 import { UpdatesPanel } from "../components/Update";
 
@@ -470,28 +470,66 @@ const THEME_CHOICES: { id: ThemeChoice; label: string; note: string }[] = [
   { id: "dark", label: "Dark", note: "Ink and soft light, whatever your computer is set to." },
 ];
 
+const PAINT_CHOICES: { id: PaintChoice; label: string; note: string }[] = [
+  { id: "screen", label: "By screen", note: "Kanso's own pairing: Structural blue for finding jobs, Nori green for your applications, ink in Settings." },
+  { id: "structural", label: "Structural", note: "Deep blue, steady and calm, on every screen." },
+  { id: "tiger-eye", label: "Tiger Eye", note: "Warm raw sienna, on every screen." },
+  { id: "infrared", label: "Infrared", note: "Carmine red, on every screen. Losses and errors keep their own red, with a sign or an icon." },
+  { id: "nori", label: "Nori", note: "Dusky green, on every screen." },
+  { id: "sumi", label: "Sumi", note: "Ink only, no colour at all." },
+];
+
+type AppearanceChoice = { theme: ThemeChoice; paint: PaintChoice };
+
 function Appearance() {
   const client = useQueryClient();
-  const appearance = useQuery({ queryKey: ["appearance"], queryFn: () => api<{ theme: ThemeChoice }>("appearance") });
-  const chosen = appearance.data?.theme ?? currentChoice();
-  async function pick(theme: ThemeChoice) {
-    applyTheme(theme);  // at once; saving follows
+  const appearance = useQuery({ queryKey: ["appearance"], queryFn: () => api<AppearanceChoice>("appearance") });
+  const theme = appearance.data?.theme ?? currentChoice();
+  const paint = appearance.data?.paint ?? currentPaint();
+  async function save(change: Partial<AppearanceChoice>) {
+    // shown at once; saving follows
+    if (change.theme) applyTheme(change.theme);
+    if (change.paint) applyPaint(change.paint);
     try {
-      client.setQueryData(["appearance"], await send<{ theme: ThemeChoice }>("appearance", "PUT", { theme }));
+      client.setQueryData(["appearance"], await send<AppearanceChoice>("appearance", "PUT", change));
     } catch (e) {
       toast(e instanceof Error ? e.message : "That didn't save. Try again.", "bad");
-      applyTheme(chosen);
+      applyTheme(theme);
+      applyPaint(paint);
     }
   }
   return (
     <section className="card settings-section" aria-labelledby="sec-appearance">
       <h2 id="sec-appearance">Appearance</h2>
       <p className="hint">Saved on this computer, and used every time Pathfinder opens.</p>
-      <div className="theme-choices" role="radiogroup" aria-label="Light or dark">
+
+      <h3 className="theme-group" id="appearance-mode">Light or dark</h3>
+      <div className="theme-choices" role="radiogroup" aria-labelledby="appearance-mode">
         {THEME_CHOICES.map((c) => (
-          <label key={c.id} className={`theme-choice ${chosen === c.id ? "is-on" : ""}`}>
-            <input type="radio" name="theme" value={c.id} checked={chosen === c.id} onChange={() => pick(c.id)} />
+          <label key={c.id} className={`theme-choice ${theme === c.id ? "is-on" : ""}`}>
+            <input type="radio" name="theme" value={c.id} checked={theme === c.id} onChange={() => save({ theme: c.id })} />
             <span className={`theme-swatch is-${c.id}`} aria-hidden="true" />
+            <span className="theme-text">
+              <span className="theme-label">{c.label}</span>
+              <span className="hint">{c.note}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+
+      <h3 className="theme-group" id="appearance-paint">Paint</h3>
+      <p className="hint">The one colour of light: the line under where you are, the focus ring, the corners of a chosen card. Each paint comes from the Kanso design language and works in light and dark.</p>
+      <div className="theme-choices paint-choices" role="radiogroup" aria-labelledby="appearance-paint">
+        {PAINT_CHOICES.map((c) => (
+          <label key={c.id} className={`theme-choice ${paint === c.id ? "is-on" : ""}`}>
+            <input type="radio" name="paint" value={c.id} checked={paint === c.id} onChange={() => save({ paint: c.id })} />
+            {c.id === "screen" ? (
+              <span className="paint-swatch is-screen" aria-hidden="true">
+                <span data-paint="structural" /><span data-paint="nori" /><span data-paint="sumi" />
+              </span>
+            ) : (
+              <span className="paint-swatch" data-paint={c.id} aria-hidden="true"><span /></span>
+            )}
             <span className="theme-text">
               <span className="theme-label">{c.label}</span>
               <span className="hint">{c.note}</span>

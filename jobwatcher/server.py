@@ -96,6 +96,8 @@ class Files:
 
 
 THEMES = ("system", "light", "dark")  # Settings, Appearance: follow the computer, or always light or dark
+# Settings, Appearance: the Kanso paint. "screen" keeps each screen's own paint; the rest use one everywhere.
+PAINTS = ("screen", "structural", "tiger-eye", "infrared", "nori", "sumi")
 AFTER_UPDATE_MODES = ("full", "since", "search")  # runs that can wait for an update to finish first
 
 
@@ -124,6 +126,16 @@ def theme_choice(cfg):
     except sqlite3.Error:
         return "system"
     return value if value in THEMES else "system"
+
+
+def paint_choice(cfg):
+    if cfg is None:
+        return "screen"
+    try:
+        value = meta_value(cfg, "paint", "screen")
+    except sqlite3.Error:
+        return "screen"
+    return value if value in PAINTS else "screen"
 
 
 def postings_db(cfg):
@@ -1199,15 +1211,23 @@ def create_app(token, dev=False, schedule=False):
     @app.get("/api/appearance")
     def appearance():
         cfg, _ = files.config()
-        return {"theme": theme_choice(cfg)}
+        return {"theme": theme_choice(cfg), "paint": paint_choice(cfg)}
 
     @app.put("/api/appearance")
     def set_appearance(body: dict = Body(...)):
-        theme = str(body.get("theme") or "")
-        if theme not in THEMES:
+        theme, paint = body.get("theme"), body.get("paint")
+        if theme is None and paint is None:
+            raise HTTPException(400, "Send a theme, a paint, or both.")
+        if theme is not None and theme not in THEMES:
             raise HTTPException(400, f"Pick one of: {', '.join(THEMES)}.")
-        set_meta_value(config_or_fail(), "theme", theme)
-        return {"theme": theme}
+        if paint is not None and paint not in PAINTS:
+            raise HTTPException(400, f"Pick one of: {', '.join(PAINTS)}.")
+        cfg = config_or_fail()
+        if theme is not None:
+            set_meta_value(cfg, "theme", theme)
+        if paint is not None:
+            set_meta_value(cfg, "paint", paint)
+        return {"theme": theme_choice(cfg), "paint": paint_choice(cfg)}
 
     @app.api_route("/api/{rest:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
     def unknown(rest: str):
@@ -1226,7 +1246,9 @@ def create_app(token, dev=False, schedule=False):
             return FileResponse(target, headers={"Cache-Control": cache})
         # The page arrives already in your chosen theme, so it never flashes the other one first.
         page = (UI_DIR / "index.html").read_text(encoding="utf-8")
-        page = page.replace("<html ", f'<html data-theme-choice="{theme_choice(files.config()[0])}" ', 1)
+        cfg = files.config()[0]
+        page = page.replace("<html ", f'<html data-theme-choice="{theme_choice(cfg)}" '
+                                      f'data-paint-choice="{paint_choice(cfg)}" ', 1)
         return HTMLResponse(page, headers={"Cache-Control": "no-cache"})
 
     return app

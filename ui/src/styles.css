@@ -74,6 +74,12 @@
   color-scheme: light;
 }
 
+/* Structural, named, so a swatch or screen inside another paint can wear it again */
+[data-paint="structural"] { --paint: #1C4286; --on-paint: #FFFFFF; --paint-text: #1C4286; --paint-soft: #F0F0EC; --light: #1C4286; }
+/* Tiger Eye (Wada No. 33, 243): chosen in Settings, Appearance */
+[data-paint="tiger-eye"] { --paint: #BB7125; --on-paint: #111314; --paint-text: #AE5224; --paint-soft: #F8F0E2; --light: #BB7125; }
+/* Infrared (Wada No. 221): chosen in Settings, Appearance. Never on numbers: red means loss */
+[data-paint="infrared"] { --paint: #A62C37; --on-paint: #FFFFFF; --paint-text: #A62C37; --paint-soft: #F7EDE5; --light: #A62C37; }
 /* Nori (Wada No. 94): Pipeline and Outreach, the long game */
 [data-paint="nori"] { --paint: #004F46; --on-paint: #EBD3A2; --paint-text: #004F46; --paint-soft: #EBEFE6; --light: #004F46; }
 /* Sumi (No. 52): Settings, a document-like screen, in ink only */
@@ -123,6 +129,9 @@
     --tick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath d='M5 10.2 8.4 13.5 15 6.8' fill='none' stroke='%23111314' stroke-width='1.8' stroke-linejoin='miter'/%3E%3C/svg%3E");
     color-scheme: dark;
   }
+  :where([data-theme="dark"]) [data-paint="structural"] { --paint: #1C4286; --on-paint: #FFFFFF; --paint-text: #97ACC8; --paint-soft: #051230; --light: #97ACC8; }
+  :where([data-theme="dark"]) [data-paint="tiger-eye"] { --paint: #BB7125; --on-paint: #111314; --paint-text: #EEB480; --paint-soft: #111314; --light: #EEB480; }
+  :where([data-theme="dark"]) [data-paint="infrared"] { --paint: #A62C37; --on-paint: #FFFFFF; --paint-text: #F58E84; --paint-soft: #111314; --light: #F58E84; }
   :where([data-theme="dark"]) [data-paint="nori"] { --paint: #004F46; --on-paint: #EBD3A2; --paint-text: #EBD3A2; --paint-soft: #112F2C; --light: #EBD3A2; }
   :where([data-theme="dark"]) [data-paint="sumi"] { --paint: #FCFAF0; --on-paint: #111314; --paint-text: #FCFAF0; --paint-soft: #242E33; --light: #FCFAF0; }
 
@@ -740,6 +749,7 @@ table.data { width: 100%; border-collapse: collapse; table-layout: fixed; font: 
 .week { height: 100%; display: flex; align-items: flex-end; justify-content: center; cursor: default; }
 .week-bar { width: 100%; max-width: 20px; background: var(--paint); transition: opacity var(--quick) var(--glide); }
 /* dark */ :where([data-theme="dark"]) .week-bar { background: var(--light); }
+[data-paint="infrared"] .week-bar { background: var(--text-secondary); } /* counts are never drawn in red */
 .week-bars:hover .week-bar { opacity: 0.45; }
 .week-bars .week:hover .week-bar { opacity: 1; }
 .week-axis { display: flex; justify-content: space-between; margin-top: var(--s3); font: 400 13px/16px var(--font-sans); color: var(--text-tertiary); }
@@ -747,6 +757,7 @@ table.data { width: 100%; border-collapse: collapse; table-layout: fixed; font: 
 
 .board { display: grid; grid-template-columns: repeat(6, minmax(150px, 1fr)); gap: var(--s3); align-items: start; overflow-x: auto; padding: var(--s1) var(--s1) var(--s4); }
 .board-col { min-width: 0; min-height: 200px; padding: var(--s3); border-radius: var(--r-m); background: var(--surface-sunken); transition: box-shadow var(--quick) var(--glide); }
+/* dark */ :where([data-theme="dark"]) .board-col { background: var(--surface); }
 .board-col.is-over { box-shadow: 0 0 0 2px var(--light); }
 .col-head { display: flex; justify-content: space-between; align-items: baseline; padding: var(--s1) var(--s2) 0; }
 .col-head h2 { font: 500 14px/20px var(--font-sans); }
@@ -754,11 +765,21 @@ table.data { width: 100%; border-collapse: collapse; table-layout: fixed; font: 
 .col-help { margin: var(--s1) var(--s2) var(--s4); font: 400 13px/16px var(--font-sans); color: var(--text-tertiary); }
 .cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s3); }
 .pcard {
-  position: relative; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: var(--s2); padding: var(--s4); border-radius: var(--r-m); background: var(--surface); box-shadow: var(--edge);
-  font: 400 14px/20px var(--font-sans); cursor: grab; transition: opacity var(--quick) var(--glide);
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: var(--s2); padding: var(--s4) var(--s6) var(--s4) var(--s4); border-radius: var(--r-m); background: var(--surface); box-shadow: var(--edge);
+  font: 400 14px/20px var(--font-sans); cursor: grab; transition: opacity var(--quick) var(--glide), box-shadow var(--quick) var(--glide);
 }
-/* dark */ :where([data-theme="dark"]) .pcard { background: var(--surface-raised); }
+/* dark: a clear step up from the column, raised with the edge highlight */
+/* dark */ :where([data-theme="dark"]) .pcard { background: var(--surface-highlight); }
+.pcard:hover { box-shadow: 0 0 0 1px var(--line-strong); }
+/* dark */ :where([data-theme="dark"]) .pcard:hover { box-shadow: var(--edge), 0 0 0 1px var(--line-strong); }
+.pcard:active { cursor: grabbing; }
 .pcard.is-dragging { opacity: 0.4; }
+/* the grip: six dots in the top corner say the card can be picked up */
+.pcard-grip {
+  position: absolute; top: var(--s4); right: var(--s3); width: 8px; height: 14px; color: var(--text-tertiary); pointer-events: none;
+  background: radial-gradient(circle, currentColor 1.1px, transparent 1.5px) 0 0 / 4px 5px; transition: color var(--quick) var(--glide);
+}
+.pcard:hover .pcard-grip { color: var(--text); }
 .pcard a { font-weight: 500; text-decoration: none; }
 .pcard a:hover { text-decoration: underline; text-decoration-color: var(--light); }
 .pcard-company { font: 400 13px/16px var(--font-sans); color: var(--text-tertiary); }
@@ -1032,6 +1053,15 @@ code { font-family: var(--font-mono); font-size: 0.85em; }
 .theme-swatch.is-light { background: linear-gradient(135deg, #FDFBF2 0 60%, #111314 60% 64%, #FDFBF2 64%); }
 .theme-swatch.is-dark { background: linear-gradient(135deg, #111314 0 60%, #FCFAF0 60% 64%, #111314 64%); }
 .theme-swatch.is-system { background: linear-gradient(90deg, #FDFBF2 0 50%, #111314 50%); }
+.theme-group { font: 500 16px/22px var(--font-sans); margin-top: var(--s7); }
+.theme-group + .hint { margin-top: var(--s1); }
+.paint-choices .theme-choice.is-on { border-color: var(--light); }
+/* each paint shown as it appears in the app: as light, a 20 x 2 active line and a jewel */
+.paint-swatch { display: flex; align-items: center; justify-content: center; gap: var(--s2); width: 48px; height: 32px; border-radius: var(--r-s); border: 1px solid var(--line-hair); background: var(--canvas); }
+.paint-swatch > span { position: relative; width: 20px; height: 2px; border-radius: 1px; background: var(--light); }
+.paint-swatch:not(.is-screen) > span::after { content: ""; position: absolute; right: -10px; top: -2px; width: 6px; height: 6px; border-radius: 50%; background: var(--light); }
+.paint-swatch.is-screen { flex-direction: column; gap: 4px; }
+.paint-swatch.is-screen > span { width: 20px; }
 
 /* Run now's update question */
 .update-ask .versions { margin-top: var(--s5); }

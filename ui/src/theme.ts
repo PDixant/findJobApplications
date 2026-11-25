@@ -24,3 +24,25 @@ export function applyTheme(choice: ThemeChoice) {
 media?.addEventListener?.("change", () => {
   if (currentChoice() === "system") applyTheme("system");
 });
+
+// The Kanso paint: "screen" lets each screen wear its own (Structural by default, Nori on Pipeline and
+// Outreach, Sumi in Settings); any other choice wears that one paint on every screen. Still one paint
+// per screen either way. The page arrives marked with it (data-paint-choice on <html>).
+export type PaintChoice = "screen" | "structural" | "tiger-eye" | "infrared" | "nori" | "sumi";
+const PAINTS: PaintChoice[] = ["screen", "structural", "tiger-eye", "infrared", "nori", "sumi"];
+const listeners = new Set<() => void>();
+
+export function currentPaint(): PaintChoice {
+  const p = document.documentElement.getAttribute("data-paint-choice") as PaintChoice | null;
+  return p && PAINTS.includes(p) ? p : "screen";
+}
+
+export function applyPaint(choice: PaintChoice) {
+  document.documentElement.setAttribute("data-paint-choice", choice);
+  listeners.forEach((l) => l());
+}
+
+export function onPaintChange(listener: () => void) {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+}

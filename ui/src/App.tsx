@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, TOKEN } from "./api";
 import { External, Icon, Logo } from "./components/bits";
@@ -6,7 +6,7 @@ import { APP_NAME, AUTHOR, REPO_URL } from "./brand";
 import { Welcome } from "./components/Welcome";
 import { RunControls } from "./components/RunControls";
 import { UpdateBeforeRun, UpdateNotice } from "./components/Update";
-import { applyTheme, type ThemeChoice } from "./theme";
+import { applyPaint, applyTheme, currentPaint, onPaintChange, type PaintChoice, type ThemeChoice } from "./theme";
 import { n } from "./format";
 import { connect, dismissToast, setRun, useLive } from "./live";
 import { useCompanies, useMeta, useSummary } from "./queries";
@@ -20,6 +20,7 @@ import { Outreach, useOutreach } from "./screens/Outreach";
 import { Pipeline, usePipeline } from "./screens/Pipeline";
 
 // One paint per screen. Structural is the default; the application journey wears Nori; Settings is ink.
+// A paint chosen in Settings, Appearance replaces this and is worn on every screen.
 const PAINT: Partial<Record<Screen, string>> = { pipeline: "nori", outreach: "nori", settings: "sumi" };
 const TITLES: Record<Screen, string> = {
   dashboard: "Today", jobs: "Jobs", postings: "Jobs", pipeline: "Pipeline", outreach: "Outreach",
@@ -30,6 +31,7 @@ type NavItem = { screen: Screen; label: string; count?: number; also?: Screen };
 
 export function App() {
   const route = useRoute();
+  const paint = useSyncExternalStore(onPaintChange, currentPaint);
   const client = useQueryClient();
   const live = useLive();
   const summary = useSummary();
@@ -47,9 +49,9 @@ export function App() {
   }, []);
 
   // Your light or dark choice (the page usually arrives with it already; this covers the dev server).
-  const appearance = useQuery({ queryKey: ["appearance"], queryFn: () => api<{ theme: ThemeChoice }>("appearance") });
+  const appearance = useQuery({ queryKey: ["appearance"], queryFn: () => api<{ theme: ThemeChoice; paint: PaintChoice }>("appearance") });
   useEffect(() => {
-    if (appearance.data) applyTheme(appearance.data.theme);
+    if (appearance.data) { applyTheme(appearance.data.theme); applyPaint(appearance.data.paint ?? "screen"); }
   }, [appearance.data]);
 
   // Take the run state from the server on first load (a run may already be going).
@@ -105,7 +107,7 @@ export function App() {
   const running = live.run?.status === "running";
 
   return (
-    <div className="shell" data-paint={PAINT[route.screen]}>
+    <div className="shell" data-paint={paint === "screen" ? PAINT[route.screen] : paint}>
       <aside className="sidenav">
         <div className="brand">
           <Logo size={32} lit={running || busyElsewhere} />

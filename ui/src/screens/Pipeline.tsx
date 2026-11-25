@@ -88,8 +88,10 @@ export function Pipeline() {
               <ul className="cards">
                 {list.slice(0, limit).map((j) => (
                   <li key={j.key} className={`pcard ${dragging === j.key ? "is-dragging" : ""}`} draggable
+                    title="Drag to another column, or pick from the menu"
                     onDragStart={(e) => { e.dataTransfer.setData("text/plain", j.key); setDragging(j.key); }}
                     onDragEnd={() => { setDragging(null); setOver(null); }}>
+                    <span className="pcard-grip" aria-hidden="true" />
                     <External href={j.url}>{j.title}</External>
                     <span className="pcard-company">{j.company}</span>
                     <div className="pcard-foot">

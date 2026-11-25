@@ -542,14 +542,19 @@ def test_schedule_setup_and_updates(client, monkeypatch, tmp_path):
     assert client.get("/api/system/old-tasks").json()["tasks"] == []
 
 
-def test_light_or_dark(client):
-    assert client.get("/api/appearance").json() == {"theme": "system"}
+def test_light_or_dark_and_paint(client):
+    assert client.get("/api/appearance").json() == {"theme": "system", "paint": "screen"}
     assert 'data-theme-choice="system"' in client.get("/").text
-    assert client.put("/api/appearance", json={"theme": "dark"}).json() == {"theme": "dark"}
+    assert client.put("/api/appearance", json={"theme": "dark"}).json() == {"theme": "dark", "paint": "screen"}
     page = client.get("/jobs").text  # every screen's page arrives already dark, with no flash of light
     assert 'data-theme-choice="dark"' in page and "prefers-color-scheme" in page
     assert client.put("/api/appearance", json={"theme": "purple"}).status_code == 400
-    assert client.put("/api/appearance", json={"theme": "system"}).json() == {"theme": "system"}
+    # the paint is saved on its own, and the page arrives already wearing it
+    assert client.put("/api/appearance", json={"paint": "tiger-eye"}).json() == {"theme": "dark", "paint": "tiger-eye"}
+    assert 'data-paint-choice="tiger-eye"' in client.get("/").text
+    assert client.put("/api/appearance", json={"paint": "chartreuse"}).status_code == 400
+    assert client.put("/api/appearance", json={}).status_code == 400
+    assert client.put("/api/appearance", json={"theme": "system", "paint": "screen"}).json() == {"theme": "system", "paint": "screen"}
 
 
 def test_signals_fit_tailor_and_pipeline(client, monkeypatch):
