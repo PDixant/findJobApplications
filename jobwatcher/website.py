@@ -12,9 +12,10 @@ _PAGES_LOCK = threading.Lock()  # guards the cache of job pages already read
 
 
 def get_page(url, accept="text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-             max_bytes=5_000_000, retries=2):
+             max_bytes=MAX_PAGE_BYTES, retries=2):
     """(final_url, text) for an ordinary web page, or None if it cannot be read.
-    Shares the polite per-site spacing and 429 handling used for the job boards."""
+    Shares the polite per-site spacing and 429 handling used for the job boards.
+    Raises BlockedAddress for an address that isn't a public website (see safeweb.py)."""
     site = HostLimiter.site(url)
     for attempt in range(retries):
         last = attempt == retries - 1
@@ -44,7 +45,7 @@ def get_page(url, accept="text/html,application/xhtml+xml,application/xml;q=0.9,
             for chunk in r.iter_content(65536):
                 body.extend(chunk)
                 if len(body) > max_bytes:
-                    break
+                    break  # a page this big is cut short; what was read is still used
             r.close()
         except requests.RequestException:
             if last:
@@ -54,8 +55,8 @@ def get_page(url, accept="text/html,application/xhtml+xml,application/xml;q=0.9,
         raw = bytes(body)
         if url.lower().endswith(".gz") or raw[:2] == b"\x1f\x8b":
             try:
-                raw = gzip.decompress(raw)
-            except OSError:
+                raw = gunzip_capped(raw, max_bytes * 4)
+            except (OSError, zlib.error, TooBig):
                 return None
         charset = re.search(r"charset=([\w-]+)", r.headers.get("Content-Type", ""), re.I)
         try:
@@ -73,9 +74,12 @@ def robots_for(url):
     with _ROBOTS_LOCK:
         if origin in _ROBOTS:
             return _ROBOTS[origin]
-    got = get_page(origin + "/robots.txt", accept="text/plain,*/*", max_bytes=500_000)
     rules = RobotFileParser()
-    rules.parse(got[1].splitlines() if got and "<html" not in got[1][:500].lower() else [])
+    try:
+        got = get_page(origin + "/robots.txt", accept="text/plain,*/*", max_bytes=500_000)
+        rules.parse(got[1].splitlines() if got and "<html" not in got[1][:500].lower() else [])
+    except BlockedAddress:
+        rules.parse(["User-agent: *", "Disallow: /"])  # not a public website: nothing there is read
     with _ROBOTS_LOCK:
         _ROBOTS[origin] = rules
     return rules
@@ -321,7 +325,11 @@ def sitemap_job_links(careers_url, robots, max_files=3, max_urls=5000):
         url = todo.pop(0)
         if not robots.can_fetch(USER_AGENT, url):
             continue
-        got = get_page(url, accept="application/xml,text/xml,*/*", max_bytes=10_000_000)
+        try:
+            got = get_page(url, accept="application/xml,text/xml,*/*", max_bytes=10_000_000)
+        except BlockedAddress as exc:
+            log.info("Sitemap skipped: %s", exc)
+            continue
         read += 1
         if not got:
             continue
@@ -345,6 +353,9 @@ def fetch_website(url, host=None, auto=False):
     careers = url.strip()
     if "://" not in careers:
         careers = "https://" + careers
+    problem = address_problem(careers)
+    if problem:
+        raise BlockedAddress(f"Careers page not read: {problem}")
     if not robots_allow(careers):
         return result(careers, [], complete=False,
                       note="The site's robots.txt asks automated tools not to read this page, so it is skipped.")
@@ -425,15 +436,20 @@ def fetch_website(url, host=None, auto=False):
         to_read.append((mod or dt.datetime.min.replace(tzinfo=dt.timezone.utc), link, key, title))
 
     to_read.sort(reverse=True)  # newest first when the sitemap says when pages changed
-    read = no_data = 0
+    read = no_data = left = 0
     for _, link, key, title in to_read:
         if read >= SETTINGS["site_pages_per_run"]:
             jobs[key] = {"key": key, "title": title, "posted": None, "locations": [], "url": link,
                          "text": None}
+            left += 1
             continue
         if not robots_allow(link):
             continue
-        got = get_page(link)
+        try:
+            got = get_page(link)
+        except BlockedAddress as exc:
+            log.info("Job page skipped: %s", exc)
+            continue
         read += 1
         found = jobs_on_page(parse_page(got[1]), got[0]) if got else []
         if found:
@@ -460,10 +476,11 @@ def fetch_website(url, host=None, auto=False):
     else:
         note = (f"Careers website{' (sitemap)' if used_sitemap else ''}: {len(jobs)} relevant job "
                 f"link{'s' if len(jobs) != 1 else ''}, {read} page{'s' if read != 1 else ''} read this run"
-                + (f", {no_data} without job details" if no_data else "") + ".")
+                + (f", {no_data} without job details" if no_data else "")
+                + (f", {left} more left for the next runs" if left else "") + ".")
     out = [{k: j.get(k) for k in ("key", "title", "locations", "url", "posted", "text")}
            for j in jobs.values()]
-    return result(careers, out, complete=False, note=note)
+    return result(careers, out, complete=False, note=note, partial=left > 0)
 
 
 

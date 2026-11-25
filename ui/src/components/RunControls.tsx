@@ -8,7 +8,7 @@ export const PHASES: Record<string, string> = {
   starting: "Starting",
   search: "Searching the web for new companies",
   career_pages: "Looking up careers pages",
-  metrics: "Updating company scores",
+  metrics: "Updating company signals",
   boards: "Reading job boards",
   postings: "Saving the postings",
   filter: "Finding your matches",
@@ -21,7 +21,7 @@ export const PHASES: Record<string, string> = {
 const STEP: Record<string, { doing: string; done: string }> = {
   search: { doing: "Searching the web for new companies", done: "Searched the web for new companies" },
   career_pages: { doing: "Looking up careers pages", done: "Looked up careers pages" },
-  metrics: { doing: "Updating company scores", done: "Updated company scores" },
+  metrics: { doing: "Updating company signals", done: "Updated company signals" },
   boards: { doing: "Reading job boards", done: "Checked the job boards" },
   postings: { doing: "Saving the postings the boards listed", done: "Saved the postings" },
   filter: { doing: "Finding your matches", done: "Found your matches" },

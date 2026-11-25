@@ -20,7 +20,7 @@ def main():
     parser.add_argument("--verify", action="store_true",
                         help="re-check every company in your list, including ones marked not_found")
     parser.add_argument("--refresh-metrics", action="store_true",
-                        help="refresh stock metrics and company scores now, then exit (needs yfinance)")
+                        help="refresh stock metrics and company signals now, then exit (needs yfinance)")
     parser.add_argument("--refilter", action="store_true",
                         help="re-run your filters on the saved postings only; makes no requests")
     parser.add_argument("--show-config", action="store_true",
@@ -64,7 +64,7 @@ def main():
         except Busy as exc:
             log.error("%s", exc)
             sys.exit(1)
-        log.info("Stock metrics and company scores refreshed. Run the watcher to see them in the tracker.")
+        log.info("Stock metrics and company signals refreshed. Run the watcher to see them in the tracker.")
         return
 
     if args.show_config or args.add or args.import_files:

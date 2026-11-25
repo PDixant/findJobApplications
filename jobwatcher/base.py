@@ -35,6 +35,9 @@ try:
 except ImportError as exc:  # pragma: no cover
     sys.exit(f"Missing dependency: {exc.name}\nRun: pip install requests openpyxl")
 
+from .safeweb import (MAX_JSON_BYTES, MAX_PAGE_BYTES, BlockedAddress, TooBig, address_problem, gunzip_capped,  # noqa: F401
+                      guard, read_capped)
+
 try:
     import tomllib  # Python 3.11+
 except ImportError:  # pragma: no cover
@@ -149,9 +152,9 @@ _local = threading.local()
 
 
 def session():
-    """One HTTP session per worker thread."""
+    """One HTTP session per worker thread. It reads only public websites (see safeweb.py)."""
     if not hasattr(_local, "s"):
-        s = requests.Session()
+        s = guard(requests.Session())
         s.headers.update({"User-Agent": USER_AGENT,
                           "Accept": "application/json", "Accept-Language": "en-US"})
         _local.s = s
@@ -320,15 +323,16 @@ def _request(method, url, params=None, body=None, retries=3):
         LIMITER.wait(site)
         try:
             if method == "POST":
-                r = session().post(url, json=body, timeout=25)
+                r = session().post(url, json=body, timeout=25, stream=True)
             else:
-                r = session().get(url, params=params, timeout=25)
+                r = session().get(url, params=params, timeout=25, stream=True)
         except requests.RequestException:
             if last:
                 raise
             time.sleep(2)
             continue
         if r.status_code == 429:
+            r.close()
             LIMITER.cool_down(site, retry_after(r))  # every thread holds off this site
             LIMITER.refused(site)
             if last:
@@ -336,18 +340,26 @@ def _request(method, url, params=None, body=None, retries=3):
             continue
         LIMITER.accepted(site)
         if r.status_code >= 500:
+            r.close()
             if last:
                 r.raise_for_status()
             time.sleep(5)
             continue
         if r.status_code >= 400:
+            r.close()
             return None
         if "json" not in r.headers.get("Content-Type", ""):
+            r.close()
             if last:
                 return None
             time.sleep(2)
             continue
-        return r.json()
+        try:
+            return json.loads(read_capped(r, MAX_JSON_BYTES))
+        except TooBig as exc:
+            raise requests.RequestException(str(exc)) from None
+        except ValueError:
+            return None
     return None
 
 
@@ -359,8 +371,10 @@ def post_json(url, body, retries=3):
     return _request("POST", url, body=body, retries=retries)
 
 
-def result(slug, jobs, host=None, complete=True, note=""):
-    return {"slug": slug, "jobs": jobs, "host": host, "complete": complete, "note": note}
+def result(slug, jobs, host=None, complete=True, note="", partial=False):
+    """What reading one board found. partial: some of its jobs could have been missed this run (a list
+    not in date order, or careers pages left for the next run); the note says why."""
+    return {"slug": slug, "jobs": jobs, "host": host, "complete": complete, "note": note, "partial": partial}
 
 
 def scan_recent(fetch_page, age_days, key_of, page_size, tolerance=0.05, max_pages=None):

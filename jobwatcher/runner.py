@@ -197,7 +197,8 @@ def fetch_all(cfg, state, store, rows, rules, now, max_age, window_start, verify
         company = row["company"]
         prev = state["companies"].get(company, {})
         record = {"checked": now.isoformat(), "priority": priority_of(row),
-                  "region": row.get("region", ""), "careers_url": row.get("careers_url", "")}
+                  "region": row.get("region", ""), "careers_url": row.get("careers_url", ""),
+                  "last_ok": prev.get("last_ok")}  # checked = the last attempt; last_ok = the last good read
         if out.get("deferred"):
             record.update({k: prev[k] for k in ("provider", "slug", "open") if k in prev})
             record.update(result="RETRY", error=f"Paused: {out['deferred']}. Retried next run.")
@@ -240,14 +241,15 @@ def fetch_all(cfg, state, store, rows, rules, now, max_age, window_start, verify
         stats["details"] += out["details"]
         nothing_read = provider == "website" and not out["postings"]
         record.update(result="NO JOBS READ" if nothing_read else "OK", provider=provider, slug=slug,
-                      open=len(out["postings"]), error=res.get("note", ""))
+                      open=len(out["postings"]), error=res.get("note", ""), partial=bool(res.get("partial")),
+                      last_ok=now.isoformat())
         state["companies"][company] = record
     return csv_dirty, stats
 
 
 RUN_LABELS = {"full": "Checked every company", "refilter": "Re-filtered saved postings",
               "since": "Checked every company, listed since last check", "search": "Searched the web, checked every company",
-              "career_pages": "Looked up careers pages", "check": "Checked one company", "scores": "Refreshed company scores"}
+              "career_pages": "Looked up careers pages", "check": "Checked one company", "scores": "Refreshed company signals"}
 
 
 def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, offline=False,
@@ -295,7 +297,7 @@ def _try(fn, *args):
 
 
 def refresh_scores(cfg, source="app"):
-    """Refresh stock metrics and company scores now (the app's Refresh scores, --refresh-metrics)."""
+    """Refresh stock metrics and company signals now (the app's Refresh signals, --refresh-metrics)."""
     lock = RunLock()
     if not lock.acquire():
         emit("run_skipped", reason="busy")

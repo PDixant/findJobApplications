@@ -43,7 +43,7 @@ RUN_MODES = {
     "search": "Search the web, then check every company",
     "career_pages": "Find careers pages for companies with no board",
     "check": "Check one company",
-    "scores": "Refresh company scores",
+    "scores": "Refresh company signals",
 }
 
 
@@ -587,6 +587,8 @@ def create_app(token, dev=False, schedule=False):
         cfg = config_or_fail()
         if not os.environ.get("ANTHROPIC_API_KEY"):
             raise HTTPException(400, "Add your Anthropic API key in Settings, under Keys.")
+        if not ai.consented(cfg):
+            raise HTTPException(400, ai.CONSENT_NEEDED)
         keys = [k for k, j in files.jobs(cfg).items() if j.get("open") and not j.get("fit")]
         left = max(0, int(cfg["ai"]["monthly_limit"]) - ai.used_this_month(cfg)) if int(cfg["ai"]["monthly_limit"]) else len(keys)
         keys = keys[:left]
@@ -635,7 +637,14 @@ def create_app(token, dev=False, schedule=False):
                 "resume_tex": tex.name, "resume_tex_found": tex.exists(), "latex": name,
                 "rules_found": (BASE / a["resume_rules"]).exists(),
                 "unscored": sum(1 for j in jobs_.values() if j.get("open") and not j.get("fit")),
-                "scoring": bool(runs.scoring and runs.scoring.is_alive())}
+                "scoring": bool(runs.scoring and runs.scoring.is_alive()), "consented": ai.consented(cfg)}
+
+    @app.post("/api/ai/consent")
+    def ai_consent():
+        """You've read what goes to Claude and agreed; asked once, before the first request."""
+        cfg = config_or_fail()
+        ai.give_consent(cfg)
+        return {"consented": ai.consented(cfg)}
 
     @app.get("/api/connections")
     def connections():
@@ -742,7 +751,7 @@ def create_app(token, dev=False, schedule=False):
             pending.setdefault(name, {}).update(fields)
         keep = ("priority", "region", "company", "score", "tier", "type", "ticker", "stage", "board", "slug",
                 "careers_url", "domain", "ats", "hubs", "status", "verified", "market_cap_b", "stock_12m_pct",
-                "revenue_growth_pct", "notes")
+                "revenue_growth_pct", "profit_margin_pct", "last_raise", "layoffs_12m", "metrics_updated", "notes")
         out = []
         for r in files.company_rows(cfg):
             if r["company"] in pending:
@@ -751,7 +760,8 @@ def create_app(token, dev=False, schedule=False):
             c = checked.get(r["company"], {})
             out.append({**{k: r.get(k, "") for k in keep}, "enabled": is_enabled(r),
                         "result": c.get("result", "" if is_enabled(r) else "OFF"), "why": c.get("error", ""),
-                        "checked": c.get("checked"), "found_on": c.get("provider") or "",
+                        "checked": c.get("checked"), "last_ok": c.get("last_ok"), "partial": bool(c.get("partial")),
+                        "found_on": c.get("provider") or "",
                         "found_slug": c.get("slug") or "", "open": c.get("open"), "matches": c.get("matches", 0),
                         "pending": r["company"] in pending, "from_config": r.get("region") == "From config file"})
         return out
@@ -886,12 +896,13 @@ def create_app(token, dev=False, schedule=False):
     def get_keys():
         cfg, _ = files.config()
         provider = ((cfg or {}).get("search") or {}).get("provider", "serper")
-        return {"store": keystore.store_available(), "search_provider": provider, "keys": keystore.status()}
+        return {"store": keystore.store_available(), "store_name": keystore.store_name(), "search_provider": provider,
+                "keys": keystore.status()}
 
     @app.put("/api/keys/{name}")
     def put_key(name: str, body: dict = Body(...)):
         try:
-            where = keystore.save_key(name, str(body.get("value") or ""))
+            where = keystore.save_key(name, str(body.get("value") or ""), plain_file_ok=bool(body.get("plain_file_ok")))
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from None
         return {"saved": where, "keys": keystore.status()}
@@ -1123,7 +1134,8 @@ def create_app(token, dev=False, schedule=False):
             raise HTTPException(400, str(exc)) from None
         close = getattr(app.state, "close_for_restart", None)
         if close:
-            app.state.restart_after_close = True
+            # The installer reopens the app itself once the new version is in; anything else reopens here.
+            app.state.restart_after_close = not result.get("installer")
             threading.Timer(1.5, close).start()  # after this answer reaches the window
         hub.publish("updated", {"to": result["to"]})
         return {**result, "restart": bool(close)}

@@ -1,0 +1,5 @@
+# Optional extras, the same as pip install ".[extras]":
+#   yfinance  stock metrics behind the company signal (Companies screen)
+#   plyer     desktop pop-ups when a run finds new matches
+yfinance
+plyer

@@ -1,4 +1,4 @@
-/* Pathfinder, drawn in Kanso (design language v1.0).
+/* Pathfinder, drawn in Kanso (design language v1.0, by Dixant Patel).
    Body: warm paper and ink. Paint: one Wada combination per screen, shown as light (the active line,
    the focus ring, the L-bracket), never as body colour. Structural is the default; Pipeline and
    Outreach wear Nori; Settings is Sumi (ink only). Every value below is a Kanso token. */
@@ -603,6 +603,10 @@ table.data { width: 100%; border-collapse: collapse; table-layout: fixed; font: 
 @media (prefers-color-scheme: dark) { .modal { background: var(--surface-raised); } }
 .modal h2 { font: 400 32px/38px var(--font-display); margin-bottom: var(--s4); }
 .modal p { color: var(--text-secondary); }
+.modal p + p { margin-top: var(--s4); }
+.consent-list { margin: var(--s4) 0 var(--s5); padding-left: var(--s5); display: grid; gap: var(--s2); color: var(--text); }
+.consent-list li { list-style: disc; }
+.modal code, .consent-list code { font: 400 14px/20px var(--font-mono); }
 
 /* a deliberate second step for things that can't be undone */
 .confirm { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s4); padding: var(--s4) var(--s5); border-radius: var(--r-m); background: var(--surface-sunken); font: 400 14px/20px var(--font-sans); }

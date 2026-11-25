@@ -1,6 +1,8 @@
+# What Pathfinder needs to read job boards and keep your tracker. pyproject.toml is the source of
+# truth; these files mirror it for people who install with pip -r.
+#   requirements-app.txt     the desktop app (what "Install Pathfinder" sets up)
+#   requirements-extras.txt  optional: stock metrics for company signals, and desktop pop-ups
+#   requirements-dev.txt     tests and checks
 requests>=2.28
 openpyxl>=3.1
 tomli>=2.0; python_version < "3.11"
-# Optional: stock metrics for company scores, and desktop pop-ups
-yfinance
-plyer

@@ -62,3 +62,4 @@ companies.csv.old
 # Left by the Update button: which commit a downloaded folder has, and files mid-swap
 .jobwatcher-version
 *.updating
+packaging/version_info.txt

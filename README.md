@@ -6,7 +6,7 @@
 
 by [Dixant Patel](https://github.com/PDixant)
 
-**Catch software jobs the hour they're posted, and know which ones are worth your time.**
+**Find new software roles sooner, straight from companies' own job boards, and know which ones are worth your time.**
 
 [![tests](https://github.com/PDixant/findJobApplications/actions/workflows/tests.yml/badge.svg)](https://github.com/PDixant/findJobApplications/actions/workflows/tests.yml)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-1C4286)
@@ -14,13 +14,13 @@ by [Dixant Patel](https://github.com/PDixant)
 [![Design: Kanso](https://img.shields.io/badge/design-Kanso-111314)](docs/design/README.md)
 [![MIT license](https://img.shields.io/badge/license-MIT-437742)](LICENSE)
 
-[Get started](#get-started) · [What it does](#what-it-does) · [A look inside](#a-look-inside) · [Design](#designed-to-be-calm) · [Full guide](docs/GUIDE.md)
+[Download](#on-windows-download-it) · [What it does](#what-it-does) · [A look inside](#a-look-inside) · [Design](#designed-to-be-calm) · [Full guide](docs/GUIDE.md)
 
 <img src="docs/screenshots/dashboard.png" alt="Today in Pathfinder: the number of open matches, how the last run went across every company, new matches from your last run and earlier in the day, and what to do next" width="900">
 
 </div>
 
-Most job sites show you a posting a day or two late, next to everyone else. Pathfinder goes straight to the source: it reads about a thousand companies' own job boards a few times a day, keeps only the roles that fit you, and helps you act while they're fresh.
+Most job sites show you a posting a day or more after it goes up, next to everyone else. Pathfinder goes straight to the source: while it's open, it checks about a thousand companies' own job boards several times a day, keeps only the roles that fit you, and helps you act while they're fresh. How soon a new role appears depends on when Pathfinder runs and how each board lists its jobs.
 
 ## What it does
 
@@ -35,18 +35,34 @@ Most job sites show you a posting a day or two late, next to everyone else. Path
 
 ## Get started
 
-> [!NOTE]
-> Windows is the smoothest. On a Mac or Linux, run `sh install.sh` in step 2 instead.
+### On Windows: download it
 
-**1. Get Pathfinder.** Press the green **Code** button above, then **Download ZIP** and unzip it. Or, if you use git:
+1. Open the **[latest release](https://github.com/PDixant/findJobApplications/releases/latest)** and download **`PathfinderSetup.exe`**. No Python or other setup needed.
+2. Open it. It installs for you alone, with no admin password, and puts Pathfinder in your Start menu.
+3. Open **Pathfinder**. A few quick questions (the jobs you want, where, your skills), and it starts looking.
+
+Rather not install anything? Download **`Pathfinder-portable-win64.zip`** from the same page, unzip it anywhere and open `Pathfinder.exe`.
+
+> [!IMPORTANT]
+> Download Pathfinder only from this repository's [Releases](https://github.com/PDixant/findJobApplications/releases) page. Each release is built by GitHub Actions from the public source and lists a SHA-256 checksum for every file in `SHA256SUMS.txt`. To check your download, run this in PowerShell and compare the result with that file:
+>
+> ```powershell
+> Get-FileHash .\PathfinderSetup.exe -Algorithm SHA256
+> ```
+>
+> The installer isn't code-signed yet, so Windows may say it **protected your PC**. If the checksum matches, choose **More info**, then **Run anyway**.
+
+### On a Mac or Linux, or to change the code: run it from source
+
+**1. Get the code.** Press the green **Code** button above, then **Download ZIP** and unzip it. Or, if you use git:
 
 ```bash
 git clone https://github.com/PDixant/findJobApplications.git
 ```
 
-**2. Double-click `Install Pathfinder`** in the folder. It sets everything up in a few minutes, installing Python first if your computer needs it.
+**2. Set it up.** On Windows, double-click `Install Pathfinder`; on a Mac or Linux, run `sh install.sh`. It takes a few minutes, installing Python first if your computer needs it.
 
-**3. Open Pathfinder** from your Desktop or Start menu. A few quick questions (the jobs you want, where, your skills), and it starts looking.
+**3. Open Pathfinder** from your Desktop, Start menu or Applications, or type `pathfinder` in a terminal.
 
 > [!TIP]
 > Add your keys under **Settings → Keys** to switch on the extras. All of them are optional:
@@ -69,7 +85,7 @@ git clone https://github.com/PDixant/findJobApplications.git
 
 ## Staying up to date
 
-When there's a new version on GitHub, **New version ready** appears at the top right of the app. Open it to see what changed, then press **Update now**: Pathfinder downloads it and reopens on the new version a few seconds later.
+When there's a new version on GitHub, **New version ready** appears at the top right of the app. Open it to see what changed, then press **Update now**: Pathfinder downloads it, checks it, and reopens on the new version a few seconds later. The Windows app takes the new installer only from this project's Releases page, and runs it only if its SHA-256 matches the release's checksums. The portable ZIP links you to the new one.
 
 > [!IMPORTANT]
 > Updates never touch your settings, company list, jobs or keys. Those live in your own files (`my_settings.toml`, `my_companies.csv` and your data), which stay on your computer and are never shared.
@@ -99,20 +115,21 @@ When there's a new version on GitHub, **New version ready** appears at the top r
 
 ## Designed to be calm
 
-Pathfinder follows **[Kanso](docs/design/README.md)**, a design language for calm, crafted software: warm paper, black ink and one colour of light.
+Pathfinder follows **[Kanso](docs/design/README.md)**, a design language for calm, crafted software created by Dixant Patel for it: warm paper, black ink and one colour of light.
 
 - **What matters first.** Each screen opens on the one thing to know, like your open matches on **Today**.
 - **Detail on request.** Your companies show as one bar. **Show every company** opens a square for each one.
 - **Plain words.** Settings explains itself in short checks, and marks what your unsaved changes affect.
 - **Light and dark.** It follows your computer's setting.
 
-**[Read the design language (PDF)](docs/design/Kanso-Design-Language.pdf)** or see [how Pathfinder uses it](docs/design/README.md).
+**[Read the design language (PDF)](docs/design/Kanso-Design-Language.pdf)** or see [how Pathfinder uses it](docs/design/README.md). Kanso is shared under the same MIT license as the code; please credit it to Dixant Patel if you build with it.
 
-## Your data stays yours
+## Your data stays under your control
 
-- 🔒 **Everything runs on your computer.** Your settings, jobs, resumes and contacts never leave it.
-- 🔑 **Keys are stored safely** in Windows Credential Manager (or the Mac Keychain), never in a file that goes to GitHub.
-- 🤖 **Claude only sees what it needs**: one posting plus your resume, and only when you use an AI feature.
+- 🔒 **Stored on your computer.** Your settings, jobs, tracker, resumes and contacts are files on your computer. Pathfinder has no server or account of its own.
+- 🔌 **Extras talk only to the services you choose,** and each is off until you add its key. When you use an AI feature, Claude (Anthropic) receives that posting plus your resume and about-me notes. Web search receives search phrases built from your job titles and places. Hunter receives a company's name or web address. Phone alerts send each new match's company, title and link to ntfy. **[Exactly what goes where](docs/GUIDE.md#what-leaves-your-computer)**, and check each provider's privacy terms before you turn it on.
+- 🔑 **Keys are kept in your computer's password store:** Windows Credential Manager, the Mac Keychain or your Linux keyring, never in a file that goes to GitHub. With no password store, Pathfinder asks before saving a key in a plain file.
+- 🛡️ **Careful with what it reads.** It visits only public websites, checks every update before installing it, and treats job postings as text to read, never as instructions to follow.
 - 🤝 **It's polite to job sites.** It spaces out requests and follows each site's rules.
 - ✉️ **Nothing is ever sent for you.** Recruiter emails are drafts you review and send yourself.
 
@@ -146,7 +163,7 @@ Another program (often antivirus) was holding a file. Restart your computer, the
 <summary><b>Windows says "Windows protected your PC"</b></summary>
 <br>
 
-Pathfinder isn't code-signed yet. Choose **More info**, then **Run anyway**.
+Pathfinder isn't code-signed yet. First make sure you downloaded it from this repository's [Releases](https://github.com/PDixant/findJobApplications/releases) page and that its checksum matches (see [Get started](#on-windows-download-it)). Then choose **More info**, then **Run anyway**. Never run a copy of Pathfinder from anywhere else.
 
 </details>
 

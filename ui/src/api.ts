@@ -166,7 +166,7 @@ export type JobDetailsData = { key: string; fit: Fit | null; tailored: Tailored 
 export type AiStatus = {
   key_set: boolean; used: number; limit: number; model: string; score_new_matches: boolean;
   resume_tex: string; resume_tex_found: boolean; latex: string | null; rules_found: boolean;
-  unscored: number; scoring: boolean;
+  unscored: number; scoring: boolean; consented: string | null;
 };
 
 export type FollowUp = { key: string; company: string; title: string; kind: "application" | "email"; days: number };
@@ -197,6 +197,10 @@ export type Company = {
   market_cap_b: string;
   stock_12m_pct: string;
   revenue_growth_pct: string;
+  profit_margin_pct: string;
+  last_raise: string;
+  layoffs_12m: string;
+  metrics_updated: string;
   notes: string;
   enabled: boolean;
   pending: boolean;
@@ -204,6 +208,8 @@ export type Company = {
   result: string;
   why: string;
   checked: string | null;
+  last_ok: string | null;
+  partial: boolean;
   found_on: string;
   found_slug: string;
   open: number | null;
@@ -229,6 +235,11 @@ export type PostingPage = { total: number; page: number; size: number; rows: Pos
 // What each company result means, in plain words, with its colour in the companies chart.
 export const RESULTS: Record<string, { label: string; tone: string; explain: string }> = {
   OK: { label: "Read", tone: "ok", explain: "Its job board was read this run." },
+  PARTIAL: {
+    label: "Read in part",
+    tone: "ok",
+    explain: "Read this run, but some jobs could have been missed: its list isn't in date order, or job pages were left for the next runs.",
+  },
   RETRY: {
     label: "Paused",
     tone: "paused",
@@ -248,7 +259,10 @@ export const RESULTS: Record<string, { label: string; tone: string; explain: str
 };
 
 // Chart order too: neighbours in this order stay apart for colour-blind readers (checked).
-export const RESULT_ORDER = ["OK", "RETRY", "NO JOBS READ", "MANUAL", "NOT FOUND", "ERROR", "PENDING", "OFF", ""];
+export const RESULT_ORDER = ["OK", "PARTIAL", "RETRY", "NO JOBS READ", "MANUAL", "NOT FOUND", "ERROR", "PENDING", "OFF", ""];
+
+/** A read that may have missed jobs shows as its own result on the Companies screen. */
+export const shownResult = (c: { result: string; partial?: boolean }) => (c.result === "OK" && c.partial ? "PARTIAL" : c.result);
 
 export function resultInfo(result: string) {
   return RESULTS[result] ?? { label: result, tone: "off", explain: "" };
@@ -277,7 +291,7 @@ export type SettingsData = { sections: SettingsSection[]; explain: string; summa
 export type Changes = Record<string, Record<string, unknown>>;
 
 export type KeyStatus = { name: string; label: string; set: boolean; source: string | null; preview: string };
-export type KeysData = { store: boolean; search_provider: string; keys: KeyStatus[] };
+export type KeysData = { store: boolean; store_name: string | null; search_provider: string; keys: KeyStatus[] };
 
 export type ImportPreview = {
   id: string;
@@ -346,7 +360,7 @@ export type ScheduleStatus = {
 
 export type UpdateChange = { sha: string; date: string | null; message: string };
 export type UpdateInfo = {
-  current: string; kind: "git" | "download" | "installed"; commit: string | null; date: string | null;
+  current: string; kind: "git" | "download" | "installed" | "portable"; commit: string | null; date: string | null;
   latest: string | null; url: string | null; newer: boolean; behind: number | null; changes: UpdateChange[];
   can_update: boolean; problem: string | null; installed: boolean; checked: string;
 };

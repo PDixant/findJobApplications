@@ -1,4 +1,4 @@
-"""The company list (companies.csv) and company scores."""
+"""The company list (companies.csv) and company signals (the score column)."""
 from __future__ import annotations
 
 from .base import *  # noqa: F401,F403

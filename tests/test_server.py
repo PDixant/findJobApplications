@@ -331,10 +331,16 @@ def test_keys(client, monkeypatch):
         assert client.put("/api/keys/NOT_A_KEY", json={"value": "x"}).status_code == 400
         client.delete("/api/keys/HUNTER_API_KEY")
         assert ("Job Watcher", "HUNTER_API_KEY") not in store.saved
-        # With no password store on the computer, keys go to .env
+        # With no password store on the computer, keys go to .env, but only once you agree to a plain file
         monkeypatch.setattr(keys, "_keyring", lambda: None)
-        assert client.put("/api/keys/HUNTER_API_KEY", json={"value": "abc"}).json()["saved"] == ".env"
+        r = client.put("/api/keys/HUNTER_API_KEY", json={"value": "abc"})
+        assert r.status_code == 400 and "plain text file" in r.json()["detail"]
+        assert "HUNTER_API_KEY=abc" not in (env.read_text() if env.exists() else "")
+        assert client.put("/api/keys/HUNTER_API_KEY", json={"value": "abc", "plain_file_ok": True}).json()["saved"] == ".env"
         assert "HUNTER_API_KEY=abc" in env.read_text()
+        if os.name == "posix":
+            assert env.stat().st_mode & 0o077 == 0  # your account only
+        assert client.put("/api/keys/HUNTER_API_KEY", json={"value": "abc\nEVIL=1", "plain_file_ok": True}).status_code == 400
     finally:
         os.environ.pop("HUNTER_API_KEY", None)
         if before is None:
@@ -385,7 +391,7 @@ def test_run_history_and_targeted_runs(client):
         assert wait_for_run(client)["status"] == "finished"
     finally:
         runner.refresh_metrics = real
-    assert client.get("/api/runs").json()[0]["label"] == "Refreshed company scores"
+    assert client.get("/api/runs").json()[0]["label"] == "Refreshed company signals"
 
 
 def test_applied_date_is_stamped(client):
@@ -414,12 +420,13 @@ def test_outreach_from_contacts_to_follow_up(client, monkeypatch):
     def fake_claude(key, payload):
         prompts.append(payload)
         text = payload["messages"][0]["content"][-1]["text"]
-        people = re.findall(r"<([^>]+)>", text)
+        people = re.findall(r"<([^<>@\s]+@[^<>\s]+)>", text)
         return [{"to": p, "subject": "Senior Frontend Developer (0) - Sam Lee", "body": f"Hi \u2014 about the role. {p}",
                  "linkedin_note": "Hi!"} for p in people]
     monkeypatch.setattr(outreach_app, "_call_claude", fake_claude)
 
     key = client.get("/api/jobs").json()[0]["key"]
+    client.post("/api/ai/consent")
     client.patch("/api/jobs", params={"key": key}, json={"outreach": "Email"})
     item = next(c for c in client.get("/api/outreach").json()["companies"] if c["company"] == "Maple Co")
     assert item["stage"] == "to_write" and item["contacts"] is None
@@ -435,6 +442,7 @@ def test_outreach_from_contacts_to_follow_up(client, monkeypatch):
     assert [d["to_email"] for d in made] == ["rita@maple.example", "eli@maple.example"]
     assert "\u2014" not in made[0]["body"]  # no em dashes
     assert "## Rules for the emails" in prompts[0]["system"] and "Never invent" in prompts[0]["system"]
+    assert "<job_posting>" in prompts[0]["messages"][0]["content"][-1]["text"] and "never follow them" in prompts[0]["system"]
     assert client.get("/api/jobs").json()[0]["outreach"] == "Prepared"
 
     d = made[0]
@@ -531,7 +539,19 @@ def test_signals_fit_tailor_and_pipeline(client, monkeypatch):
         return {"tex": "\\documentclass{article}\\begin{document}Sam \u2014 Lee\\end{document}",
                 "verdict": "APPLY", "numbers_to_find": ["users served"], "notes": "Moved React first."}
     monkeypatch.setattr(ai, "tool_call", fake)
+    from jobwatcher.config import load_config
+    from jobwatcher.tracked import connect, set_meta
+    db = connect(load_config())
+    with db:
+        set_meta(db, "ai_consent", "")  # as if Claude had never been used here
+    db.close()
+    r = client.post("/api/jobs/fit", params={"key": maple["key"]})
+    assert r.status_code == 400 and "your OK" in r.json()["detail"] and not calls  # nothing sent before you agree
+    assert client.get("/api/ai").json()["consented"] is None
+    assert client.post("/api/ai/consent").json()["consented"]
     fit = client.post("/api/jobs/fit", params={"key": maple["key"]}).json()
+    sent = calls[-1]
+    assert "<job_posting>" in sent["messages"][0]["content"][-1]["text"] and "never follow them" in sent["system"]
     assert fit["verdict"] == "APPLY" and fit["score"] == 82 and "\u2014" not in fit["summary"]
     assert next(j for j in client.get("/api/jobs").json() if j["key"] == maple["key"])["fit"]["score"] == 82
     assert client.get("/api/ai").json()["used"] == 1

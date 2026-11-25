@@ -477,9 +477,9 @@ function Keys() {
       <h2 id="sec-keys">Keys and accounts</h2>
       <p className="hint">
         {data?.store
-          ? "Keys are saved in Windows Credential Manager (the Keychain on a Mac), not in a file, and taken out of .env."
-          : "This computer has no password store the app can use, so keys are saved in the .env file."}{" "}
-        The scheduled task and the command line read them from the same place.
+          ? `Keys are saved in ${data.store_name ?? "your computer's password store"}, not in a file, and taken out of .env.`
+          : "This computer has no password store Pathfinder can use. A key can still go in .env, a plain text file only your account can read; you'll be asked first."}{" "}
+        The command line reads them from the same place.
       </p>
       <ErrorNote error={keys.error} />
       {shown?.map((k) => <KeyRow key={k.name} k={k} />)}
@@ -489,10 +489,13 @@ function Keys() {
 
 export function KeyRow({ k }: { k: KeyStatus }) {
   const client = useQueryClient();
+  const keys = useQuery({ queryKey: ["keys"], queryFn: () => api<KeysData>("keys") });
   const [value, setValue] = useState("");
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [askPlain, setAskPlain] = useState(false);
   const secret = k.name !== "GMAIL_ADDRESS";
+  const noStore = keys.data ? !keys.data.store : false;
 
   async function act(fn: () => Promise<unknown>) {
     setBusy(true);
@@ -504,8 +507,13 @@ export function KeyRow({ k }: { k: KeyStatus }) {
       setBusy(false);
     }
   }
-  const save = () => act(async () => {
-    await send(`keys/${k.name}`, "PUT", { value });
+  const save = (plainFileOk = false) => act(async () => {
+    if (noStore && !plainFileOk) {
+      setAskPlain(true);
+      return;
+    }
+    await send(`keys/${k.name}`, "PUT", { value, plain_file_ok: plainFileOk });
+    setAskPlain(false);
     setValue("");
     setResult(null);
     await client.invalidateQueries({ queryKey: ["keys"] });
@@ -543,6 +551,13 @@ export function KeyRow({ k }: { k: KeyStatus }) {
             question={`Remove your ${k.label} from this computer? You'd have to paste it again to use it.`} />
         )}
       </div>
+      {askPlain && (
+        <div className="confirm" role="group" aria-label="Save in a plain file?" style={{ marginTop: 12, gridColumn: "1 / -1" }}>
+          <p>This computer has no password store, so the key would go in <code>.env</code>, a plain text file only your account can read. It's never shared in git. Save it there?</p>
+          <button type="button" className="button small" onClick={() => save(true)} disabled={busy}>Save in .env</button>
+          <button type="button" className="text-button" onClick={() => setAskPlain(false)}>Don't save</button>
+        </div>
+      )}
       {result && (
         <p className={result.ok ? "key-result ok" : "key-result bad"}><Icon name={result.ok ? "check" : "alert"} />{result.message}</p>
       )}

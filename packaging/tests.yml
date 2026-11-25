@@ -1,0 +1,100 @@
+# Tests on every push and pull request, on each system Pathfinder runs on, with the oldest and newest
+# Python it supports. Also checks the built interface is up to date, and once a week (and on every
+# push) looks for known security problems in the packages Pathfinder uses.
+name: tests
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "23 13 * * 1"  # Mondays, for the dependency check
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      # First with only what a run needs, so the core never quietly depends on the app's packages
+      - run: pip install -r requirements.txt pytest pyflakes
+      - run: python -m pyflakes outreach.py tests
+      - run: python -m pytest -q tests
+      # Then everything, as the app and the installer have it
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pyflakes outreach.py app.py tests jobwatcher/safeweb.py
+      - run: python -m pytest -q tests
+
+  install:
+    # The real installer, start to finish: set up, the command works, then uninstall
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: python install/install.py --minimal
+      - name: The command runs
+        shell: bash
+        env:
+          JOBWATCHER_HOME: ${{ runner.temp }}/pathfinder-home
+        run: |
+          mkdir -p "$JOBWATCHER_HOME"
+          if [ "$RUNNER_OS" = "Windows" ]; then cmd=.venv/Scripts/jobwatcher.exe; else cmd=.venv/bin/jobwatcher; fi
+          "$cmd" run --show-config
+      - name: Uninstall
+        run: python install/install.py --uninstall
+
+  interface:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+      - working-directory: ui
+        run: |
+          npm ci
+          npm run build
+      - name: The committed interface matches the code
+        run: |
+          git diff --stat --exit-code jobwatcher/ui_dist || {
+            echo "::error::jobwatcher/ui_dist is out of date. Run npm run build in ui/ and commit jobwatcher/ui_dist."
+            exit 1
+          }
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Known problems in Python packages
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt -r requirements-app.txt -r requirements-extras.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Known problems in the interface's packages
+        working-directory: ui
+        run: |
+          npm ci
+          npm audit --omit=dev --audit-level=high

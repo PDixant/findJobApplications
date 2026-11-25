@@ -7,8 +7,14 @@ How a copy updates depends on how it was set up:
   download   a folder from GitHub's "Download ZIP": the latest commit on GitHub is compared with the
              one this folder has, and updating downloads that commit and copies its files over Job
              Watcher's own. Your files (settings, company list, data, keys) are never in a download.
-  installed  the Windows installer: new releases on GitHub; updating means downloading the new installer.
+  installed  the Windows installer: new releases on GitHub. Updating downloads the new release's
+             PathfinderSetup.exe, checks its SHA-256 against the release's SHA256SUMS.txt, and runs it.
+  portable   the portable ZIP of the Windows app: new releases on GitHub; you download the new ZIP.
 When an update changes the packages Pathfinder needs, they're installed as the app starts again.
+
+What's downloaded is checked before anything changes: only from this project's own GitHub addresses,
+over HTTPS, size-capped, and it must be exactly the commit (or the installer) GitHub named. A
+downloaded folder's files are swapped in all at once, and put back as they were if anything fails.
 """
 from __future__ import annotations
 
@@ -20,14 +26,19 @@ import zipfile
 from .base import *  # noqa: F401,F403
 from .config import find_git, make_my_copies
 
-REPO = os.environ.get("JOBWATCHER_UPDATE_REPO", "PDixant/findJobApplications")
+OFFICIAL_REPO = "PDixant/findJobApplications"
+REPO = os.environ.get("JOBWATCHER_UPDATE_REPO", OFFICIAL_REPO)  # only ever changed for testing a fork
+if REPO != OFFICIAL_REPO:
+    log.warning("Updates come from %s instead of %s (JOBWATCHER_UPDATE_REPO is set).", REPO, OFFICIAL_REPO)
 BRANCH = os.environ.get("JOBWATCHER_UPDATE_BRANCH", "main")
 ROOT = SOURCE_DIR  # the Pathfinder folder being updated
 CHECK_EVERY = dt.timedelta(hours=3)
-PACKAGE_FILES = ("pyproject.toml", "requirements.txt", "requirements-app.txt")
+PACKAGE_FILES = ("pyproject.toml", "requirements.txt", "requirements-app.txt", "requirements-extras.txt")
 SHARED_FILES = ("config.toml", "companies.csv")  # yours are copies of these, so they can be put back
 NEVER_FROM_DOWNLOAD = {".git", ".venv", "node_modules", ".app_window", "outreach", "resumes", "resume"}
 NO_WINDOW = 0x08000000 if sys.platform == "win32" else 0
+SETUP_NAME, SUMS_NAME = "PathfinderSetup.exe", "SHA256SUMS.txt"
+MAX_ZIP_BYTES, MAX_SETUP_BYTES = 80_000_000, 300_000_000
 
 
 class UpdateProblem(Exception):
@@ -49,7 +60,8 @@ def packages_flag():
 
 def kind():
     if getattr(sys, "frozen", False):
-        return "installed"
+        # The installer leaves its uninstaller beside the app; the portable ZIP has none.
+        return "installed" if (Path(sys.executable).parent / "unins000.exe").exists() else "portable"
     return "git" if (ROOT / ".git").exists() else "download"
 
 
@@ -146,11 +158,19 @@ def _check_download():
             "changes": [_change(sha, when, info.get("message"))] if newer else []}
 
 
-def _check_installed(current):
+def _release_assets(body):
+    """The installer and checksum file of a release, as download addresses."""
+    found = {a.get("name"): a.get("browser_download_url") for a in body.get("assets") or []}
+    return found.get(SETUP_NAME), found.get(SUMS_NAME)
+
+
+def _check_release(current, how):
     body = _github(f"repos/{REPO}/releases/latest") or {}
     latest = body.get("tag_name")
     newer = bool(latest) and _version(latest) > _version(current)
-    return {"latest": latest, "newer": newer, "url": body.get("html_url"), "can_update": False,
+    setup, sums = _release_assets(body)
+    can = newer and how == "installed" and sys.platform == "win32" and bool(setup and sums)
+    return {"latest": latest, "newer": newer, "url": body.get("html_url"), "can_update": can,
             "changes": [_change("", body.get("published_at"), body.get("name") or latest)] if newer else []}
 
 
@@ -163,7 +183,7 @@ def check(current, force=False):
     if force or not fresh:
         try:
             found = (_check_git() if how == "git" else _check_download() if how == "download"
-                     else _check_installed(current))
+                     else _check_release(current, how))
         except UpdateProblem as exc:
             found = {"newer": False, "problem": str(exc)}
         data = {"newer": False, "behind": None, "changes": [], "can_update": False, "problem": None, "url": None,
@@ -171,15 +191,18 @@ def check(current, force=False):
                 "checked": dt.datetime.now(dt.timezone.utc).isoformat()}
         cache_path().parent.mkdir(parents=True, exist_ok=True)
         save_json(cache_path(), data)
-    return {**data, "current": current, "installed": how == "installed"}
+    return {**data, "current": current, "installed": how in ("installed", "portable")}
 
 
 # ----------------------------------------------------------------- updating
 def apply():
-    """Bring this folder up to date. Returns what changed; the app then restarts to use it."""
+    """Bring this folder up to date. Returns what changed; the app then restarts to use it (or, for
+    the installed app, closes while the checked installer puts the new version in and reopens it)."""
     how = kind()
+    if how == "portable":
+        raise UpdateProblem("Download the new portable ZIP from the release page and unzip it over this one.")
     if how == "installed":
-        raise UpdateProblem("Download the new installer from the release page and run it.")
+        return _apply_installed()
     make_my_copies()  # your settings and companies are in your own files before anything changes
     result = _apply_git() if how == "git" else _apply_download()
     if result["packages"]:
@@ -217,45 +240,127 @@ def _apply_git():
             "packages": any(name in PACKAGE_FILES for name in changed)}
 
 
+def _get(url, limit, timeout=120):
+    """Download from GitHub over HTTPS, up to limit bytes."""
+    try:
+        r = requests.get(url, timeout=timeout, stream=True, headers={"User-Agent": USER_AGENT})
+        r.raise_for_status()
+        return read_capped(r, limit)
+    except TooBig:
+        raise UpdateProblem("The download was far bigger than any Pathfinder version, so it was stopped.") from None
+    except requests.RequestException as exc:
+        raise UpdateProblem(f"The download didn't work ({exc.__class__.__name__}). Try again in a minute.") from None
+
+
+def _is_commit(archive, sha):
+    """GitHub names the commit in the ZIP it makes: as the archive's comment, and in its one top folder."""
+    if archive.comment.decode("ascii", "replace").strip() == sha:
+        return True
+    tops = {Path(m.filename).parts[0] for m in archive.infolist() if Path(m.filename).parts}
+    return len(tops) == 1 and next(iter(tops)).endswith("-" + sha)
+
+
 def _apply_download():
     latest = _github(f"repos/{REPO}/commits/{BRANCH}")
     if not latest:
         raise UpdateProblem("Couldn't reach GitHub. Check the internet connection and try again.")
-    sha = latest["sha"]
+    sha = str(latest.get("sha") or "")
+    if not re.fullmatch(r"[0-9a-f]{40}", sha):
+        raise UpdateProblem("GitHub's answer didn't name a version. Try again in a minute.")
     try:
-        r = requests.get(f"https://codeload.github.com/{REPO}/zip/{sha}", timeout=120,
-                         headers={"User-Agent": USER_AGENT})
-        r.raise_for_status()
-        archive = zipfile.ZipFile(io.BytesIO(r.content))
-    except (requests.RequestException, zipfile.BadZipFile) as exc:
-        raise UpdateProblem(f"The download didn't work ({exc.__class__.__name__}). Try again in a minute.") from None
+        archive = zipfile.ZipFile(io.BytesIO(_get(f"https://codeload.github.com/{REPO}/zip/{sha}", MAX_ZIP_BYTES)))
+    except zipfile.BadZipFile:
+        raise UpdateProblem("The download wasn't a complete ZIP. Try again in a minute.") from None
+    if not _is_commit(archive, sha):
+        raise UpdateProblem("The download wasn't the version GitHub named, so nothing was changed. Try again later.")
     old = load_json(version_file(), {}).get("commit")
-    packages, written = False, 0
+    root = ROOT.resolve()
     with tempfile.TemporaryDirectory(prefix="jobwatcher-update-") as tmp:
         tmp = Path(tmp)
         for member in archive.infolist():
-            parts = Path(member.filename).parts[1:]  # inside the top folder GitHub adds
-            if not parts or member.is_dir() or parts[0] in NEVER_FROM_DOWNLOAD or ".." in parts:
+            parts = Path(member.filename.replace("\\", "/")).parts[1:]  # inside the top folder GitHub adds
+            if (not parts or member.is_dir() or parts[0] in NEVER_FROM_DOWNLOAD or ".." in parts
+                    or any(":" in p for p in parts)):
                 continue
             staged = tmp.joinpath(*parts)
             staged.parent.mkdir(parents=True, exist_ok=True)
             staged.write_bytes(archive.read(member))
+        changes = []
         for staged in sorted(p for p in tmp.rglob("*") if p.is_file()):
             rel = staged.relative_to(tmp)
             target = ROOT / rel
+            if root not in target.resolve().parents:
+                continue  # never anything outside the Pathfinder folder
             data = staged.read_bytes()
-            if target.exists() and target.read_bytes() == data:
-                continue
-            if str(rel).replace("\\", "/") in PACKAGE_FILES:
-                packages = True
-            target.parent.mkdir(parents=True, exist_ok=True)
-            part = target.with_name(target.name + ".updating")  # same folder, so the swap is instant
-            part.write_bytes(data)
-            replace_file(part, target)
-            written += 1
+            if not (target.exists() and target.read_bytes() == data):
+                changes.append((rel, target, data))
+        _swap_in(changes, tmp)
     when = ((latest.get("commit") or {}).get("committer") or {}).get("date")
     save_json(version_file(), {"commit": sha, "date": when})
-    return {"from": (old or "")[:7] or None, "to": sha[:7], "files": written, "packages": packages}
+    packages = any(str(rel).replace("\\", "/") in PACKAGE_FILES for rel, _, _ in changes)
+    return {"from": (old or "")[:7] or None, "to": sha[:7], "files": len(changes), "packages": packages}
+
+
+def _swap_in(changes, scratch):
+    """Write every changed file, all or nothing. Each new file is written beside its target first,
+    then the old ones are kept aside while the new ones take their place, and put back if anything fails."""
+    parts, kept, done = [], scratch / ".kept", []
+    try:
+        for rel, target, data in changes:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            part = target.with_name(target.name + ".updating")  # same folder, so each swap is instant
+            part.write_bytes(data)
+            parts.append(part)
+        for (rel, target, _), part in zip(changes, parts):
+            if target.exists():
+                (kept / rel).parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(target, kept / rel)
+            replace_file(part, target)
+            done.append((rel, target))
+    except OSError as exc:
+        for rel, target in reversed(done):
+            try:
+                if (kept / rel).exists():
+                    shutil.copy2(kept / rel, target)
+                else:
+                    target.unlink(missing_ok=True)
+            except OSError:
+                log.exception("Couldn't put %s back after a failed update", rel)
+        for part in parts:
+            part.unlink(missing_ok=True)
+        raise UpdateProblem(f"The update couldn't write {getattr(exc, 'filename', None) or 'a file'}, so this "
+                            "folder was put back as it was. Close anything using Pathfinder's files and try again.") from None
+
+
+def _apply_installed():
+    """Download the newest release's installer, check it against the release's own checksums, and
+    run it. It closes Pathfinder, installs the new version and opens it again."""
+    body = _github(f"repos/{REPO}/releases/latest") or {}
+    tag = body.get("tag_name")
+    setup, sums = _release_assets(body)
+    official = f"https://github.com/{REPO}/releases/download/"
+    if not (tag and setup and sums):
+        raise UpdateProblem("The newest release has no installer yet. Try again later, or download it from the release page.")
+    if not (setup.startswith(official) and sums.startswith(official)):
+        raise UpdateProblem("The release's files aren't on Pathfinder's own release page, so they weren't downloaded.")
+    expected = None
+    for line in _get(sums, 200_000, timeout=30).decode("utf-8", "replace").splitlines():
+        bits = line.strip().split()
+        if len(bits) == 2 and bits[1].lstrip("*") == SETUP_NAME:
+            expected = bits[0].lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", expected or ""):
+        raise UpdateProblem(f"The release's {SUMS_NAME} doesn't list the installer, so it wasn't run.")
+    data = _get(setup, MAX_SETUP_BYTES, timeout=600)
+    if hashlib.sha256(data).hexdigest() != expected:
+        raise UpdateProblem("The downloaded installer doesn't match the release's checksum, so it wasn't run. "
+                            "Try again later, or download it from the release page.")
+    path = Path(tempfile.mkdtemp(prefix="pathfinder-update-")) / SETUP_NAME
+    path.write_bytes(data)
+    flags = 0x00000008 | 0x00000200 if sys.platform == "win32" else 0  # detached, its own process group
+    subprocess.Popen([str(path), "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CLOSEAPPLICATIONS"],
+                     close_fds=True, creationflags=flags)
+    log.info("Installing Pathfinder %s with its checked installer (SHA-256 %s).", tag, expected[:12])
+    return {"from": None, "to": tag, "files": 1, "packages": False, "installer": True}
 
 
 def install_packages_if_needed():
@@ -281,4 +386,4 @@ def install_packages_if_needed():
     return True
 
 
-__all__ = ["check", "apply", "install_packages_if_needed", "kind", "UpdateProblem", "REPO", "BRANCH"]
+__all__ = ["check", "apply", "install_packages_if_needed", "kind", "UpdateProblem", "REPO", "BRANCH", "OFFICIAL_REPO"]

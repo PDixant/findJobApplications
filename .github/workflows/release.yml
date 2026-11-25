@@ -1,0 +1,172 @@
+# Builds Pathfinder for Windows from this repository's public source and publishes it as a GitHub
+# Release: PathfinderSetup.exe (the installer), Pathfinder-portable-win64.zip, and SHA256SUMS.txt.
+#
+# For each new version:
+#     1. set the version in pyproject.toml and jobwatcher/__init__.py (for example 1.0.1)
+#     2. git tag v1.0.1 && git push origin v1.0.1
+# Want to try it first? Actions tab, release, Run workflow: it builds everything and keeps the files
+# under that run's Artifacts, without publishing a release.
+#
+# Code signing is off until you add your own certificate (bought in your name, so you stay the only
+# publisher) as two repository secrets: WINDOWS_CERT_PFX (the .pfx file, base64) and
+# WINDOWS_CERT_PASSWORD. With them, the programs and the installer are signed before publishing.
+name: release
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      PYTHONUTF8: "1"
+      HAS_CERT: ${{ secrets.WINDOWS_CERT_PFX != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+      - name: Build the interface
+        working-directory: ui
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install Pathfinder and the build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[app]" pyinstaller
+          pip install -r requirements-dev.txt
+
+      - name: Run the tests
+        run: python -m pytest -q tests
+
+      - name: Work out the version
+        shell: pwsh
+        run: |
+          $declared = python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])"
+          $version = $declared
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $version = "${{ github.ref_name }}".TrimStart("v")
+            if ($version -ne $declared) {
+              throw "The tag says $version but pyproject.toml says $declared. Make them match, then tag again."
+            }
+          }
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          python packaging/version_info.py $version
+
+      - name: Build Pathfinder.exe
+        run: pyinstaller --noconfirm packaging/pathfinder.spec
+
+      - name: Smoke test the build
+        shell: pwsh
+        run: |
+          $env:JOBWATCHER_HOME = Join-Path $env:RUNNER_TEMP "pathfinder-home"
+          New-Item -ItemType Directory -Force -Path $env:JOBWATCHER_HOME | Out-Null
+          dist\Pathfinder\jobwatcher.exe run --show-config
+          if ($LASTEXITCODE -ne 0) { throw "The command line didn't start." }
+          $env:BROWSER = "none"
+          $app = Start-Process -FilePath dist\Pathfinder\jobwatcher.exe -ArgumentList "--browser", "--port", "8811" -PassThru
+          $ok = $false
+          foreach ($i in 1..30) {
+            Start-Sleep -Seconds 2
+            try {
+              $page = Invoke-WebRequest -Uri "http://127.0.0.1:8811/" -UseBasicParsing -TimeoutSec 5
+              if ($page.StatusCode -eq 200 -and $page.Content -match "Pathfinder") { $ok = $true; break }
+            } catch { }
+          }
+          Stop-Process -Id $app.Id -Force -ErrorAction SilentlyContinue
+          if (-not $ok) { throw "The app didn't serve its window." }
+
+      - name: Sign the programs (only with your own certificate)
+        if: env.HAS_CERT == 'true'
+        shell: pwsh
+        env:
+          CERT: ${{ secrets.WINDOWS_CERT_PFX }}
+          CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        run: |
+          $pfx = Join-Path $env:RUNNER_TEMP "cert.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:CERT))
+          $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object FullName | Select-Object -Last 1
+          & $signtool.FullName sign /f $pfx /p $env:CERT_PASSWORD /fd sha256 /tr http://timestamp.digicert.com /td sha256 dist\Pathfinder\Pathfinder.exe dist\Pathfinder\jobwatcher.exe
+          Remove-Item $pfx
+
+      - name: Make the portable ZIP
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path out | Out-Null
+          Compress-Archive -Path dist\Pathfinder -DestinationPath out\Pathfinder-portable-win64.zip
+
+      - name: Make the installer
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+          $outDir = (Resolve-Path out).Path
+          iscc "/DAppVersion=$env:VERSION" "/O$outDir" packaging\pathfinder.iss
+          if (-not (Test-Path out\PathfinderSetup.exe)) { throw "Inno Setup didn't make the installer." }
+
+      - name: Sign the installer (only with your own certificate)
+        if: env.HAS_CERT == 'true'
+        shell: pwsh
+        env:
+          CERT: ${{ secrets.WINDOWS_CERT_PFX }}
+          CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        run: |
+          $pfx = Join-Path $env:RUNNER_TEMP "cert.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:CERT))
+          $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Sort-Object FullName | Select-Object -Last 1
+          & $signtool.FullName sign /f $pfx /p $env:CERT_PASSWORD /fd sha256 /tr http://timestamp.digicert.com /td sha256 out\PathfinderSetup.exe
+          Remove-Item $pfx
+
+      - name: Write the checksums
+        shell: pwsh
+        run: |
+          $lines = Get-ChildItem out -File | Where-Object Name -ne "SHA256SUMS.txt" | Sort-Object Name | ForEach-Object {
+            "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name
+          }
+          [IO.File]::WriteAllText((Join-Path $PWD "out\SHA256SUMS.txt"), (($lines -join "`n") + "`n"))
+          Get-Content out\SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pathfinder-${{ env.VERSION }}
+          path: out/*
+          if-no-files-found: error
+
+      - name: Publish the release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Pathfinder ${{ env.VERSION }}
+          files: |
+            out/PathfinderSetup.exe
+            out/Pathfinder-portable-win64.zip
+            out/SHA256SUMS.txt
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          body: |
+            **Download `PathfinderSetup.exe`** below and open it. No Python or other setup needed.
+            Prefer not to install? `Pathfinder-portable-win64.zip` runs from any folder.
+
+            Built by GitHub Actions from the tagged source in this repository. To check your download,
+            run this in PowerShell and compare the result with the line in `SHA256SUMS.txt`:
+
+            ```
+            Get-FileHash .\PathfinderSetup.exe -Algorithm SHA256
+            ```
+
+            Windows may say it protected your PC, because the installer isn't code-signed yet. Only run
+            it if you downloaded it from this page and its checksum matches; then choose
+            **More info**, **Run anyway**.

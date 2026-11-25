@@ -116,7 +116,7 @@ export function UpdatesPanel() {
       setChecking(false);
     }
   }
-  const have = u.kind === "installed" ? `Version ${u.current}`
+  const have = u.kind === "installed" || u.kind === "portable" ? `Version ${u.current}`
     : `Version ${u.current}${u.commit ? ` (${u.commit}${u.date ? `, ${new Date(u.date).toLocaleDateString()}` : ""})` : ""}`;
   return (
     <section className="card settings-section" aria-labelledby="sec-updates">
@@ -128,7 +128,9 @@ export function UpdatesPanel() {
           <p className="hint">{have}. Made by <External href={REPO_URL}>{AUTHOR}</External>; the code is on GitHub.</p>
         </div>
       </div>
-      <p style={{ marginTop: 16 }}>{u.newer ? `There's a newer version: ${changeCount(u)}.` : "You have the latest version."}</p>
+      <p style={{ marginTop: 16 }}>{!u.newer ? "You have the latest version."
+        : u.behind ? `There's a newer version: ${changeCount(u)}.`
+        : `Pathfinder ${(u.latest ?? "").replace(/^v/, "")} is ready.`}</p>
       {u.problem && <p className="hint" style={{ marginTop: 8 }}>{u.problem}</p>}
       {u.newer && u.changes.length > 0 && (
         <ul className="update-changes">
@@ -153,8 +155,9 @@ export function UpdatesPanel() {
       </div>
       <p className="hint" style={{ marginTop: 24 }}>
         {u.kind === "git" ? "This folder is a git clone, so updating pulls the newest code from GitHub."
-          : u.kind === "download" ? "Updating downloads the newest code from GitHub into this folder."
-          : "New versions come as a new installer."}{" "}
+          : u.kind === "download" ? "Updating downloads the newest code from GitHub into this folder, checks it's exactly that version, and swaps it in all at once."
+          : u.kind === "installed" ? "Updating downloads the new installer from Pathfinder's own release page, checks its SHA-256 against the release's checksums, then runs it."
+          : "This is the portable app: download the new portable ZIP from the release page and unzip it over this folder."}{" "}
         Your settings, company list, jobs and keys are never touched. Checked {new Date(u.checked).toLocaleString()}.
       </p>
       <UpdatingNote state={apply.state} />

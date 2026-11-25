@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, send, upload, type AiStatus } from "../api";
 import { Confirm, Icon, Meter } from "../components/bits";
+import { useClaudeConsent } from "../components/ClaudeConsent";
 import { n } from "../format";
 import { toast } from "../live";
 
@@ -22,9 +23,11 @@ function Item({ done, children }: { done: boolean; children: React.ReactNode }) 
 export function ClaudeHelp() {
   const client = useQueryClient();
   const ai = useQuery({ queryKey: ["ai"], queryFn: () => api<AiStatus>("ai"), refetchInterval: (q) => (q.state.data?.scoring ? 5000 : false) });
+  const consent = useClaudeConsent();
   const a = ai.data;
   if (!a) return null;
   const score = () => act(async () => {
+    if (!(await consent.ensure())) return;
     const r = await send<{ queued: number }>("jobs/fit/unscored", "POST");
     toast(r.queued ? `Scoring ${n(r.queued)} matches. They fill in as Claude finishes each one.` : "Every open match is already scored.", "info");
     client.invalidateQueries({ queryKey: ["ai"] });
@@ -46,7 +49,18 @@ export function ClaudeHelp() {
           {a.latex ? `LaTeX found (${a.latex}), so tailored resumes come with a PDF` : "No LaTeX found. Install MiKTeX or Tectonic for PDFs; until then you get the .tex"}
         </Item>
       </ul>
-      <p className="hint">Each request sends one posting, your resume and about_me.md to Anthropic. Nothing else leaves your computer.</p>
+      <p className="hint">
+        Each request sends one posting, your resume and about_me.md to Anthropic. Nothing else leaves your computer.{" "}
+        {a.consented ? `You agreed to this on ${new Date(a.consented).toLocaleDateString()}.`
+          : a.key_set ? "Pathfinder asks for your OK before the first request." : ""}
+      </p>
+      {consent.dialog}
+      {a.key_set && !a.consented && a.score_new_matches && (
+        <div className="card-foot">
+          <button className="button" onClick={() => consent.ensure()}>Review what's sent and agree</button>
+          <span className="hint">New matches aren't scored until you do.</span>
+        </div>
+      )}
       {a.key_set && a.unscored > 0 && (
         <div className="card-foot">
           <button className="button" onClick={score} disabled={a.scoring}>
@@ -126,8 +140,9 @@ export function PhoneAlerts() {
         <span>Alerts on your phone</span>
         <small>
           Install the free ntfy app on your phone, tap +, and subscribe to a topic name only you know. Anyone who knows
-          the name can read the alerts, so use a long random one. It's kept with your keys, never in your settings file.
-          Alerts carry only the company, title and link.
+          the name can read the alerts, so use a long random one, keep it out of screenshots and bug reports, and make a
+          new one if it gets out. It's kept with your keys, never in your settings file. Alerts carry only the company,
+          title, region and link.
         </small>
       </div>
       {made && <p className="topic-made">Subscribe to this topic in the ntfy app: <code>{made}</code></p>}

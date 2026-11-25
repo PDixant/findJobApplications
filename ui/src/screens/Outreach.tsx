@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, send, type Draft, type OutreachCompany, type OutreachData, type Person } from "../api";
 import { Confirm, Empty, ErrorNote, External, Icon, Skeleton } from "../components/bits";
+import { useClaudeConsent } from "../components/ClaudeConsent";
 import { ago, day, n, plural } from "../format";
 import { toast } from "../live";
 import { go, useRoute } from "../router";
@@ -135,6 +136,7 @@ function Workspace({ c, data }: { c: OutreachCompany; data: OutreachData }) {
   const [chosen, setChosen] = useState<string[]>([]);
   useEffect(() => setChosen(followUp ? recipients.map((p) => p.email) : c.contacts?.suggested ?? []), [c.company, c.contacts, followUp]); // eslint-disable-line react-hooks/exhaustive-deps
   const [busy, setBusy] = useState("");
+  const consent = useClaudeConsent();
 
   async function findPeople() {
     setBusy("find");
@@ -143,6 +145,7 @@ function Workspace({ c, data }: { c: OutreachCompany; data: OutreachData }) {
     refresh();
   }
   async function write() {
+    if (!(await consent.ensure())) return;
     setBusy("write");
     const made = await attempt(() => send<Draft[]>("outreach/write", "POST", { company: c.company, emails: chosen, follow_up: followUp }));
     setBusy("");
@@ -155,6 +158,7 @@ function Workspace({ c, data }: { c: OutreachCompany; data: OutreachData }) {
   const toggle = (email: string, on: boolean) => setChosen(on ? [...chosen, email] : chosen.filter((x) => x !== email));
   return (
     <section className="card workspace" aria-labelledby="ws-title">
+      {consent.dialog}
       <header className="card-head" style={{ alignItems: "flex-end" }}>
         <h2 id="ws-title">{c.company}</h2>
         {c.stage !== "replied" && sent.length > 0 && (

@@ -148,6 +148,7 @@ def fetch_smartrecruiters(slug, host=None, auto=False):
                     postings.update(more[0])
         complete = False
         note = scan_note(pages, ordered, False)
+    unsorted = not ordered and not complete
 
     jobs = []
     for pid, p in postings.items():
@@ -167,7 +168,7 @@ def fetch_smartrecruiters(slug, host=None, auto=False):
             "posted": parse_date(p.get("releasedDate")), "text": None,
             "load_detail": partial(_sr_detail, slug, pid),
         })
-    return result(slug, jobs, complete=complete, note=note)
+    return result(slug, jobs, complete=complete, note=note, partial=unsorted)
 
 
 # --- Workable
@@ -299,7 +300,7 @@ def fetch_workday(slug, host=None, auto=False):
             "text": None, "ambiguous_location": ambiguous or not loc,
             "load_detail": partial(_wd_detail, base, tenant, site, path),
         })
-    return result(canonical, jobs, complete=complete, note=note)
+    return result(canonical, jobs, complete=complete, note=note, partial=not ordered and not complete)
 
 
 # --- Recognising job-board links

@@ -4,6 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { api, send, type AiStatus, type Fit, type Job, type JobDetailsData, type JobEdit, type Meta, type PostingPage,
   type Tailored } from "../api";
 import { Drawer, Empty, ErrorNote, External, Icon, PillSelect, SearchInput, Tabs, useDismiss, usePopSide } from "../components/bits";
+import { useClaudeConsent } from "../components/ClaudeConsent";
 import { FitBadge, Flags, payRange, payText, payUnit, WORKPLACES } from "../components/Fit";
 import { toast } from "../live";
 import { Table, TableSkeleton } from "../components/Table";
@@ -259,7 +260,7 @@ function jobColumns(meta: Meta | undefined, lastRun: string | null, onEdit: (key
     {
       id: "company", header: "Company", accessorFn: (j) => j.company.toLowerCase(), size: 180,
       cell: (c) => (
-        <span className="cell-stack" title={c.row.original.score ? `Company score ${c.row.original.score} (tier ${c.row.original.tier})` : undefined}>
+        <span className="cell-stack" title={c.row.original.score ? `Company signal ${c.row.original.score}, a rough read of its public facts` : undefined}>
           <span className="cell-main">{c.row.original.company}</span>
           <span className="cell-sub">{c.row.original.region}</span>
         </span>
@@ -333,7 +334,7 @@ function JobDetails({ job, onEdit }: { job: Job; onEdit: (c: JobEdit) => void })
           <div><dt>Posted</dt><dd>{job.posted ? `${when(job.posted)} (${ago(job.posted)})` : "No date on the posting"}</dd></div>
           <div><dt>Found</dt><dd>{when(job.found)}</dd></div>
           <div><dt>Stack match</dt><dd>{job.stack.join(", ") || "None"}</dd></div>
-          {job.score && <div><dt>Company score</dt><dd>{job.score} (tier {job.tier})</dd></div>}
+          {job.score && <div><dt>Company signal</dt><dd>{job.score}, a rough read of its public facts (see Companies)</dd></div>}
           <div><dt>Board</dt><dd>{job.provider}</dd></div>
           {!job.open && <div><dt>Closed</dt><dd>{day(job.closed)}</dd></div>}
         </dl>
@@ -378,7 +379,9 @@ function useAi() {
 function useClaude(job: Job, what: "fit" | "tailor") {
   const client = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const consent = useClaudeConsent();
   async function run() {
+    if (!(await consent.ensure())) return;
     setBusy(true);
     try {
       await send<Fit | Tailored>(`jobs/${what}?key=${encodeURIComponent(job.key)}`, "POST");
@@ -392,16 +395,17 @@ function useClaude(job: Job, what: "fit" | "tailor") {
       setBusy(false);
     }
   }
-  return { busy, run };
+  return { busy, run, dialog: consent.dialog };
 }
 
 function FitPanel({ job }: { job: Job }) {
   const details = useDetails(job);
   const ai = useAi();
-  const { busy, run } = useClaude(job, "fit");
+  const { busy, run, dialog } = useClaude(job, "fit");
   const fit = details.data?.fit;
   return (
     <section className="sheet-section" aria-labelledby="fit-title">
+      {dialog}
       <div className="fit-head">
         <div>
           <p className="eyebrow" id="fit-title">Fit for you</p>
@@ -443,13 +447,14 @@ function FitPanel({ job }: { job: Job }) {
 function ResumePanel({ job }: { job: Job }) {
   const details = useDetails(job);
   const ai = useAi();
-  const { busy, run } = useClaude(job, "tailor");
+  const { busy, run, dialog } = useClaude(job, "tailor");
   const t = details.data?.tailored;
   const open = (path: string, folder = false) =>
     send("files/open", "POST", { path, folder }).catch((e) => toast(e instanceof Error ? e.message : "That file didn't open.", "bad"));
   const ready = ai.data?.key_set && ai.data.resume_tex_found;
   return (
     <section className="sheet-section" aria-labelledby="resume-title">
+      {dialog}
       <h3 id="resume-title">Tailored resume</h3>
       {t ? (
         <>

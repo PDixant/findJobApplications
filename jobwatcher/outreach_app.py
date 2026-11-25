@@ -11,6 +11,7 @@ import imaplib
 import subprocess
 
 from .base import *  # noqa: F401,F403
+from . import ai
 from .tracked import connect, load_jobs, edit_job, update_job
 
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
@@ -208,6 +209,8 @@ def write_drafts(cfg, company, emails, follow_up=False):
     api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     if not api_key:
         raise OutreachProblem("Add your Anthropic API key in Settings, under Keys, to write drafts in the app.")
+    if not ai.consented(cfg):
+        raise OutreachProblem(ai.CONSENT_NEEDED)
     try:
         about = o.load_about_me(cfg)
     except o.OutreachError as exc:
@@ -243,8 +246,9 @@ def write_drafts(cfg, company, emails, follow_up=False):
     job_text = []
     for j in jobs:
         desc = _text_of(cfg, j["key"])[:6000] or "(description not saved; write from the title)"
-        job_text.append(f"### {j['title']}\nJob ID: {o.job_id(j)}\nLink: {j.get('url', '')}\n"
-                        f"Tracker status: {j.get('status') or 'New'}\nPosted: {(j.get('posted') or '')[:10]}\n\n{desc}")
+        job_text.append(f"Job ID: {o.job_id(j)}\nLink: {j.get('url', '')}\n"
+                        f"Tracker status: {j.get('status') or 'New'}\nPosted: {(j.get('posted') or '')[:10]}\n"
+                        + ai.posting_block(j, desc))
     lines = [f"Write {'a follow-up' if follow_up else 'an email'} to each of these people at {company}:"]
     for c in contacts:
         lines.append(f"- {c.get('name') or 'unknown name'} <{c['email']}>, {c.get('position') or 'role unknown'}"
@@ -262,7 +266,7 @@ def write_drafts(cfg, company, emails, follow_up=False):
                         "title": f"{name}'s resume"})
     content.append({"type": "text", "text": "\n".join(lines)})
     system = (f"You write short, factual recruiting emails for {name}, who reviews and sends every one "
-              f"themselves. Follow these rules exactly.\n\n{_rules(follow_up, name)}")
+              f"themselves. Follow these rules exactly.\n\n{_rules(follow_up, name)}\n\n{ai.UNTRUSTED}")
     tool = {"name": "save_drafts", "description": "Save the drafted emails.",
             "input_schema": {"type": "object", "required": ["emails"], "properties": {"emails": {
                 "type": "array", "items": {"type": "object", "required": ["to", "subject", "body", "linkedin_note"],

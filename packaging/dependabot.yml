@@ -1,0 +1,19 @@
+# Weekly pull requests when Pathfinder's packages, the interface's packages or the workflows' actions
+# have new versions, so security fixes don't sit unnoticed.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    directory: "/ui"
+    schedule:
+      interval: weekly
+    groups:
+      interface:
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly

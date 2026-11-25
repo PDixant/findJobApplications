@@ -1,8 +1,12 @@
 """API keys and the Gmail app password.
 
 Looked up in this order: real environment variables, then the operating system's password
-store (Windows Credential Manager or the macOS Keychain, through the keyring package), then the
-.env file. The desktop app saves keys to the password store and takes them out of .env.
+store (Windows Credential Manager, the macOS Keychain, or on Linux the desktop keyring through
+Secret Service, all through the keyring package), then the .env file. The desktop app saves keys to
+the password store and takes them out of .env.
+
+A computer with no password store (or only one that keeps secrets in a plain file) gets keys in
+.env only after you agree to that, and the file is made readable by your account alone.
 """
 from __future__ import annotations
 
@@ -24,12 +28,24 @@ KEYS = {
 SOURCES = {}  # name -> "environment", "password store" or ".env", filled by load_keys
 
 
+class NoPasswordStore(ValueError):
+    """There's no password store, and you haven't agreed to a plain file yet."""
+
+
+def _secure(backend):
+    """A real password store, not a stand-in that refuses everything or keeps secrets in plain text."""
+    kind = f"{type(backend).__module__}.{type(backend).__name__}".lower()
+    return not any(bad in kind for bad in ("fail", "null", "plaintext", "keyrings.alt", "uncrypted", "chainer"))
+
+
 def _keyring():
     try:
         import keyring
-        from keyring.backends import fail
-        if isinstance(keyring.get_keyring(), fail.Keyring):
-            return None
+        backend = keyring.get_keyring()
+        if not _secure(backend):
+            from keyring.backends import chainer  # several stores at once: fine if any is a real one
+            if not (isinstance(backend, chainer.ChainerBackend) and any(_secure(b) for b in backend.backends)):
+                return None
         return keyring
     except Exception:  # not installed, or no password store on this computer
         return None
@@ -37,6 +53,14 @@ def _keyring():
 
 def store_available():
     return _keyring() is not None
+
+
+def store_name():
+    """What the password store is called on this computer, for the Keys screen."""
+    if not store_available():
+        return None
+    return {"win32": "Windows Credential Manager", "darwin": "the macOS Keychain"}.get(
+        sys.platform, "your desktop keyring (Secret Service: GNOME Keyring or KDE Wallet)")
 
 
 def load_keys(env_values):
@@ -79,20 +103,25 @@ def _mask(value, secret=True):
     return ("•" * 6) + value[-4:] if len(value) > 8 else "•" * len(value)
 
 
-def save_key(name, value, env_path=None):
-    """Save to the password store (and take it out of .env), or to .env if there is no store.
-    Returns where it went."""
+def save_key(name, value, env_path=None, plain_file_ok=False):
+    """Save to the password store (and take it out of .env). With no password store, save to .env
+    only if plain_file_ok (you agreed), else raise NoPasswordStore. Returns where it went."""
     if name not in KEYS:
         raise ValueError(f"Unknown key {name}")
     value = value.strip()
     if not value:
         raise ValueError("The key is empty")
+    if any(c in value for c in "\r\n\0"):
+        raise ValueError("A key is one line of text")
     env_path = env_path or ENV_PATH
     store = _keyring()
     if store:
         store.set_password(SERVICE, name, value)
         _remove_from_env(env_path, name)
         where = "password store"
+    elif not plain_file_ok:
+        raise NoPasswordStore("This computer has no password store, so the key would be saved in .env, a plain "
+                              "text file only your account can read. Save it under Settings, Keys, and agree to that.")
     else:
         _write_env(env_path, name, value)
         where = ".env"
@@ -141,6 +170,16 @@ def _write_env(path, name, value):
     lines = [l for l in _env_lines(path) if not _is_line_for(l, name)]
     lines.append(f"{name}={value}")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    private_file(path)
+
+
+def private_file(path):
+    """Readable and writable by your account only (Mac and Linux; on Windows your user folder is already yours)."""
+    if os.name == "posix":
+        try:
+            os.chmod(path, 0o600)
+        except OSError:
+            pass
 
 
 def test_key(name, cfg=None):

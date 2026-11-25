@@ -6,7 +6,7 @@ Everything in detail. New here? Start with the [README](../README.md).
 
 **Applying:** [Claude's help](#claudes-help) · [The fine print](#the-fine-print) · [People you know](#people-you-know) · [Recruiter emails](#recruiter-emails) · [Pipeline and follow-ups](#pipeline-and-follow-ups) · [Phone alerts](#phone-alerts)
 
-**Reference:** [Commands](#commands) · [Your files](#your-files) · [Opening the app](#opening-the-app) · [The Windows installer](#the-windows-installer) · [For developers](#for-developers)
+**Reference:** [What leaves your computer](#what-leaves-your-computer) · [Where your keys are kept](#where-your-keys-are-kept) · [Staying safe](#staying-safe) · [Commands](#commands) · [Your files](#your-files) · [Opening the app](#opening-the-app) · [The Windows installer](#the-windows-installer) · [For developers](#for-developers)
 
 ---
 
@@ -80,7 +80,7 @@ About 970 companies to start, in `my_companies.csv` (yours, made from the shared
 | `careers_url`, `domain` | Its careers page and email domain |
 | `type`, `ticker`, `stage`, `last_raise`, `layoffs_12m` | Used for the score |
 | `enabled` | `no` stops watching it without deleting the row |
-| `score`, `tier`, `status`, `verified` | Filled in for you |
+| `score`, `tier`, `status`, `verified` | Filled in for you. `score` is the **company signal**: a rough 0 to 100 read of public facts (share price, revenue growth, margin and size for public companies; funding stage and last raise for private ones; lower after layoffs). It is not advice on whether to apply. |
 
 Board IDs by hand: `job-boards.greenhouse.io/acme` is greenhouse `acme`, `jobs.lever.co/acme` is lever `acme`, and for Workday paste the whole careers URL. Not sure? Use `auto`.
 
@@ -102,7 +102,7 @@ When a new version is on GitHub, **New version ready** appears at the top right 
 |---|---|
 | `git clone` | Pulls the new commits. If you changed code yourself, it stops and tells you which files. |
 | Download ZIP | Downloads the newest files into your folder. |
-| The installer | Links to the newest installer. |
+| The installer | Downloads the newest installer from this project's Releases page, checks its SHA-256 against the release's `SHA256SUMS.txt`, then runs it and reopens Pathfinder. |
 
 Your settings, company list, jobs and keys are never touched.
 
@@ -159,7 +159,47 @@ The **Pipeline** screen has a column per status: New, Applied, Interviewing, Off
 2. In Pathfinder: **Settings → Runs and alerts → Make me a private topic**.
 3. In ntfy, tap **+** and subscribe to that topic. **Send a test alert** to check.
 
-New matches arrive with the company, title and a link.
+New matches arrive with the company, title, region and a link, nothing else about you.
+
+> [!WARNING]
+> Anyone who knows your topic name can read your alerts. Use the long random topic Pathfinder makes, keep it out of screenshots and bug reports, and make a new one (and subscribe to it) if it ever gets out.
+
+---
+
+## What leaves your computer
+
+Pathfinder has no server or account of its own: your settings, jobs, tracker, resumes and contacts are files on your computer. These are the only places it sends anything, and every one except the job boards and update checks is off until you add its key.
+
+| Service | When | What it receives | Needed? |
+|---|---|---|---|
+| **Job boards and careers sites** (Greenhouse, Lever, Ashby, Workday, companies' own sites and others) | Every run | Ordinary requests for their public job listings. Nothing about you. | Yes, this is how it finds jobs |
+| **[Anthropic](https://www.anthropic.com/legal/privacy)** (Claude) | When you ask for a fit score, a tailored resume or email drafts, and after a run if **score new matches** is on | The posting's text and your `about_me.md`. Fit scores and drafts also get `resume.pdf`; tailoring gets `resume.tex` and `resume_rules.md`. Drafts also get each contact's name, email and role, and your earlier email when following up. | Optional |
+| **Serper**, **Brave** or **SerpApi** (whichever key you add) | Finding new companies, within your monthly query limit, and **Find career pages** | Search phrases built from your job titles and places, or a company's name | Optional |
+| **[Hunter](https://hunter.io)** | Outreach: **Find people** and checking an address | A company's name or web address, and the email addresses being checked | Optional |
+| **Gmail** | Only when you press **Gmail draft** | That email and its attached resume, saved to your own Drafts folder | Optional |
+| **[ntfy](https://ntfy.sh)** | When a run finds new matches, if you set a topic | Each new match's company, title, region and link | Optional |
+| **Yahoo Finance** (through `yfinance`) | **Refresh signals**, about once a week | The stock tickers in your company list | Optional extra |
+| **GitHub** | A few times a day, and when you update | A request for the newest version. Nothing about you. | Built in |
+
+Each provider keeps and handles what it receives under its own terms; read them before you add its key. Pathfinder shows a short notice the first time it would send anything to Claude.
+
+## Where your keys are kept
+
+Keys go into your computer's own password store, under the name **Job Watcher** (the app's first name, kept so older keys are still found):
+
+| Computer | Password store |
+|---|---|
+| Windows | Credential Manager (**Windows Credentials**) |
+| Mac | Keychain Access (login keychain) |
+| Linux | Your desktop's keyring through Secret Service: GNOME Keyring or KDE Wallet |
+
+If a computer has no password store (some Linux setups, like a server with no desktop), Pathfinder says so and asks before saving a key in `.env`, a plain text file that only your user account can read. `.env` is never shared in git. Keys typed into a terminal session as environment variables are used first and never saved.
+
+## Staying safe
+
+- **Only public websites.** Pathfinder reads careers pages only over `http` or `https`, and never on this computer or a private network (addresses like `localhost`, `192.168.x.x` or `10.x.x.x`). Every redirect and the address it finally connects to are checked too, and each page is capped in size. A company whose page breaks these rules shows why on the **Companies** screen.
+- **Checked updates.** A downloaded update must be exactly the version GitHub named, and it's copied in all at once or not at all. The Windows app takes a new installer only from this project's own [Releases](https://github.com/PDixant/findJobApplications/releases) page, and only after its SHA-256 matches the release's `SHA256SUMS.txt`.
+- **Job postings are text, not instructions.** Claude is told to treat each posting as untrusted text to read. A tailored resume is never turned into a PDF if Claude added commands that would read your files or run programs, and LaTeX runs with those commands turned off.
 
 ---
 
@@ -192,7 +232,7 @@ Your own files are listed in `.gitignore`, so they never reach GitHub and update
 |---|---|---|
 | `config.toml`, `companies.csv` | The starting settings and company list everyone shares | Yes |
 | `my_settings.toml`, `my_companies.csv` | **Your** settings and company list | No |
-| `.env` | Keys, if you keep them in a file instead of the app | No |
+| `.env` | Keys, only if your computer has no password store, or you keep them in a file yourself | No |
 | `about_me.md`, `resume.pdf`, `resume.tex`, `resume_rules.md`, `resumes/` | You, your resumes and your tailoring rules | No |
 | `outreach/` | Email drafts and the contacts cache | No |
 | `postings.db`, `job_tracker.xlsx`, `all_postings.csv`, `job_watcher_state.json`, `job_watcher.log` | Saved postings, your tracker, run history and the log | No |
@@ -211,19 +251,34 @@ Moved or renamed the folder? Double-click **Install Pathfinder** again so the sh
 
 ## The Windows installer
 
-`packaging/` builds `PathfinderSetup.exe`, which needs no Python and no admin rights, and keeps its data in `%APPDATA%\JobWatcher`. To publish one, copy `packaging/release.yml` to `.github/workflows/` and push a version tag:
+Every release has three files, built by GitHub Actions from the tagged source:
 
-```bash
-git tag v0.6.0
-git push origin v0.6.0
-```
+| File | What it is |
+|---|---|
+| `PathfinderSetup.exe` | The installer. No Python, no admin rights; installs to your user folder and keeps its data in `%APPDATA%\JobWatcher`, which uninstalling leaves alone. |
+| `Pathfinder-portable-win64.zip` | The same app with no installer: unzip anywhere and open `Pathfinder.exe`. |
+| `SHA256SUMS.txt` | The SHA-256 of each file. `Get-FileHash .\PathfinderSetup.exe -Algorithm SHA256` in PowerShell should print the same. |
 
-GitHub builds the installer and attaches it to a release.
+To publish a version (maintainers):
+
+1. Set the version in `pyproject.toml` and `jobwatcher/__init__.py`.
+2. Tag it and push the tag:
+
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+
+The workflow, `.github/workflows/release.yml`, runs the tests, builds the interface and `Pathfinder.exe` with PyInstaller (`packaging/pathfinder.spec`), starts it once to be sure it works, wraps it with Inno Setup (`packaging/pathfinder.iss`), writes `SHA256SUMS.txt` and publishes the release. **Actions → release → Run workflow** does a dry run that keeps the files as artifacts without publishing. It stops if the tag and `pyproject.toml` disagree, because the app's update check compares them.
+
+The installer isn't code-signed. Signing needs a certificate bought in the publisher's own name; add it as the repository secrets `WINDOWS_CERT_PFX` (the `.pfx`, base64) and `WINDOWS_CERT_PASSWORD`, and the workflow signs the programs and the installer.
 
 ## For developers
 
 - **Code:** the `jobwatcher` package. `runner` does a run, `boards` and `systems` read job boards, `filters` and `signals` decide matches, `server` is the app's API (on 127.0.0.1 only, with a per-launch token), `desktop` opens the window and `updates` handles updates.
+- **Packages:** `pyproject.toml` is the one list. `requirements.txt` has only what a run needs, `requirements-app.txt` adds the desktop app, `requirements-extras.txt` the optional stock metrics and pop-ups, and `requirements-dev.txt` the tests.
 - **Data folder:** `JOBWATCHER_HOME` overrides it. By default it's the source folder, or `%APPDATA%\JobWatcher` for an installed copy.
+- **Checks on GitHub:** `.github/workflows/tests.yml` runs the tests on Windows, macOS and Linux with Python 3.10 and 3.13, runs the real installer and uninstaller on each, checks the committed interface is up to date, and looks for known security problems in the packages (pip-audit and npm audit) every push and every Monday. Dependabot (`.github/dependabot.yml`) proposes package updates weekly.
 - **Tests** use fake job boards, a fake search service and a fake Claude, so they make no outside requests:
 
   ```bash

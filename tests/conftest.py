@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 HOME = Path(tempfile.mkdtemp(prefix="jobwatcher-test-"))
 os.environ["JOBWATCHER_HOME"] = str(HOME)
+os.environ["PATHFINDER_ALLOW_PRIVATE_SITES"] = "1"  # the fake careers sites run on this computer
 for key in ("SERPER_API_KEY", "BRAVE_API_KEY", "SERPAPI_API_KEY", "HUNTER_API_KEY",
             "GMAIL_ADDRESS", "GMAIL_APP_PASSWORD", "ANTHROPIC_API_KEY"):
     os.environ.pop(key, None)

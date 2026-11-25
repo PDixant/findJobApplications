@@ -2,15 +2,15 @@
 
 # Design
 
-**Pathfinder's interface follows Kanso, a design language for calm, crafted software.**
+**Pathfinder's interface follows Kanso, a design language for calm, crafted software, created by [Dixant Patel](https://github.com/PDixant).**
 
-<a href="Kanso-Design-Language.pdf"><img src="cover.png" alt="The cover of Kanso, a design language for calm, crafted software" width="420"></a>
+<a href="Kanso-Design-Language.pdf"><img src="cover.png" alt="The cover of Kanso, a design language for calm, crafted software, by Dixant Patel" width="420"></a>
 
 **[Read the design language (PDF, 27 pages)](Kanso-Design-Language.pdf)**
 
 </div>
 
-Warm paper, black ink and one colour of light. Kanso sets out the feelings, ten principles and fixed values (colour, type, space, shape, motion and components) that every screen is built from, so the whole app looks like one family.
+Warm paper, black ink and one colour of light. Kanso sets out the feelings, ten principles and fixed values (colour, type, space, shape, motion and components) that every screen is built from, so the whole app looks like one family. Dixant made Kanso for Pathfinder and shares it here under the same MIT license as the code: you're welcome to build with it, and to credit him when you do.
 
 ## How Pathfinder uses it
 
@@ -50,4 +50,4 @@ Kanso asks that any choice it doesn't cover is listed. These are Pathfinder's:
 
 Every value is a CSS custom property at the top of [`ui/src/styles.css`](../../ui/src/styles.css), named after the PDF's tokens (`--canvas`, `--surface`, `--paint`, `--light` and so on). The shared pieces (icons, the Mesh texture, the jewel dots, tabs with the sliding line) are in [`ui/src/components/bits.tsx`](../../ui/src/components/bits.tsx).
 
-<sub>Kanso draws on Wealthsimple, Sanzo Wada's *A Dictionary of Color Combinations* and three cars, as credited on its last page. Those names are trademarks of their owners, referenced only as inspiration; neither Kanso nor Pathfinder is affiliated with or endorsed by any of them. Instrument Serif, Jost and Geist Mono are under the SIL Open Font License.</sub>
+<sub>Kanso design language © 2026 Dixant Patel, under the [MIT license](../../LICENSE). Kanso draws on Wealthsimple, Sanzo Wada's *A Dictionary of Color Combinations* and three cars, as credited on its last page. Those names are trademarks of their owners, referenced only as inspiration; neither Kanso nor Pathfinder is affiliated with or endorsed by any of them. Instrument Serif, Jost and Geist Mono are under the SIL Open Font License.</sub>
