@@ -167,8 +167,14 @@ def companies():
 
 
 def test_first_run_finds_everything():
-    events = Counter()
-    listener = jw.on_event(lambda kind, data: events.update([kind]))
+    events, outcomes = Counter(), Counter()
+
+    def listen(kind, data):
+        events.update([kind])
+        if kind == "board_done":
+            outcomes.update([data["outcome"]])
+            assert data["ok"] == (data["outcome"] == "read")
+    listener = jw.on_event(listen)
     try:
         jw.run_once(jw.load_config())
     finally:
@@ -190,6 +196,7 @@ def test_first_run_finds_everything():
     assert ("blocked", "/careers") not in HITS
     assert events["run_started"] == events["run_finished"] == 1
     assert events["board_done"] == events["boards_started"] * 9 and events["new_match"] == 9
+    assert set(outcomes) <= {"read", "missing", "paused", "error"} and outcomes["read"] and not outcomes["error"]
 
 
 def test_second_run_reads_no_job_page_twice():

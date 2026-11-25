@@ -2,12 +2,14 @@
 import { useSyncExternalStore } from "react";
 import { api, eventsUrl, type Run } from "./api";
 
+export type BoardOutcome = "read" | "missing" | "paused" | "error";
+
 type Toast = { id: number; text: string; tone: "good" | "bad" | "info"; action?: { label: string; run: () => void } };
 
 type LiveState = {
   connected: boolean;
   run: Run | null;
-  boards: Record<string, boolean>; // company -> read OK, for the run in progress
+  boards: Record<string, BoardOutcome>; // company -> what happened to its board, for the run in progress
   boardsStartedAt: number | null; // when this window saw board reading start, for "min left"
   log: string[];
   toasts: Toast[];
@@ -124,14 +126,14 @@ function handle(m: Message) {
     case "board_done":
       catchUp();
       set({
-        boards: { ...state.boards, [String(m.company)]: Boolean(m.ok) },
+        boards: { ...state.boards, [String(m.company)]: (m.outcome as BoardOutcome | undefined) ?? (m.ok ? "read" : "error") },
         run: run
           ? {
               ...run,
               done: Number(m.done),
               total: Number(m.total),
               last_company: String(m.company),
-              failed_boards: run.failed_boards + (m.ok ? 0 : 1),
+              failed_boards: run.failed_boards + ((m.outcome ?? (m.ok ? "read" : "error")) === "error" ? 1 : 0),
             }
           : run,
       });

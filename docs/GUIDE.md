@@ -115,18 +115,18 @@ Add your Anthropic key under **Settings → Keys**. Each use sends one posting p
 
 ## The fine print
 
-Read from each posting, on your computer, and shown as tags on every match:
+Read from each posting, on your computer. Pay has its own column in **Jobs**; the rest sits on the quiet line under each title, and anything that could rule a job out carries a warning sign:
 
-| Tag | Means |
+| You'll see | Means |
 |---|---|
 | **Pay** | The pay range, in CAD for Canadian jobs and USD otherwise |
 | **Remote / Hybrid / On-site** | From the title, location and description |
-| **Asks 7+ yrs** | Years of experience asked for (highlighted when it's more than yours) |
+| **7+ yrs** | Years of experience asked for (with a warning sign when it's more than yours) |
 | **No visa sponsorship**, **Security clearance**, **Citizens only** | Work permit limits |
 | **Relocation help** | Relocation offered |
 | **Reposted**, **Open 60 days** | Posted before, or up for a long time |
 
-Filter by them in **Jobs** with **Fit**, **Where** and **Only**.
+Filter by them in **Jobs** with **Fit**, and under **More** with **Where you work** and **Only**.
 
 ## People you know
 
@@ -149,7 +149,7 @@ Applying and then writing to a recruiter usually gets more attention than applyi
 
 ## Pipeline and follow-ups
 
-The **Pipeline** screen has a column per status: New, Applied, Interviewing, Offer, Rejected and Skipped. Drag a card, or use its menu. At the top: how many you've applied to, how often you hear back, and applications per week. **Time to follow up** lists applications and emails with no reply after a few days; **I followed up** resets the clock.
+The **Pipeline** screen has a column per status: New, Applied, Interviewing, Offer, Rejected and Skipped. Drag a card, or use its **Move to** menu. At the top: how many you've applied to, how often you hear back, how many you're interviewing for, and applications per week. **Time to follow up** lists applications and emails with no reply after a few days; **I followed up** resets the clock.
 
 ## Phone alerts
 
@@ -229,6 +229,7 @@ GitHub builds the installer and attaches it to a release.
   python -m pytest -q tests
   ```
 
+- **Design:** the interface follows [Kanso](design/README.md) ([PDF](design/Kanso-Design-Language.pdf)). Its tokens are CSS custom properties at the top of `ui/src/styles.css`, and the shared pieces are in `ui/src/components/bits.tsx`. Use only those values; where the PDF is silent, follow its ten principles and note the choice in `docs/design/README.md`.
 - **Interface:** React and TypeScript in `ui/` (Node 20+):
 
   ```bash

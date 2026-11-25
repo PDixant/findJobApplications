@@ -298,8 +298,8 @@ class Runs:
                 elif kind == "board_done":
                     run.update(done=data.get("done", 0), total=data.get("total"),
                                last_company=data.get("company", ""))
-                    if not data.get("ok"):
-                        run["failed_boards"] += 1
+                    if data.get("outcome", "read" if data.get("ok") else "error") == "error":
+                        run["failed_boards"] += 1  # a board with none found yet, or paused, isn't a failure
                 elif kind == "rate_limited":
                     run["rate_limited"] = (run["rate_limited"] + [data.get("site", "")])[-20:]
                 elif kind == "new_match":

@@ -180,8 +180,10 @@ def fetch_all(cfg, state, store, rows, rules, now, max_age, window_start, verify
         futures = {pool.submit(work, row): i for i, row in enumerate(todo)}
         for done, future in enumerate(as_completed(futures), start=1):
             results[futures[future]] = out = future.result()
+            outcome = ("error" if out.get("error") else "paused" if out.get("deferred")
+                       else "missing" if out.get("missing") else "read")
             emit("board_done", done=done, total=len(todo), company=out["row"]["company"],
-                 ok=not (out.get("error") or out.get("missing") or out.get("deferred")))
+                 ok=outcome == "read", outcome=outcome)
             if done == len(todo) or time.monotonic() - last_note >= 30:
                 last_note = time.monotonic()
                 log.info("  ...%d of %d boards read (%.1f min)", done, len(todo), (last_note - started) / 60)

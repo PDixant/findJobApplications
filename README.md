@@ -5,13 +5,14 @@
 **Catch software jobs the hour they're posted, and know which ones are worth your time.**
 
 [![tests](https://github.com/PDixant/findJobApplications/actions/workflows/tests.yml/badge.svg)](https://github.com/PDixant/findJobApplications/actions/workflows/tests.yml)
-![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-1f3864)
-![Windows · macOS · Linux](https://img.shields.io/badge/runs%20on-Windows%20%7C%20macOS%20%7C%20Linux-2a4a80)
-[![MIT license](https://img.shields.io/badge/license-MIT-3f9a6a)](LICENSE)
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-1C4286)
+![Windows · macOS · Linux](https://img.shields.io/badge/runs%20on-Windows%20%7C%20macOS%20%7C%20Linux-34454C)
+[![Design: Kanso](https://img.shields.io/badge/design-Kanso-111314)](docs/design/README.md)
+[![MIT license](https://img.shields.io/badge/license-MIT-437742)](LICENSE)
 
-[Get started](#get-started) · [What it does](#what-it-does) · [Staying up to date](#staying-up-to-date) · [Full guide](docs/GUIDE.md)
+[Get started](#get-started) · [What it does](#what-it-does) · [A look inside](#a-look-inside) · [Design](#designed-to-be-calm) · [Full guide](docs/GUIDE.md)
 
-<img src="docs/screenshots/dashboard.png" alt="The Job Watcher dashboard: new matches, every company's job board being read, and what to do next" width="900">
+<img src="docs/screenshots/dashboard.png" alt="Today in Job Watcher: the number of open matches, how the last run went across every company, new matches and what to do next" width="900">
 
 </div>
 
@@ -57,7 +58,7 @@ git clone https://github.com/PDixant/findJobApplications.git
 | To | Do this |
 |---|---|
 | **Open it** | Click **Job Watcher** on your Desktop or Start menu, or type `jobwatcher` in any terminal. |
-| **Check for jobs now** | Press **Run now**. While the window is open, it also checks by itself a few times a day. |
+| **Check for jobs now** | Press **Run now**, low in the side bar. Its progress shows right there on every screen, and in full on **Today**. While the window is open, it also checks by itself a few times a day. |
 | **Change what it looks for** | Open **Settings**. The **In plain words** card sums up what your settings do and marks what your unsaved changes affect. |
 | **Close it** | Close the window. Nothing keeps running in the background. |
 
@@ -72,16 +73,35 @@ When there's a new version on GitHub, **New version ready** appears at the top r
 
 <table>
   <tr>
+    <td width="50%"><img src="docs/screenshots/run.png" alt="Today during a run: 619 of 992 job boards checked, with a progress line, the time left and one board that failed"></td>
     <td width="50%"><img src="docs/screenshots/job-details.png" alt="A match opened in Jobs, with an Apply fit score, the requirements you meet, pay and workplace"></td>
-    <td width="50%"><img src="docs/screenshots/pipeline.png" alt="The Pipeline board with application columns, weekly stats and follow-ups due"></td>
   </tr>
   <tr>
+    <td align="center"><b>A run</b>: one number, one line of progress, and only real problems flagged</td>
     <td align="center"><b>Jobs</b>: your fit, pay and the fine print for every match</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/pipeline.png" alt="The Pipeline board with weekly stats, follow-ups due and application columns"></td>
+    <td width="50%"><img src="docs/screenshots/settings-dark.png" alt="Settings in dark mode, with the In plain words summary beside the form"></td>
+  </tr>
+  <tr>
     <td align="center"><b>Pipeline</b>: where every application stands</td>
+    <td align="center"><b>Settings</b>, in dark mode: summed up in plain words as you edit</td>
   </tr>
 </table>
 
 <sub>Screenshots use made-up companies.</sub>
+
+## Designed to be calm
+
+Job Watcher follows **[Kanso](docs/design/README.md)**, a design language for calm, crafted software: warm paper, black ink and one colour of light.
+
+- **What matters first.** Each screen opens on the one thing to know, like your open matches on **Today**.
+- **Detail on request.** Your companies show as one bar. **Show every company** opens a square for each one.
+- **Plain words.** Settings explains itself in short checks, and marks what your unsaved changes affect.
+- **Light and dark.** It follows your computer's setting.
+
+**[Read the design language (PDF)](docs/design/Kanso-Design-Language.pdf)** or see [how Job Watcher uses it](docs/design/README.md).
 
 ## Your data stays yours
 
@@ -141,12 +161,13 @@ The **[full guide](docs/GUIDE.md)** covers everything in detail:
 - [Claude's help: fit scores and tailored resumes](docs/GUIDE.md#claudes-help)
 - [Recruiter emails](docs/GUIDE.md#recruiter-emails), [people you know](docs/GUIDE.md#people-you-know) and [phone alerts](docs/GUIDE.md#phone-alerts)
 - [All commands](docs/GUIDE.md#commands) and [which files are yours](docs/GUIDE.md#your-files)
+- [The design language](docs/design/README.md) behind the interface
 
 <details>
 <summary><b>For developers</b></summary>
 <br>
 
-The app is Python (FastAPI, served only on your own computer) with a React and TypeScript interface in `ui/`.
+The app is Python (FastAPI, served only on your own computer) with a React and TypeScript interface in `ui/`, styled with the [Kanso](docs/design/README.md) tokens in `ui/src/styles.css`.
 
 ```bash
 pip install -r requirements-dev.txt

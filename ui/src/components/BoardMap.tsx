@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { RESULT_ORDER, resultInfo, type Company, type Run } from "../api";
 import { n, plural } from "../format";
-import { useLive } from "../live";
+import { useLive, type BoardOutcome } from "../live";
 import { loadPrefs, savePrefs } from "../queries";
 import { Icon, LineProgress, useTip } from "./bits";
 import { phaseText, timeLeft } from "./RunControls";
@@ -87,7 +87,9 @@ function StackBar({ counts, total, onPick }: { counts: Map<string, number>; tota
 }
 
 /** A run in progress: the one number that matters (boards read), a line of light, and what's happening. */
-function RunProgress({ run, boards, since, reading }: { run: Run; boards: Record<string, boolean>; since: number | null; reading: boolean }) {
+const OUTCOME_TONE: Record<BoardOutcome, string> = { read: "ok", missing: "missing", paused: "paused", error: "error" };
+
+function RunProgress({ run, boards, since, reading }: { run: Run; boards: Record<string, BoardOutcome>; since: number | null; reading: boolean }) {
   if (!reading || !run.total) {
     return (
       <>
@@ -96,22 +98,25 @@ function RunProgress({ run, boards, since, reading }: { run: Run; boards: Record
       </>
     );
   }
-  const failed = Object.values(boards).filter((ok) => !ok).length || run.failed_boards;
+  const outcomes = Object.values(boards);
+  const failed = outcomes.filter((o) => o === "error").length || run.failed_boards;
+  const noBoard = outcomes.filter((o) => o === "missing").length;
   const left = timeLeft(run.done, run.total, since);
   const paused = [...new Set(run.rate_limited)];
   return (
     <>
       <div className="run-figure">
         <span className="t-display-m">{n(run.done)}</span>
-        <span className="of">of {plural(run.total, "job board")} read</span>
+        <span className="of">of {plural(run.total, "job board")} checked</span>
         <span className="pct">{Math.min(100, Math.floor((run.done / run.total) * 100))}%</span>
       </div>
-      <LineProgress share={run.cancelled ? null : run.done / run.total} label="Job boards read" />
+      <LineProgress share={run.cancelled ? null : run.done / run.total} label="Job boards checked" />
       <p className="run-facts">
         {run.last_company && <span>Just read {run.last_company}</span>}
         {left && <span>{left[0].toUpperCase() + left.slice(1)}</span>}
         {run.new.length > 0 && <span>{plural(run.new.length, "new match", "new matches")} so far</span>}
-        {failed > 0 && <span className="bad"><Icon name="alert" />{plural(failed, "board")} not read</span>}
+        {noBoard > 0 && <span>{plural(noBoard, "company", "companies")} with no board yet</span>}
+        {failed > 0 && <span className="bad"><Icon name="alert" />{plural(failed, "board")} failed</span>}
         {paused.length > 0 && <span>Paused by {paused.slice(0, 3).join(", ")}</span>}
       </p>
       {run.new.length > 0 && <NewSoFar lines={run.new} />}
@@ -131,7 +136,7 @@ function NewSoFar({ lines }: { lines: string[] }) {
 /** Every company, one square each. Grouped by last run; during a run, A to Z, lighting up as each
  *  board is read. A board that failed is drawn as a ring, so it never depends on colour alone. */
 function CompanyMap({ companies, live, reading, onPick }: {
-  companies: Company[]; live: Record<string, boolean>; reading: boolean; onPick: (c: string) => void;
+  companies: Company[]; live: Record<string, BoardOutcome>; reading: boolean; onPick: (c: string) => void;
 }) {
   const [hover, setHover] = useState<Company | null>(null);
 
@@ -145,16 +150,20 @@ function CompanyMap({ companies, live, reading, onPick }: {
   function tone(c: Company) {
     if (!reading || SKIPPED.includes(c.result)) return resultInfo(c.result).tone;
     if (!(c.company in live)) return "pending";
-    return live[c.company] ? "ok" : "error";
+    return OUTCOME_TONE[live[c.company]];
   }
 
   function note(c: Company | null) {
     if (!c) {
       const readNow = Object.keys(live).length;
-      return reading ? `${plural(readNow, "board")} read so far this run. Point at a square to see the company.`
+      return reading ? `${plural(readNow, "board")} checked so far this run. Point at a square to see the company.`
         : "Point at a square to see the company. Click it to open it in Companies.";
     }
-    if (reading && c.company in live) return <><strong>{c.company}</strong>: {live[c.company] ? "read this run" : "not read this run (see the log in Activity)"}</>;
+    if (reading && c.company in live) {
+      const said = { read: "read this run", missing: "no job board found yet", paused: "paused by a rate limit, read again next run",
+        error: "failed this run (the log in Activity says why)" }[live[c.company]];
+      return <><strong>{c.company}</strong>: {said}</>;
+    }
     if (reading && !SKIPPED.includes(c.result)) return <><strong>{c.company}</strong>: still to read</>;
     const info = resultInfo(c.result);
     const open = c.result === "OK" && c.open != null ? `, ${plural(c.open, "open posting")}` : "";
@@ -173,7 +182,9 @@ function CompanyMap({ companies, live, reading, onPick }: {
           ) : (
             <p className="grid-group-label">
               <span className="swatch tone-ok" aria-hidden="true" />Read this run
-              <span className="swatch tone-error" aria-hidden="true" style={{ marginLeft: 12 }} />Not read
+              <span className="swatch tone-missing" aria-hidden="true" style={{ marginLeft: 12 }} />No board yet
+              <span className="swatch tone-paused" aria-hidden="true" style={{ marginLeft: 12 }} />Paused
+              <span className="swatch tone-error" aria-hidden="true" style={{ marginLeft: 12 }} />Failed
               <span className="swatch tone-pending" aria-hidden="true" style={{ marginLeft: 12 }} />Still to read
               <span style={{ marginLeft: 12 }}>A to Z</span>
             </p>
