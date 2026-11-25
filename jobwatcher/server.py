@@ -18,7 +18,7 @@ import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import Body, FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 
 from .base import *  # noqa: F401,F403
 from .config import *  # noqa: F401,F403
@@ -93,6 +93,37 @@ class Files:
     def forget(self, key):
         with self._lock:
             self._cache.pop(key, None)
+
+
+THEMES = ("system", "light", "dark")  # Settings, Appearance: follow the computer, or always light or dark
+AFTER_UPDATE_MODES = ("full", "since", "search")  # runs that can wait for an update to finish first
+
+
+def meta_value(cfg, name, default=""):
+    db = connect(cfg)
+    try:
+        return get_meta(db, name, default)
+    finally:
+        db.close()
+
+
+def set_meta_value(cfg, name, value):
+    db = connect(cfg)
+    try:
+        with db:
+            set_meta(db, name, value)
+    finally:
+        db.close()
+
+
+def theme_choice(cfg):
+    if cfg is None:
+        return "system"
+    try:
+        value = meta_value(cfg, "theme", "system")
+    except sqlite3.Error:
+        return "system"
+    return value if value in THEMES else "system"
 
 
 def postings_db(cfg):
@@ -432,6 +463,25 @@ def create_app(token, dev=False, schedule=False):
     app.state.scheduler = scheduler
     if schedule:
         scheduler.start()
+
+        def run_after_update():
+            """You pressed Update, then run: the new version starts the run you asked for."""
+            cfg, _ = files.config()
+            if cfg is None:
+                return
+            try:
+                mode = meta_value(cfg, "run_after_update")
+                if mode:
+                    set_meta_value(cfg, "run_after_update", "")
+            except sqlite3.Error:
+                return
+            if mode in AFTER_UPDATE_MODES:
+                log.info("Updated. Starting the run you asked for.")
+                try:
+                    runs.start(mode, source="app")
+                except HTTPException as exc:
+                    log.info("The run you asked for didn't start: %s", exc.detail)
+        threading.Timer(3.0, run_after_update).start()  # once the window has opened
 
     @app.middleware("http")
     async def guard(request: Request, call_next):
@@ -1124,14 +1174,20 @@ def create_app(token, dev=False, schedule=False):
         return updates.check(__version__, force=force)
 
     @app.post("/api/update/apply")
-    def update_apply():
-        """Install the newer version, then close and open the app again so it runs."""
+    def update_apply(body: dict = Body(default={})):
+        """Install the newer version, then close and open the app again so it runs. then_run: a run
+        to start as soon as the new version opens (from Run now's update check)."""
         if runs.active():
             raise HTTPException(409, "A run is going. Update when it finishes.")
         try:
             result = updates.apply()
         except updates.UpdateProblem as exc:
             raise HTTPException(400, str(exc)) from None
+        then_run = str(body.get("then_run") or "")
+        if then_run in AFTER_UPDATE_MODES:
+            cfg, _ = files.config()
+            if cfg is not None:
+                set_meta_value(cfg, "run_after_update", then_run)
         close = getattr(app.state, "close_for_restart", None)
         if close:
             # The installer reopens the app itself once the new version is in; anything else reopens here.
@@ -1139,6 +1195,19 @@ def create_app(token, dev=False, schedule=False):
             threading.Timer(1.5, close).start()  # after this answer reaches the window
         hub.publish("updated", {"to": result["to"]})
         return {**result, "restart": bool(close)}
+
+    @app.get("/api/appearance")
+    def appearance():
+        cfg, _ = files.config()
+        return {"theme": theme_choice(cfg)}
+
+    @app.put("/api/appearance")
+    def set_appearance(body: dict = Body(...)):
+        theme = str(body.get("theme") or "")
+        if theme not in THEMES:
+            raise HTTPException(400, f"Pick one of: {', '.join(THEMES)}.")
+        set_meta_value(config_or_fail(), "theme", theme)
+        return {"theme": theme}
 
     @app.api_route("/api/{rest:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
     def unknown(rest: str):
@@ -1155,7 +1224,10 @@ def create_app(token, dev=False, schedule=False):
             fonts = path.startswith("assets/") and path.endswith((".woff", ".woff2"))
             cache = "public, max-age=31536000, immutable" if fonts else "no-cache"
             return FileResponse(target, headers={"Cache-Control": cache})
-        return FileResponse(UI_DIR / "index.html", headers={"Cache-Control": "no-cache"})
+        # The page arrives already in your chosen theme, so it never flashes the other one first.
+        page = (UI_DIR / "index.html").read_text(encoding="utf-8")
+        page = page.replace("<html ", f'<html data-theme-choice="{theme_choice(files.config()[0])}" ', 1)
+        return HTMLResponse(page, headers={"Cache-Control": "no-cache"})
 
     return app
 

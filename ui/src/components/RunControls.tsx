@@ -1,8 +1,10 @@
 import { useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { api, type Run, type RunMode } from "../api";
 import { setRun, toast, useLive } from "../live";
 import { n, plural, when } from "../format";
 import { Icon, Jewels, LineProgress, useDismiss } from "./bits";
+import { checkBeforeRun } from "./Update";
 
 export const PHASES: Record<string, string> = {
   starting: "Starting",
@@ -77,15 +79,27 @@ export function timeLeft(done: number, total: number, since: number | null): str
   return mins < 1 ? "under a minute left" : `about ${mins} min left`;
 }
 
+// Runs that read every board first ask whether a newer Pathfinder is out (see checkBeforeRun).
+const CHECK_FIRST: RunMode[] = ["full", "since", "search"];
+
 export function useRunActions() {
+  const client = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const [checking, setChecking] = useState(false);
   async function start(mode: RunMode, company?: string) {
     setBusy(true);
     try {
+      if (CHECK_FIRST.includes(mode)) {
+        setChecking(true);
+        const choice = await checkBeforeRun(client, mode);
+        setChecking(false);
+        if (choice !== "run") return;  // cancelled, or updating (the new version starts the run)
+      }
       setRun(await api<Run>("runs", { method: "POST", body: JSON.stringify({ mode, company }) }));
     } catch (e) {
       toast(e instanceof Error ? e.message : "The run didn't start.", "bad");
     } finally {
+      setChecking(false);
       setBusy(false);
     }
   }
@@ -99,7 +113,7 @@ export function useRunActions() {
       setBusy(false);
     }
   }
-  return { start, cancel, busy };
+  return { start, cancel, busy, checking };
 }
 
 const OTHER_RUNS: { mode: RunMode; label: string; what: string }[] = [
@@ -111,7 +125,7 @@ const OTHER_RUNS: { mode: RunMode; label: string; what: string }[] = [
 /** The run, low in the side nav on every screen: start one, or see how far it has got and stop it. */
 export function RunControls({ lastRun, busyElsewhere }: { lastRun: string | null; busyElsewhere: boolean }) {
   const { run, boardsStartedAt, phases } = useLive();
-  const { start, cancel, busy } = useRunActions();
+  const { start, cancel, busy, checking } = useRunActions();
   const [menu, setMenu] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   useDismiss(box, menu, () => setMenu(false));
@@ -159,7 +173,9 @@ export function RunControls({ lastRun, busyElsewhere }: { lastRun: string | null
   return (
     <div className="run-box" ref={box}>
       <span className="run-box-note">{lastRun ? `Last run ${when(lastRun)}` : "No runs yet"}</span>
-      <button className="button paint wide" onClick={() => start("full")} disabled={busy}>Run now</button>
+      <button className="button paint wide" onClick={() => start("full")} disabled={busy}>
+        {checking ? "Checking for updates" : "Run now"}
+      </button>
       <div className="run-more">
         <button className="text-button" aria-expanded={menu} onClick={() => setMenu((m) => !m)}>Other ways to run</button>
         {menu && (

@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
+import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { api, send, type UpdateInfo, type UpdateResult } from "../api";
 import { External, Jewels, Logo, useDismiss } from "./bits";
 import { APP_NAME, AUTHOR, REPO_URL } from "../brand";
@@ -15,19 +16,22 @@ export function useUpdate() {
     staleTime: THREE_HOURS });
 }
 
-/** Install the update; the app closes and opens again on the new version. */
+/** Install the update; the app closes and opens again on the new version (and, with thenRun,
+ *  starts that run as soon as it's open). */
 export function useApplyUpdate() {
   const client = useQueryClient();
   const [state, setState] = useState<"idle" | "working" | "restarting" | "reopen">("idle");
-  async function run() {
+  async function run(thenRun?: string) {
     setState("working");
     try {
-      const r = await send<UpdateResult>("update/apply", "POST");
+      const r = await send<UpdateResult>("update/apply", "POST", thenRun ? { then_run: thenRun } : {});
       setState(r.restart ? "restarting" : "reopen");
       client.invalidateQueries({ queryKey: ["update"] });
+      return true;
     } catch (e) {
       setState("idle");
       toast(e instanceof Error ? e.message : "The update didn't go through. Nothing changed.", "bad");
+      return false;
     }
   }
   return { state, run };
@@ -86,7 +90,7 @@ export function UpdateNotice() {
           <p className="hint" style={{ marginTop: 16 }}>Your settings, company list, jobs and keys stay as they are.</p>
           <div className="card-foot" style={{ marginTop: 20 }}>
             {u.can_update ? (
-              <button className="button primary small" onClick={apply.run} disabled={apply.state !== "idle"}>
+              <button className="button primary small" onClick={() => apply.run()} disabled={apply.state !== "idle"}>
                 {apply.state === "working" ? "Updating" : "Update now"}
               </button>
             ) : u.url ? <External href={u.url}>Download the new version</External> : null}
@@ -145,7 +149,7 @@ export function UpdatesPanel() {
       )}
       <div className="card-foot">
         {u.newer && u.can_update && (
-          <button className="button primary" onClick={apply.run} disabled={apply.state !== "idle"}>
+          <button className="button primary" onClick={() => apply.run()} disabled={apply.state !== "idle"}>
             {apply.state === "working" ? "Updating" : "Update now"}
           </button>
         )}
@@ -162,5 +166,115 @@ export function UpdatesPanel() {
       </p>
       <UpdatingNote state={apply.state} />
     </section>
+  );
+}
+
+// ------------------------------------------------------------------ before a run
+
+type Choice = "run" | "update" | "cancel";
+type Ask = { info: UpdateInfo; mode: string; resolve: (c: Choice) => void };
+let asking: Ask | null = null;
+const listeners = new Set<() => void>();
+const skipped = new Set<string>();  // versions you chose to run without, until the app reopens
+const tell = () => listeners.forEach((l) => l());
+
+function withTimeout<T>(p: Promise<T>, ms: number) {
+  return Promise.race([p, new Promise<never>((_, no) => setTimeout(() => no(new Error("timeout")), ms))]);
+}
+
+/** Run now asks GitHub first. With a newer version, you choose: update and then run, or run this
+ *  version. Offline, slow (over 10 seconds) or already answered for this version: it just runs. */
+export async function checkBeforeRun(client: QueryClient, mode: string): Promise<Choice> {
+  let info: UpdateInfo;
+  try {
+    info = await withTimeout(api<UpdateInfo>("update?force=true"), 10_000);
+    client.setQueryData(["update"], info);
+  } catch {
+    return "run";
+  }
+  if (!info.newer || skipped.has(info.latest ?? "")) return "run";
+  return new Promise<Choice>((resolve) => {
+    asking = { info, mode, resolve };
+    tell();
+  });
+}
+
+function answer(choice: Choice) {
+  if (!asking) return;
+  if (choice === "run") skipped.add(asking.info.latest ?? "");
+  asking.resolve(choice);
+  asking = null;
+  tell();
+}
+
+const short = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "");
+
+function versionLine(u: UpdateInfo, side: "yours" | "new") {
+  if (u.kind === "installed" || u.kind === "portable") {
+    return side === "yours" ? `Pathfinder ${u.current}` : `Pathfinder ${(u.latest ?? "").replace(/^v/, "")}`;
+  }
+  if (side === "yours") return [`Pathfinder ${u.current}`, u.commit, short(u.date)].filter(Boolean).join(", ");
+  const newest = u.changes[0];
+  return [u.latest, newest?.date ? short(newest.date) : ""].filter(Boolean).join(", ") || "the newest version";
+}
+
+/** The question Run now asks when GitHub has a newer version: what changed, and what to do. */
+export function UpdateBeforeRun() {
+  const ask = useSyncExternalStore((l) => (listeners.add(l), () => listeners.delete(l)), () => asking);
+  const apply = useApplyUpdate();
+  const first = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!ask) return;
+    first.current?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && apply.state === "idle" && answer("cancel");
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [ask, apply.state]);
+  if (apply.state === "restarting" || apply.state === "reopen") return <UpdatingNote state={apply.state} />;
+  if (!ask) return null;
+  const u = ask.info;
+  const shown = u.changes.slice(0, 12);
+  const more = (u.behind ?? u.changes.length) - shown.length;
+  const update = async () => {
+    if (await apply.run(ask.mode)) answer("update");  // if it didn't go through, the choice stays open
+  };
+  return createPortal(
+    <div className="scrim" onClick={(e) => e.target === e.currentTarget && apply.state === "idle" && answer("cancel")}>
+      <div className="modal update-ask" role="dialog" aria-modal="true" aria-labelledby="update-ask-title">
+        <h2 id="update-ask-title">A new version is ready</h2>
+        <p>Before this run, you can update. Your settings, company list, jobs and keys stay as they are.</p>
+        <dl className="facts versions">
+          <div><dt>You have</dt><dd>{versionLine(u, "yours")}</dd></div>
+          <div><dt>On GitHub</dt><dd>{versionLine(u, "new")}</dd></div>
+        </dl>
+        <p className="t-title-s" style={{ marginTop: 20 }}>
+          What changed{u.behind ? ` (${u.behind} ${u.behind === 1 ? "change" : "changes"})` : ""}
+        </p>
+        <ul className="change-list">
+          {shown.map((c, i) => (
+            <li key={c.sha + i}><span>{c.message || "Changes"}</span>{c.date && <span className="quiet num">{short(c.date)}</span>}</li>
+          ))}
+          {more > 0 && <li className="quiet">and {more} more{u.url ? ", " : ""}{u.url && <External href={u.url}>all of them on GitHub</External>}</li>}
+        </ul>
+        {u.problem && <p className="hint" style={{ marginTop: 16 }}>{u.problem}</p>}
+        <div className="card-foot" style={{ marginTop: 28 }}>
+          {u.can_update ? (
+            <>
+              <button ref={first} className="button primary" onClick={update} disabled={apply.state !== "idle"}>
+                {apply.state === "working" ? "Updating" : "Update, then run"}
+              </button>
+              <button className="button" onClick={() => answer("run")} disabled={apply.state !== "idle"}>Run this version</button>
+            </>
+          ) : (
+            <>
+              {u.url && <External href={u.url}>Download the new version</External>}
+              <button ref={first} className="button primary" onClick={() => answer("run")}>Run this version</button>
+            </>
+          )}
+          <button className="text-button" onClick={() => answer("cancel")} disabled={apply.state !== "idle"}>Cancel</button>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }

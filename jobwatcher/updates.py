@@ -170,8 +170,16 @@ def _check_release(current, how):
     newer = bool(latest) and _version(latest) > _version(current)
     setup, sums = _release_assets(body)
     can = newer and how == "installed" and sys.platform == "win32" and bool(setup and sums)
+    changes, behind = [], None
+    if newer:  # every change between your version's tag and the new one, newest first
+        compare = _github(f"repos/{REPO}/compare/v{current}...{latest}") or {}
+        commits = list(reversed(compare.get("commits") or []))[:30]
+        changes = [_change(c["sha"], ((c.get("commit") or {}).get("committer") or {}).get("date"),
+                           (c.get("commit") or {}).get("message")) for c in commits]
+        behind = compare.get("ahead_by") or (len(changes) or None)
+        changes = changes or [_change("", body.get("published_at"), body.get("name") or latest)]
     return {"latest": latest, "newer": newer, "url": body.get("html_url"), "can_update": can,
-            "changes": [_change("", body.get("published_at"), body.get("name") or latest)] if newer else []}
+            "behind": behind, "changes": changes}
 
 
 def check(current, force=False):

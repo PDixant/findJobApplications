@@ -21,7 +21,7 @@ Warm paper, black ink and one colour of light. Kanso sets out the feelings, ten 
 | **Light** | The paint appears only as light: the short line beside the active screen, tab and selected row, the focus ring, and the corner brackets on a chosen person in Outreach. |
 | **Space** | A long lead-in above each page, white cards on the paper with no borders, and one ink line under each page title. |
 | **Detail on request** | Simple first: your companies show as one bar until you ask to see every company, and Settings sums itself up in plain words. |
-| **Light and dark** | Pathfinder follows your computer's setting. Dark mode has its own values from the PDF, not an automatic flip. |
+| **Light and dark** | Pathfinder follows your computer's setting, or the one you pick under Settings, Appearance. Dark mode has its own values from the PDF, not an automatic flip. |
 
 ## The logo
 
@@ -48,6 +48,6 @@ Kanso asks that any choice it doesn't cover is listed. These are Pathfinder's:
 
 ## In the code
 
-Every value is a CSS custom property at the top of [`ui/src/styles.css`](../../ui/src/styles.css), named after the PDF's tokens (`--canvas`, `--surface`, `--paint`, `--light` and so on). The shared pieces (icons, the Mesh texture, the jewel dots, tabs with the sliding line) are in [`ui/src/components/bits.tsx`](../../ui/src/components/bits.tsx).
+Every value is a CSS custom property at the top of [`ui/src/styles.css`](../../ui/src/styles.css), named after the PDF's tokens (`--canvas`, `--surface`, `--paint`, `--light` and so on). Dark values sit under `:where([data-theme="dark"])`, so they apply when the theme (set from Settings, Appearance, or your computer) is dark, without changing which rule wins. The shared pieces (icons, the Mesh texture, the jewel dots, tabs with the sliding line) are in [`ui/src/components/bits.tsx`](../../ui/src/components/bits.tsx).
 
 <sub>Kanso design language © 2026 Dixant Patel, under the [MIT license](../../LICENSE). Kanso draws on Wealthsimple, Sanzo Wada's *A Dictionary of Color Combinations* and three cars, as credited on its last page. Those names are trademarks of their owners, referenced only as inspiration; neither Kanso nor Pathfinder is affiliated with or endorsed by any of them. Instrument Serif, Jost and Geist Mono are under the SIL Open Font License.</sub>

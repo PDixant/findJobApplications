@@ -9,6 +9,7 @@ import { Confirm, ErrorNote, Icon, Skeleton, Tabs } from "../components/bits";
 import { toast } from "../live";
 import { hex, n } from "../format";
 import { go, useRoute } from "../router";
+import { applyTheme, currentChoice, type ThemeChoice } from "../theme";
 import { ClaudeHelp, Connections, PhoneAlerts } from "./SettingsExtras";
 import { UpdatesPanel } from "../components/Update";
 
@@ -29,13 +30,14 @@ const LABELS: Record<string, string> = {
 };
 const SWATCHES = ["C6EFCE", "DDEBF7", "D9F2F2", "FCE4D6", "E4DFEC", "FFF2CC", "F8CBAD", "EDEDED"];
 
-type TabId = "jobs" | "search" | "runs" | "claude" | "keys" | "updates";
+type TabId = "jobs" | "search" | "runs" | "claude" | "keys" | "appearance" | "updates";
 const TABS: { id: TabId; label: string; sections: string[] }[] = [
   { id: "jobs", label: "Which jobs", sections: ["jobs", "places"] },
   { id: "search", label: "Finding companies", sections: ["search", "career_sites"] },
   { id: "runs", label: "Runs and alerts", sections: ["schedule", "tracker", "alerts"] },
   { id: "claude", label: "Claude and email", sections: ["ai", "outreach"] },
   { id: "keys", label: "Keys", sections: [] },
+  { id: "appearance", label: "Appearance", sections: [] },
   { id: "updates", label: "Updates", sections: [] },
 ];
 
@@ -169,6 +171,7 @@ export function Settings() {
           {tab === "runs" && <Background />}
           {tab === "claude" && <Connections />}
           {tab === "keys" && <Keys />}
+          {tab === "appearance" && <Appearance />}
           {tab === "updates" && <UpdatesPanel />}
         </div>
         <PlainWords summary={preview?.summary ?? settings.data?.summary} saved={settings.data?.summary} dirty={dirty}
@@ -456,6 +459,47 @@ export function Regions({ value, onChange }: { value: RegionValue[]; onChange: (
       </button>
       <p className="hint">Short codes such as BC, ON and CA must match exactly. The first region that matches wins. Removing a region takes effect when you save.</p>
     </div>
+  );
+}
+
+// ------------------------------------------------------------------ appearance
+
+const THEME_CHOICES: { id: ThemeChoice; label: string; note: string }[] = [
+  { id: "system", label: "Match my computer", note: "Light or dark, whichever your computer is set to, and it changes when your computer does." },
+  { id: "light", label: "Light", note: "Warm paper and ink, whatever your computer is set to." },
+  { id: "dark", label: "Dark", note: "Ink and soft light, whatever your computer is set to." },
+];
+
+function Appearance() {
+  const client = useQueryClient();
+  const appearance = useQuery({ queryKey: ["appearance"], queryFn: () => api<{ theme: ThemeChoice }>("appearance") });
+  const chosen = appearance.data?.theme ?? currentChoice();
+  async function pick(theme: ThemeChoice) {
+    applyTheme(theme);  // at once; saving follows
+    try {
+      client.setQueryData(["appearance"], await send<{ theme: ThemeChoice }>("appearance", "PUT", { theme }));
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "That didn't save. Try again.", "bad");
+      applyTheme(chosen);
+    }
+  }
+  return (
+    <section className="card settings-section" aria-labelledby="sec-appearance">
+      <h2 id="sec-appearance">Appearance</h2>
+      <p className="hint">Saved on this computer, and used every time Pathfinder opens.</p>
+      <div className="theme-choices" role="radiogroup" aria-label="Light or dark">
+        {THEME_CHOICES.map((c) => (
+          <label key={c.id} className={`theme-choice ${chosen === c.id ? "is-on" : ""}`}>
+            <input type="radio" name="theme" value={c.id} checked={chosen === c.id} onChange={() => pick(c.id)} />
+            <span className={`theme-swatch is-${c.id}`} aria-hidden="true" />
+            <span className="theme-text">
+              <span className="theme-label">{c.label}</span>
+              <span className="hint">{c.note}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+    </section>
   );
 }
 

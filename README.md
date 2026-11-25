@@ -14,7 +14,7 @@ by [Dixant Patel](https://github.com/PDixant)
 [![Design: Kanso](https://img.shields.io/badge/design-Kanso-111314)](docs/design/README.md)
 [![MIT license](https://img.shields.io/badge/license-MIT-437742)](LICENSE)
 
-[Download](#on-windows-download-it) · [What it does](#what-it-does) · [A look inside](#a-look-inside) · [Design](#designed-to-be-calm) · [Full guide](docs/GUIDE.md)
+[Get started](#get-started) · [What it does](#what-it-does) · [A look inside](#a-look-inside) · [Design](#designed-to-be-calm) · [Full guide](docs/GUIDE.md)
 
 <img src="docs/screenshots/dashboard.png" alt="Today in Pathfinder: the number of open matches, how the last run went across every company, new matches from your last run and earlier in the day, and what to do next" width="900">
 
@@ -35,24 +35,8 @@ Most job sites show you a posting a day or more after it goes up, next to everyo
 
 ## Get started
 
-### On Windows: download it
-
-1. Open the **[latest release](https://github.com/PDixant/findJobApplications/releases/latest)** and download **`PathfinderSetup.exe`**. No Python or other setup needed.
-2. Open it. It installs for you alone, with no admin password, and puts Pathfinder in your Start menu.
-3. Open **Pathfinder**. A few quick questions (the jobs you want, where, your skills), and it starts looking.
-
-Rather not install anything? Download **`Pathfinder-portable-win64.zip`** from the same page, unzip it anywhere and open `Pathfinder.exe`.
-
-> [!IMPORTANT]
-> Download Pathfinder only from this repository's [Releases](https://github.com/PDixant/findJobApplications/releases) page. Each release is built by GitHub Actions from the public source and lists a SHA-256 checksum for every file in `SHA256SUMS.txt`. To check your download, run this in PowerShell and compare the result with that file:
->
-> ```powershell
-> Get-FileHash .\PathfinderSetup.exe -Algorithm SHA256
-> ```
->
-> The installer isn't code-signed yet, so Windows may say it **protected your PC**. If the checksum matches, choose **More info**, then **Run anyway**.
-
-### On a Mac or Linux, or to change the code: run it from source
+> [!NOTE]
+> Windows is the smoothest. On a Mac or Linux, run `sh install.sh` in step 2 instead.
 
 **1. Get the code.** Press the green **Code** button above, then **Download ZIP** and unzip it. Or, if you use git:
 
@@ -60,7 +44,7 @@ Rather not install anything? Download **`Pathfinder-portable-win64.zip`** from t
 git clone https://github.com/PDixant/findJobApplications.git
 ```
 
-**2. Set it up.** On Windows, double-click `Install Pathfinder`; on a Mac or Linux, run `sh install.sh`. It takes a few minutes, installing Python first if your computer needs it.
+**2. Double-click `Install Pathfinder`** in the folder. It sets everything up in a few minutes, installing Python first if your computer needs it. No other tools are needed.
 
 **3. Open Pathfinder** from your Desktop, Start menu or Applications, or type `pathfinder` in a terminal.
 
@@ -78,14 +62,15 @@ git clone https://github.com/PDixant/findJobApplications.git
 | To | Do this |
 |---|---|
 | **Open it** | Click **Pathfinder** on your Desktop or Start menu, or type `pathfinder` in any terminal. |
-| **Check for jobs now** | Press **Run now**, low in the side bar. Its progress shows right there on every screen, and in full on **Today**, step by step: reading the job boards, then saving the postings, finding your matches and saving your tracker. While the window is open, it also checks by itself a few times a day. |
+| **Check for jobs now** | Press **Run now**, low in the side bar. If a newer Pathfinder is out, it first shows what changed and offers to update, then runs. Its progress shows right there on every screen, and in full on **Today**, step by step: reading the job boards, then saving the postings, finding your matches and saving your tracker. While the window is open, it also checks by itself a few times a day. |
 | **See what's new since last time** | **Today** splits new matches into **From your last run** and **Earlier in the last day**, so a morning run shows exactly what was posted overnight. In **Jobs**, the **Found** filter does the same, and a dot marks each job your last run found. |
 | **Change what it looks for** | Open **Settings**. The **In plain words** card sums up what your settings do and marks what your unsaved changes affect. |
+| **Light or dark** | **Settings → Appearance**: light, dark, or match your computer. |
 | **Close it** | Close the window. Nothing keeps running in the background. |
 
 ## Staying up to date
 
-When there's a new version on GitHub, **New version ready** appears at the top right of the app. Open it to see what changed, then press **Update now**: Pathfinder downloads it, checks it, and reopens on the new version a few seconds later. The Windows app takes the new installer only from this project's Releases page, and runs it only if its SHA-256 matches the release's checksums. The portable ZIP links you to the new one.
+When there's a new version on GitHub, **New version ready** appears at the top right of the app. Open it to see what changed, then press **Update now**: Pathfinder downloads it, checks it, and reopens on the new version a few seconds later.
 
 > [!IMPORTANT]
 > Updates never touch your settings, company list, jobs or keys. Those live in your own files (`my_settings.toml`, `my_companies.csv` and your data), which stay on your computer and are never shared.
@@ -120,7 +105,7 @@ Pathfinder follows **[Kanso](docs/design/README.md)**, a design language for cal
 - **What matters first.** Each screen opens on the one thing to know, like your open matches on **Today**.
 - **Detail on request.** Your companies show as one bar. **Show every company** opens a square for each one.
 - **Plain words.** Settings explains itself in short checks, and marks what your unsaved changes affect.
-- **Light and dark.** It follows your computer's setting.
+- **Light and dark.** It follows your computer's setting, or pick one under **Settings → Appearance**.
 
 **[Read the design language (PDF)](docs/design/Kanso-Design-Language.pdf)** or see [how Pathfinder uses it](docs/design/README.md). Kanso is shared under the same MIT license as the code; please credit it to Dixant Patel if you build with it.
 
@@ -156,14 +141,6 @@ What went wrong is written to `job_watcher_errors.log` in the Pathfinder folder.
 <br>
 
 Another program (often antivirus) was holding a file. Restart your computer, then double-click **Install Pathfinder** again, with a normal double-click rather than "Run as administrator".
-
-</details>
-
-<details>
-<summary><b>Windows says "Windows protected your PC"</b></summary>
-<br>
-
-Pathfinder isn't code-signed yet. First make sure you downloaded it from this repository's [Releases](https://github.com/PDixant/findJobApplications/releases) page and that its checksum matches (see [Get started](#on-windows-download-it)). Then choose **More info**, then **Run anyway**. Never run a copy of Pathfinder from anywhere else.
 
 </details>
 

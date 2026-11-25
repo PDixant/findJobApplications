@@ -1,6 +1,7 @@
 """The desktop app's local server: its guard, what it reads, and runs started, watched and
 cancelled through it. Runs against a real server on localhost with fake job boards."""
 import csv
+import gc
 import re
 import os
 import json
@@ -9,6 +10,7 @@ import socket
 import threading
 from pathlib import Path
 import time
+from contextlib import closing
 
 import pytest
 
@@ -44,6 +46,17 @@ def fake_greenhouse(slug, host=None, auto=False):
     return None
 
 
+def remove(path, tries=20):
+    """Delete a test file. Windows refuses while anything has it open, so wait a moment for that."""
+    for _ in range(tries):
+        try:
+            path.unlink(missing_ok=True)
+            return
+        except PermissionError:
+            time.sleep(0.25)
+    path.unlink(missing_ok=True)
+
+
 @pytest.fixture(scope="module")
 def client():
     saved = HOME / "saved-by-test-server"
@@ -71,7 +84,8 @@ def client():
         s.bind(("127.0.0.1", 0))
         port = s.getsockname()[1]
     server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning"))
-    threading.Thread(target=server.run, daemon=True).start()
+    serving = threading.Thread(target=server.run, daemon=True)
+    serving.start()
     while not server.started:
         time.sleep(0.02)
     with httpx.Client(base_url=f"http://127.0.0.1:{port}", headers={"X-Token": TOKEN}, timeout=20) as c:
@@ -79,10 +93,12 @@ def client():
         yield c
     app.state.runs.wait(30)
     server.should_exit = True
+    serving.join(10)  # the server finishes its last request before its files go
     app.state.detach()
     patch.undo()
+    gc.collect()  # any connection nobody closed is closed now, so Windows lets go of the file
     for name in FILES:
-        (HOME / name).unlink(missing_ok=True)
+        remove(HOME / name)
         if (saved / name).exists():
             shutil.move(saved / name, HOME / name)
     saved.rmdir()
@@ -499,6 +515,14 @@ def test_schedule_setup_and_updates(client, monkeypatch, tmp_path):
     monkeypatch.setattr(updates, "apply", lambda: {"from": "abc1234", "to": "def5678", "files": 3, "packages": False})
     assert client.post("/api/update/apply").json() == {"from": "abc1234", "to": "def5678", "files": 3,
                                                        "packages": False, "restart": False}
+    # Run now's "Update, then run": the new version starts that run once it opens
+    from jobwatcher.server import meta_value, set_meta_value
+    cfg = jw.load_config()
+    client.post("/api/update/apply", json={"then_run": "full"})
+    assert meta_value(cfg, "run_after_update") == "full"
+    set_meta_value(cfg, "run_after_update", "")
+    client.post("/api/update/apply", json={"then_run": "scores"})  # only runs that read the boards
+    assert meta_value(cfg, "run_after_update") == ""
 
     if jw.sys.platform.startswith("linux"):
         monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
@@ -516,6 +540,16 @@ def test_schedule_setup_and_updates(client, monkeypatch, tmp_path):
         finally:
             (HOME / "my_settings.toml").write_text(original, encoding="utf-8")
     assert client.get("/api/system/old-tasks").json()["tasks"] == []
+
+
+def test_light_or_dark(client):
+    assert client.get("/api/appearance").json() == {"theme": "system"}
+    assert 'data-theme-choice="system"' in client.get("/").text
+    assert client.put("/api/appearance", json={"theme": "dark"}).json() == {"theme": "dark"}
+    page = client.get("/jobs").text  # every screen's page arrives already dark, with no flash of light
+    assert 'data-theme-choice="dark"' in page and "prefers-color-scheme" in page
+    assert client.put("/api/appearance", json={"theme": "purple"}).status_code == 400
+    assert client.put("/api/appearance", json={"theme": "system"}).json() == {"theme": "system"}
 
 
 def test_signals_fit_tailor_and_pipeline(client, monkeypatch):
@@ -597,7 +631,8 @@ def test_signals_fit_tailor_and_pipeline(client, monkeypatch):
 
     # pipeline and follow-ups
     client.patch("/api/jobs", params={"key": maple["key"]}, json={"status": "Applied"})
-    with jw.connect(jw.load_config()) as db:
+    db = jw.connect(jw.load_config())
+    with closing(db), db:  # sqlite3's own "with" commits but never closes; Windows keeps an open file locked
         row = db.execute("SELECT data FROM jobs WHERE key=?", (maple["key"],)).fetchone()
         job = json.loads(row["data"])
         old = (jw.dt.datetime.now(jw.dt.timezone.utc) - jw.dt.timedelta(days=12)).isoformat()

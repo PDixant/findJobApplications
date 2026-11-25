@@ -253,3 +253,16 @@ def test_the_portable_app_points_to_the_release_page(tmp_path, monkeypatch):
     with pytest.raises(updates.UpdateProblem, match="portable ZIP"):
         updates.apply()
     updates.cache_path().unlink(missing_ok=True)
+
+
+def test_the_installed_app_lists_every_change_since_its_version(tmp_path, monkeypatch):
+    _installed(monkeypatch, tmp_path)
+    commits = [{"sha": f"{i:040x}", "commit": {"message": f"Change {i}\n\nmore", "committer": {"date": f"2026-12-0{i}T00:00:00Z"}}}
+               for i in (1, 2, 3)]
+    answers = {"compare/v1.0.0...v9.0.0": {"ahead_by": 3, "commits": commits}}
+    real_get = updates.requests.get
+    monkeypatch.setattr(updates.requests, "get", lambda url, **kw: Reply(answers[next(k for k in answers if k in url)])
+                        if any(k in url for k in answers) else real_get(url, **kw))
+    u = updates.check("1.0.0", force=True)
+    assert u["behind"] == 3 and [c["message"] for c in u["changes"]] == ["Change 3", "Change 2", "Change 1"]
+    updates.cache_path().unlink(missing_ok=True)

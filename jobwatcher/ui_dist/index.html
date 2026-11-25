@@ -6,6 +6,15 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256' role='img' aria-label='Pathfinder'%3E%3Crect x='0.5' y='0.5' width='255' height='255' rx='56' fill='%23FDFBF2' stroke='%23E1DFD7'/%3E%3Cpath d='M65 134V65H134' fill='none' stroke='%23111314' stroke-width='18' stroke-linecap='butt' stroke-linejoin='miter'/%3E%3Cpath d='M122 191H191V122' fill='none' stroke='%23111314' stroke-width='18' stroke-linecap='butt' stroke-linejoin='miter'/%3E%3Ccircle cx='128' cy='128' r='24' fill='%231C4286'/%3E%3C/svg%3E" />
     <title>Pathfinder</title>
+    <script>
+      // Light, dark, or the computer's setting, decided before the first paint (see src/theme.ts).
+      (function () {
+        var root = document.documentElement;
+        var choice = root.getAttribute("data-theme-choice") || "system";
+        var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        root.setAttribute("data-theme", choice === "system" ? (dark ? "dark" : "light") : choice);
+      })();
+    </script>
     <script type="module" crossorigin src="/assets/app.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/app.css">
   </head>

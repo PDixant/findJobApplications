@@ -5,7 +5,8 @@ import { External, Icon, Logo } from "./components/bits";
 import { APP_NAME, AUTHOR, REPO_URL } from "./brand";
 import { Welcome } from "./components/Welcome";
 import { RunControls } from "./components/RunControls";
-import { UpdateNotice } from "./components/Update";
+import { UpdateBeforeRun, UpdateNotice } from "./components/Update";
+import { applyTheme, type ThemeChoice } from "./theme";
 import { n } from "./format";
 import { connect, dismissToast, setRun, useLive } from "./live";
 import { useCompanies, useMeta, useSummary } from "./queries";
@@ -44,6 +45,12 @@ export function App() {
   useEffect(() => {
     if (TOKEN) connect();
   }, []);
+
+  // Your light or dark choice (the page usually arrives with it already; this covers the dev server).
+  const appearance = useQuery({ queryKey: ["appearance"], queryFn: () => api<{ theme: ThemeChoice }>("appearance") });
+  useEffect(() => {
+    if (appearance.data) applyTheme(appearance.data.theme);
+  }, [appearance.data]);
 
   // Take the run state from the server on first load (a run may already be going).
   const seeded = useRef(false);
@@ -139,6 +146,7 @@ export function App() {
 
       {setup.data?.needed && !welcomed && <Welcome companies={setup.data.companies} onDone={() => setWelcomed(true)} />}
 
+      <UpdateBeforeRun />
       <div className="toasts" aria-live="polite">
         {live.toasts.map((t) => (
           <div key={t.id} className={`toast tone-${t.tone}`} role={t.tone === "bad" ? "alert" : "status"}>

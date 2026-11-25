@@ -27,7 +27,7 @@ Change them in the app under **Settings**. Beside the form, **In plain words** s
 > [!NOTE]
 > Your settings are saved in `my_settings.toml`, made the first time you run Pathfinder from `config.toml` (the starting point everyone shares). Only your copy ever changes, and git ignores it. Updates never touch it, and your changes never reach anyone else.
 
-Settings has six tabs:
+Settings has seven tabs:
 
 | Tab | What's in it |
 |---|---|
@@ -36,6 +36,7 @@ Settings has six tabs:
 | **Runs and alerts** | When it runs by itself, whether it keeps running after you close it, desktop pop-ups, "since last check" and phone alerts |
 | **Claude and email** | What Claude can see, fit scores, a monthly limit, your resume files, recruiter emails and people you know |
 | **Keys** | Your keys, saved in your computer's password store |
+| **Appearance** | Light, dark, or match your computer |
 | **Updates** | Your version, what's new and the Update button |
 
 **Years of experience.** Set yours, and postings asking for more (for example "8+ years of experience") are left out. **Stretch allowance** lets through jobs asking for a little more than you have: with 5 years and an allowance of 1, a 6+ year job counts and a 7+ doesn't. Choose **flag** instead of **skip** to keep those jobs, marked with the years they ask for.
@@ -98,11 +99,12 @@ Want it checking all day? Turn on **Keep running after closing**. Closing the wi
 
 When a new version is on GitHub, **New version ready** appears at the top right of the app, with what changed. **Update now** downloads it, installs anything new it needs, and reopens Pathfinder on it. **Settings → Updates** shows your version and has **Check for updates**.
 
+**Run now** checks first. If GitHub has a newer version, it lists what changed since yours and asks: **Update, then run** installs it, reopens Pathfinder and starts the run by itself, or **Run this version** runs as you are (and doesn't ask again about that version until Pathfinder reopens). Offline, or if GitHub takes more than 10 seconds to answer, the run just starts. Scheduled runs never stop to ask.
+
 | How you got Pathfinder | How it updates |
 |---|---|
 | `git clone` | Pulls the new commits. If you changed code yourself, it stops and tells you which files. |
 | Download ZIP | Downloads the newest files into your folder. |
-| The installer | Downloads the newest installer from this project's Releases page, checks its SHA-256 against the release's `SHA256SUMS.txt`, then runs it and reopens Pathfinder. |
 
 Your settings, company list, jobs and keys are never touched.
 
@@ -198,7 +200,7 @@ If a computer has no password store (some Linux setups, like a server with no de
 ## Staying safe
 
 - **Only public websites.** Pathfinder reads careers pages only over `http` or `https`, and never on this computer or a private network (addresses like `localhost`, `192.168.x.x` or `10.x.x.x`). Every redirect and the address it finally connects to are checked too, and each page is capped in size. A company whose page breaks these rules shows why on the **Companies** screen.
-- **Checked updates.** A downloaded update must be exactly the version GitHub named, and it's copied in all at once or not at all. The Windows app takes a new installer only from this project's own [Releases](https://github.com/PDixant/findJobApplications/releases) page, and only after its SHA-256 matches the release's `SHA256SUMS.txt`.
+- **Checked updates.** A downloaded update must be exactly the version GitHub named, and it's copied in all at once or not at all.
 - **Job postings are text, not instructions.** Claude is told to treat each posting as untrusted text to read. A tailored resume is never turned into a PDF if Claude added commands that would read your files or run programs, and LaTeX runs with those commands turned off.
 
 ---
@@ -251,27 +253,15 @@ Moved or renamed the folder? Double-click **Install Pathfinder** again so the sh
 
 ## The Windows installer
 
-Every release has three files, built by GitHub Actions from the tagged source:
+Pathfinder is shared as source: **Install Pathfinder** sets it up, installing Python if needed, and nothing is downloaded as an `.exe`. For anyone who wants a standalone build anyway, `packaging/` can make one on Windows (no Python needed to run it):
 
-| File | What it is |
-|---|---|
-| `PathfinderSetup.exe` | The installer. No Python, no admin rights; installs to your user folder and keeps its data in `%APPDATA%\JobWatcher`, which uninstalling leaves alone. |
-| `Pathfinder-portable-win64.zip` | The same app with no installer: unzip anywhere and open `Pathfinder.exe`. |
-| `SHA256SUMS.txt` | The SHA-256 of each file. `Get-FileHash .\PathfinderSetup.exe -Algorithm SHA256` in PowerShell should print the same. |
+```bash
+pip install -e ".[app]" pyinstaller
+pyinstaller --noconfirm packaging/pathfinder.spec   # dist/Pathfinder/Pathfinder.exe
+iscc packaging\pathfinder.iss                       # optional installer, with Inno Setup 6
+```
 
-To publish a version (maintainers):
-
-1. Set the version in `pyproject.toml` and `jobwatcher/__init__.py`.
-2. Tag it and push the tag:
-
-   ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-
-The workflow, `.github/workflows/release.yml`, runs the tests, builds the interface and `Pathfinder.exe` with PyInstaller (`packaging/pathfinder.spec`), starts it once to be sure it works, wraps it with Inno Setup (`packaging/pathfinder.iss`), writes `SHA256SUMS.txt` and publishes the release. **Actions → release → Run workflow** does a dry run that keeps the files as artifacts without publishing. It stops if the tag and `pyproject.toml` disagree, because the app's update check compares them.
-
-The installer isn't code-signed. Signing needs a certificate bought in the publisher's own name; add it as the repository secrets `WINDOWS_CERT_PFX` (the `.pfx`, base64) and `WINDOWS_CERT_PASSWORD`, and the workflow signs the programs and the installer.
+These builds aren't code-signed, so Windows SmartScreen warns about them. They aren't published as releases.
 
 ## For developers
 
