@@ -225,7 +225,7 @@ def tailor(cfg, key):
     base = Path(a["resume_tex"])
     base = base if base.is_absolute() else BASE / base
     if not base.exists():
-        raise AIProblem(f"Put your base LaTeX resume in the Job Watcher folder as {base.name} "
+        raise AIProblem(f"Put your base LaTeX resume in the Pathfinder folder as {base.name} "
                         "(or set its name under Settings, AI help) to make tailored resumes.")
     rules_path = BASE / a["resume_rules"]
     rules = rules_path.read_text(encoding="utf-8") if rules_path.exists() else DEFAULT_RESUME_RULES

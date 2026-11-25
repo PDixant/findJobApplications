@@ -11,13 +11,14 @@ type LiveState = {
   run: Run | null;
   boards: Record<string, BoardOutcome>; // company -> what happened to its board, for the run in progress
   boardsStartedAt: number | null; // when this window saw board reading start, for "min left"
+  phases: string[]; // the steps this run has been through, in order
   log: string[];
   toasts: Toast[];
   version: number; // bumps when a run ends, so screens refetch
 };
 
 let state: LiveState = {
-  connected: false, run: null, boards: {}, boardsStartedAt: null, log: [], toasts: [], version: 0,
+  connected: false, run: null, boards: {}, boardsStartedAt: null, phases: [], log: [], toasts: [], version: 0,
 };
 const listeners = new Set<() => void>();
 let toastId = 0;
@@ -98,7 +99,7 @@ function handle(m: Message) {
       set({ log: [...state.log, String(m.line)].slice(-600) });
       break;
     case "run_started": {
-      set({ boards: {}, boardsStartedAt: null });
+      set({ boards: {}, boardsStartedAt: null, phases: [] });
       const started = (m.run as Run | null | undefined) ?? null;
       if (!started) {
         refreshRun();
@@ -116,10 +117,11 @@ function handle(m: Message) {
       break;
     case "phase":
       if (run) set({ run: { ...run, phase: String(m.name) } });
+      if (!state.phases.includes(String(m.name))) set({ phases: [...state.phases, String(m.name)] });
       catchUp();
       break;
     case "boards_started":
-      set({ boardsStartedAt: Date.now() });
+      set({ boardsStartedAt: Date.now(), phases: state.phases.includes("boards") ? state.phases : [...state.phases, "boards"] });
       if (run) set({ run: { ...run, phase: "boards", total: Number(m.total), done: 0 } });
       catchUp();
       break;

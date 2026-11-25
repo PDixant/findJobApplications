@@ -167,10 +167,12 @@ def companies():
 
 
 def test_first_run_finds_everything():
-    events, outcomes = Counter(), Counter()
+    events, outcomes, phases = Counter(), Counter(), []
 
     def listen(kind, data):
         events.update([kind])
+        if kind == "phase":
+            phases.append(data["name"])
         if kind == "board_done":
             outcomes.update([data["outcome"]])
             assert data["ok"] == (data["outcome"] == "read")
@@ -197,6 +199,9 @@ def test_first_run_finds_everything():
     assert events["run_started"] == events["run_finished"] == 1
     assert events["board_done"] == events["boards_started"] * 9 and events["new_match"] == 9
     assert set(outcomes) <= {"read", "missing", "paused", "error"} and outcomes["read"] and not outcomes["error"]
+    # after the boards, every step that takes time says so, in order
+    after = phases[phases.index("postings"):]
+    assert after == ["postings", "filter", "export", "save"]
 
 
 def test_second_run_reads_no_job_page_twice():

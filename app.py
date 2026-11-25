@@ -1,4 +1,4 @@
-"""Job Watcher desktop app. Double-click "Install Job Watcher" once to get a Start menu and
+"""Pathfinder desktop app. Double-click "Install Pathfinder" once to get a Start menu and
 Desktop shortcut and a `jobwatcher` command that works from any folder. Or run:
 
     python app.py              open the app in its own window

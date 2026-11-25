@@ -74,7 +74,7 @@ def test_a_clone_with_your_own_code_changes_is_left_alone(github):
 
 
 def test_a_downloaded_folder_updates_from_github(tmp_path, monkeypatch):
-    folder = tmp_path / "Job Watcher"
+    folder = tmp_path / "Pathfinder"
     (folder / "jobwatcher").mkdir(parents=True)
     (folder / "jobwatcher" / "app.py").write_text("v1\n")
     (folder / "my_settings.toml").write_text("mine\n")

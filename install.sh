@@ -1,5 +1,5 @@
 #!/bin/sh
-# Mac and Linux: sets up Job Watcher with an app shortcut and a `jobwatcher` command.
+# Mac and Linux: sets up Pathfinder with an app shortcut and a `jobwatcher` command.
 # Run:  sh install.sh        (or  sh install.sh --uninstall)
 cd "$(dirname "$0")" || exit 1
 for py in python3.13 python3.12 python3.11 python3.10 python3; do

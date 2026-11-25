@@ -1,14 +1,15 @@
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, send, type UpdateInfo, type UpdateResult } from "../api";
-import { External, Jewels, useDismiss } from "./bits";
+import { External, Jewels, Logo, useDismiss } from "./bits";
+import { APP_NAME, AUTHOR, REPO_URL } from "../brand";
 import { toast } from "../live";
 import { go } from "../router";
 
 const THREE_HOURS = 3 * 60 * 60 * 1000;
 const DISMISSED = "jw.updateDismissed";
 
-/** Whether GitHub has a newer Job Watcher. The server asks GitHub at most every few hours. */
+/** Whether GitHub has a newer Pathfinder. The server asks GitHub at most every few hours. */
 export function useUpdate() {
   return useQuery({ queryKey: ["update"], queryFn: () => api<UpdateInfo>("update"), refetchInterval: THREE_HOURS,
     staleTime: THREE_HOURS });
@@ -35,7 +36,7 @@ export function useApplyUpdate() {
 export const changeCount = (u: UpdateInfo) =>
   u.behind ? `${u.behind} ${u.behind === 1 ? "change" : "changes"}` : "a new version";
 
-/** While Job Watcher restarts on the new version. */
+/** While Pathfinder restarts on the new version. */
 export function UpdatingNote({ state }: { state: string }) {
   if (state !== "restarting" && state !== "reopen") return null;
   return (
@@ -43,8 +44,8 @@ export function UpdatingNote({ state }: { state: string }) {
       <div className="modal">
         <h2>{state === "restarting" ? "Updated" : "Updated. Open it again"}</h2>
         <p>{state === "restarting"
-          ? "Job Watcher closes and opens on the new version in a few seconds. Your settings and jobs are as you left them."
-          : "Close Job Watcher and open it again to use the new version."}</p>
+          ? "Pathfinder closes and opens on the new version in a few seconds. Your settings and jobs are as you left them."
+          : "Close Pathfinder and open it again to use the new version."}</p>
         {state === "restarting" && <p style={{ marginTop: 24 }}><Jewels lit /></p>}
       </div>
     </div>
@@ -75,7 +76,7 @@ export function UpdateNotice() {
       </button>
       {open && (
         <div className="popover" role="dialog" aria-label="New version">
-          <p className="t-title-s">Job Watcher has {changeCount(u)}</p>
+          <p className="t-title-s">Pathfinder has {changeCount(u)}</p>
           {u.changes.length > 0 && (
             <ul className="update-list">
               {u.changes.slice(0, 4).map((c) => <li key={c.sha + c.message}>{c.message || "Changes"}</li>)}
@@ -120,7 +121,13 @@ export function UpdatesPanel() {
   return (
     <section className="card settings-section" aria-labelledby="sec-updates">
       <h2 id="sec-updates">Updates</h2>
-      <p className="hint">{have}</p>
+      <div className="about-app">
+        <Logo size={48} />
+        <div>
+          <p className="t-title-s">{APP_NAME}</p>
+          <p className="hint">{have}. Made by <External href={REPO_URL}>{AUTHOR}</External>; the code is on GitHub.</p>
+        </div>
+      </div>
       <p style={{ marginTop: 16 }}>{u.newer ? `There's a newer version: ${changeCount(u)}.` : "You have the latest version."}</p>
       {u.problem && <p className="hint" style={{ marginTop: 8 }}>{u.problem}</p>}
       {u.newer && u.changes.length > 0 && (

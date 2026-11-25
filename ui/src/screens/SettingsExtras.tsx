@@ -39,7 +39,7 @@ export function ClaudeHelp() {
       <ul className="checklist">
         <Item done={a.key_set}>{a.key_set ? "Anthropic key saved" : "No Anthropic key yet"}</Item>
         <Item done={a.resume_tex_found}>
-          {a.resume_tex_found ? `Base resume found (${a.resume_tex})` : `No ${a.resume_tex} in the Job Watcher folder, so tailoring is off`}
+          {a.resume_tex_found ? `Base resume found (${a.resume_tex})` : `No ${a.resume_tex} in the Pathfinder folder, so tailoring is off`}
         </Item>
         <Item done={a.rules_found}>{a.rules_found ? "Your resume rules found" : "No rules file, so the built-in resume rules are used"}</Item>
         <Item done={Boolean(a.latex)}>

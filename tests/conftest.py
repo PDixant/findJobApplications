@@ -1,4 +1,4 @@
-"""Every test runs against a throwaway Job Watcher folder, never your real one.
+"""Every test runs against a throwaway Pathfinder folder, never your real one.
 JOBWATCHER_HOME has to be set before jobwatcher is imported, so it happens here."""
 import os
 import shutil

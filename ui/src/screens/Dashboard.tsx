@@ -3,9 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { api, type Job, type ScheduleStatus } from "../api";
 import { CompanyStatus } from "../components/BoardMap";
 import { Empty, ErrorNote, Icon, Meter, Skeleton } from "../components/bits";
-import { ago, n, plural, when } from "../format";
+import { ago, fromRun, n, plural, when, withinDay } from "../format";
 import { useLive } from "../live";
-import { PREVIOUS_VISIT, useCompanies, useJobs, useSummary } from "../queries";
+import { useCompanies, useJobs, useSummary } from "../queries";
 import { go } from "../router";
 import { FitBadge } from "../components/Fit";
 import { useRunActions } from "../components/RunControls";
@@ -46,14 +46,18 @@ export function Dashboard() {
   const s = summary.data;
   const sch = schedule.data;
 
-  const since = PREVIOUS_VISIT ?? new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-  const { fresh, latest } = useMemo(() => {
+  // Your latest run, and the rest of the last day, kept apart: run at night, run again in the
+  // morning, and the morning's finds sit on top.
+  const lastRun = s?.last_run ?? null;
+  const { latestRun, earlier, latest } = useMemo(() => {
     const open = (jobs.data ?? []).filter((j) => j.open);
     const byFound = [...open].sort((a, b) => (b.found ?? "").localeCompare(a.found ?? ""));
-    return { fresh: byFound.filter((j) => (j.found ?? "") > since), latest: byFound.slice(0, 8) };
-  }, [jobs.data, since]);
+    const latestRun = lastRun ? byFound.filter((j) => fromRun(j.found, lastRun)) : [];
+    const earlier = byFound.filter((j) => withinDay(j.found) && !latestRun.includes(j));
+    return { latestRun, earlier, latest: byFound.slice(0, 8) };
+  }, [jobs.data, lastRun]);
   const openCount = useCountTo(s?.jobs.open);
-  const sinceWords = PREVIOUS_VISIT ? `since you last looked, ${when(PREVIOUS_VISIT)}` : "in the last day";
+  const dayTotal = latestRun.filter((j) => withinDay(j.found)).length + earlier.length;
   const next = sch?.enabled && !sch.paused && sch.next ? `Next automatic run ${when(sch.next)}`
     : sch?.paused ? "Automatic runs are paused" : sch && !sch.enabled ? "Automatic runs are off" : "";
 
@@ -64,9 +68,13 @@ export function Dashboard() {
           <span className="eyebrow">Open matches</span>
           {s ? <span className="t-figure">{n(openCount ?? s.jobs.open)}</span> : <Skeleton width={180} height={64} />}
           <p className="hero-change">
-            {!jobs.data ? <Skeleton width={320} height={24} />
-              : fresh.length ? <><span className="up">▲ +{n(fresh.length)}</span> new {sinceWords}</>
-              : `No new matches ${sinceWords}.`}
+            {!jobs.data || !s ? <Skeleton width={360} height={24} />
+              : !lastRun ? "No runs yet. Press Run now to check every company."
+              : <>
+                  {latestRun.length ? <><span className="up">▲ +{n(latestRun.length)}</span> from your last run, {when(lastRun)}.</>
+                    : <>Nothing new from your last run, {when(lastRun)}.</>}
+                  {" "}<span className="quiet">{plural(dayTotal, "new match", "new matches")} in the last day.</span>
+                </>}
           </p>
         </div>
         {next && <div className="hero-meta"><span>{next}</span></div>}
@@ -84,17 +92,20 @@ export function Dashboard() {
       <div className="dash-grid">
         <section className="card" aria-labelledby="matches-title">
           <header className="card-head">
-            <h2 id="matches-title">{fresh.length ? (PREVIOUS_VISIT ? "New since you last looked" : "New in the last day") : "Latest matches"}</h2>
+            <h2 id="matches-title">{latestRun.length || earlier.length ? "New matches" : "Latest matches"}</h2>
             <button className="text-button" onClick={() => go("jobs")}>All matches</button>
           </header>
-          <MatchList jobs={fresh.length ? fresh.slice(0, 10) : latest} loading={!jobs.data} />
-          {fresh.length > 10 && (
-            <div className="card-foot">
-              <button className="text-button" onClick={() => go("jobs")}>
-                {plural(fresh.length - 10, "more new match", "more new matches")} in Jobs
-              </button>
-            </div>
-          )}
+          {!jobs.data ? <MatchList jobs={[]} loading /> : latestRun.length || earlier.length ? (
+            <>
+              {lastRun && (
+                <MatchGroup title="From your last run" when={when(lastRun)} jobs={latestRun} limit={10}
+                  empty="Nothing new this time. Everything below was already here." />
+              )}
+              {earlier.length > 0 && (
+                <MatchGroup title="Earlier in the last day" jobs={earlier} limit={latestRun.length ? 6 : 10} />
+              )}
+            </>
+          ) : <MatchList jobs={latest} loading={false} />}
         </section>
 
         <div className="side-stack">
@@ -155,6 +166,27 @@ function NextUp({ jobs }: { jobs: Job[] }) {
       </ul>
       {best.length > 0 && <p className="hint" style={{ marginTop: 16 }}>Claude rates these Apply, and you haven't acted on them yet.</p>}
     </section>
+  );
+}
+
+/** One group of new matches, under its own label, so your latest run stands apart from the rest of the day. */
+function MatchGroup({ title, when: at, jobs, limit, empty }: {
+  title: string; when?: string; jobs: Job[]; limit: number; empty?: string;
+}) {
+  return (
+    <div className="match-group">
+      <h3 className="group-label">
+        <span>{title}</span>
+        {at && <span className="quiet">{at}</span>}
+        <span className="num">{n(jobs.length)}</span>
+      </h3>
+      {jobs.length ? <MatchList jobs={jobs.slice(0, limit)} loading={false} /> : <p className="hint group-empty">{empty}</p>}
+      {jobs.length > limit && (
+        <button className="text-button" style={{ marginTop: 8 }} onClick={() => go("jobs", { found: title.startsWith("From") ? "run" : "day" })}>
+          {plural(jobs.length - limit, "more")} in Jobs
+        </button>
+      )}
+    </div>
   );
 }
 

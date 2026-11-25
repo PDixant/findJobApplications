@@ -10,7 +10,7 @@ import imaplib
 
 from .base import *  # noqa: F401,F403
 
-SERVICE = "Job Watcher"
+SERVICE = "Job Watcher"  # the app's first name: kept, so keys saved before the rename are still found
 KEYS = {
     "SERPER_API_KEY": "Serper (web search)",
     "BRAVE_API_KEY": "Brave Search",
@@ -161,7 +161,7 @@ def test_key(name, cfg=None):
         if name == "NTFY_TOPIC":
             from .alerts import send
             ok = send({"alerts": {**((cfg or {}).get("alerts") or {}), "ntfy_topic": value}},
-                      "Job Watcher test", "Phone alerts work. New matches will show up here.")
+                      "Pathfinder test", "Phone alerts work. New matches will show up here.")
             return (True, "Sent a test alert. Check your phone.") if ok else (False, "ntfy didn't accept the alert.")
         if name == "ANTHROPIC_API_KEY":
             r = requests.get("https://api.anthropic.com/v1/models", timeout=15,

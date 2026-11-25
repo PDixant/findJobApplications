@@ -1,4 +1,4 @@
-# Lets Job Watcher be installed as a command. "Install Job Watcher" does this for you; by hand:
+# Lets Pathfinder be installed as a command. "Install Pathfinder" does this for you; by hand:
 #     pip install -e ".[app]"
 # then `jobwatcher` works from any folder (see README, section 15).
 
@@ -26,6 +26,7 @@ extras = ["yfinance", "plyer"]
 dev = ["pytest>=8", "pyflakes", "httpx", "fastapi>=0.110", "uvicorn>=0.29", "tomlkit>=0.12"]
 
 [project.scripts]
+pathfinder = "jobwatcher.desktop:main"
 jobwatcher = "jobwatcher.desktop:main"
 
 [project.gui-scripts]

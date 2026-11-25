@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, send, type KeysData, type RegionValue, type SettingsData } from "../api";
 import { Chips, KeyRow, Regions } from "../screens/Settings";
 import { useRunActions } from "./RunControls";
-import { Mesh } from "./bits";
+import { External, Logo, Mesh } from "./bits";
+import { APP_NAME, AUTHOR, REPO_URL } from "../brand";
 import { n } from "../format";
 import { toast } from "../live";
 
@@ -14,7 +15,7 @@ type Draft = {
 
 const STEPS = ["Welcome", "Jobs", "Places", "Skills", "Keys", "Schedule"];
 
-/** First run: the few choices that make Job Watcher yours, then the first run. */
+/** First run: the few choices that make Pathfinder yours, then the first run. */
 export function Welcome({ companies, onDone }: { companies: number; onDone: () => void }) {
   const client = useQueryClient();
   const settings = useQuery({ queryKey: ["settings"], queryFn: () => api<SettingsData>("settings") });
@@ -62,7 +63,7 @@ export function Welcome({ companies, onDone }: { companies: number; onDone: () =
   const page = [
     <>
       <h2>Find fresh jobs before everyone else</h2>
-      <p>Job Watcher reads the job boards of {n(companies)} companies straight from the source, several times a day,
+      <p>Pathfinder reads the job boards of {n(companies)} companies straight from the source, several times a day,
         and keeps the postings that fit you. A few choices make it yours. You can change any of them later in Settings.</p>
     </>,
     <>
@@ -95,20 +96,27 @@ export function Welcome({ companies, onDone }: { companies: number; onDone: () =
     </>,
     <>
       <h2 className="small">When should it check?</h2>
-      <p>Job Watcher runs at these times each day while it's open. Use 24-hour times, such as 08:00 or 17:30.</p>
+      <p>Pathfinder runs at these times each day while it's open. Use 24-hour times, such as 08:00 or 17:30.</p>
       <div className="field-stack">Run at
         <Chips value={draft.times} onChange={(times) => set({ times })} label="run times" /></div>
       <label className="switch">
         <input type="checkbox" checked={draft.startup} onChange={(e) => set({ startup: e.target.checked })} />
-        Start Job Watcher when I sign in, so it checks even when I haven't opened it
+        Start Pathfinder when I sign in, so it checks even when I haven't opened it
       </label>
     </>,
   ];
 
   return (
-    <div className="welcome" role="dialog" aria-modal="true" aria-label="Set up Job Watcher">
+    <div className="welcome" role="dialog" aria-modal="true" aria-label="Set up Pathfinder">
       <div className="welcome-band"><Mesh /></div>
       <div className="welcome-inner">
+        <p className="welcome-brand">
+          <Logo size={40} />
+          <span className="brand-text">
+            <span className="brand-name">{APP_NAME}</span>
+            <External href={REPO_URL} className="brand-by">by {AUTHOR}</External>
+          </span>
+        </p>
         <ol className="welcome-steps" aria-label="Steps" style={{ listStyle: "none", padding: 0 }}>
           {STEPS.map((s, i) => (
             <li key={s} className={`welcome-step ${i === step ? "is-on" : i < step ? "is-done" : ""}`} aria-current={i === step ? "step" : undefined}>{s}</li>

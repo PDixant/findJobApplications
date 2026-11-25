@@ -1,7 +1,7 @@
 # =====================================================================
-#  Job Watcher settings: the starting point everyone shares
+#  Pathfinder settings: the starting point everyone shares
 # =====================================================================
-#  The first time Job Watcher runs, it copies this file to
+#  The first time Pathfinder runs, it copies this file to
 #  my_settings.toml. That copy is yours: the Settings screen saves into
 #  it, git ignores it, and it never changes for anyone else. Edit
 #  my_settings.toml, not this file. (The same goes for companies.csv
@@ -284,11 +284,11 @@ drafts_folder = "[Gmail]/Drafts"
 # ---------------------------------------------------------------------
 [schedule]
 
-# Run at these times while Job Watcher is open.
+# Run at these times while Pathfinder is open.
 enabled = true
 times = ["08:00", "12:00", "16:00", "20:00"]
 
-# false: closing the window quits Job Watcher completely.
+# false: closing the window quits Pathfinder completely.
 # true: closing the window keeps it running by the clock (Windows tray), so the
 # times above still run, and it can start quietly when you sign in.
 keep_in_tray = false

@@ -97,7 +97,7 @@ def fetch_board(row, state, rules, has_text, now, max_age, window_start, known_b
 def notify(count, sample):
     try:
         from plyer import notification  # optional: pip install plyer
-        notification.notify(title=f"Job Watcher: {count} new match{'es' if count != 1 else ''}",
+        notification.notify(title=f"Pathfinder: {count} new match{'es' if count != 1 else ''}",
                             message=sample[:250], timeout=10)
     except Exception:
         pass
@@ -190,6 +190,7 @@ def fetch_all(cfg, state, store, rows, rules, now, max_age, window_start, verify
     if CANCEL.is_set():
         log.info("Run cancelled: boards not read yet were left for the next run.")
 
+    emit("phase", name="postings")  # the boards are read; saving what they listed takes a moment
     csv_dirty, today = False, now.astimezone().date().isoformat()
     for out in results:
         row = out["row"]
@@ -257,7 +258,7 @@ def run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, of
     Every run is recorded for the app's Activity screen."""
     lock = RunLock()
     if not lock.acquire():
-        log.warning("Another Job Watcher run is in progress (the app, a terminal or the scheduled "
+        log.warning("Another Pathfinder run is in progress (the app, a terminal or the scheduled "
                     "task), so this one was skipped.")
         emit("run_skipped", reason="busy")
         return []
@@ -298,7 +299,7 @@ def refresh_scores(cfg, source="app"):
     lock = RunLock()
     if not lock.acquire():
         emit("run_skipped", reason="busy")
-        raise Busy("Another Job Watcher run is in progress. Try again when it finishes.")
+        raise Busy("Another Pathfinder run is in progress. Try again when it finishes.")
     CANCEL.clear()
     record = _try(start_run_record, cfg, RUN_LABELS["scores"], source)
     emit("run_started", offline=True, label=RUN_LABELS["scores"])
@@ -432,6 +433,7 @@ def _run_once(cfg, since_check=False, hours=None, verify=False, refresh=False, o
         tracked_open = Counter(j["company"] for j in state["jobs"].values() if j.get("open"))
         for name, c in state["companies"].items():
             c["matches"] = tracked_open.get(name, 0)
+        emit("phase", name="export")
         store.export_csv(BASE / cfg.get("all_postings_csv", "all_postings.csv"), set(state["jobs"]))
         saved_total, saved_open = store.counts()
     finally:

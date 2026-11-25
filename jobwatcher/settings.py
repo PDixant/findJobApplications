@@ -55,7 +55,7 @@ FIELDS = {
         ("check_every_minutes", "number", "Minutes between checks with --loop"),
     ],
     "outreach": [
-        ("resume", "text", "Your resume file, in the Job Watcher folder"),
+        ("resume", "text", "Your resume file, in the Pathfinder folder"),
         ("about_me", "text", "The file with your details for emails"),
         ("contacts_per_company", "number", "People to email at each company"),
         ("departments", "list", "Hunter departments to look in"),
@@ -65,17 +65,17 @@ FIELDS = {
         ("model", "text", "The Claude model that writes drafts"),
     ],
     "schedule": [
-        ("enabled", "bool", "Run automatically at these times while Job Watcher is open"),
+        ("enabled", "bool", "Run automatically at these times while Pathfinder is open"),
         ("times", "list", "When to run each day, as 24-hour times such as 08:00 or 17:30"),
-        ("keep_in_tray", "bool", "When you close the window, keep Job Watcher running by the clock (Windows tray) so "
+        ("keep_in_tray", "bool", "When you close the window, keep Pathfinder running by the clock (Windows tray) so "
                                  "automatic runs still happen. Off: closing the window quits it. Takes effect the next "
-                                 "time you open Job Watcher"),
+                                 "time you open Pathfinder"),
     ],
     "ai": [
         ("score_new_matches", "bool", "Ask Claude for a fit score on each new match (needs your Anthropic key)"),
         ("monthly_limit", "number", "Never use more Claude requests than this in a month (fit scores and tailored resumes)"),
         ("model", "text", "The Claude model for fit scores and tailored resumes"),
-        ("resume_tex", "text", "Your base LaTeX resume, in the Job Watcher folder"),
+        ("resume_tex", "text", "Your base LaTeX resume, in the Pathfinder folder"),
         ("resume_rules", "text", "Your rules for tailoring it (a text file; built-in rules if missing)"),
     ],
     "alerts": [

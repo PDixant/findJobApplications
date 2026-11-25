@@ -1,6 +1,10 @@
 <div align="center">
 
-# Job Watcher
+<img src="jobwatcher/assets/logo.svg" alt="" width="88">
+
+# Pathfinder
+
+by [Dixant Patel](https://github.com/PDixant)
 
 **Catch software jobs the hour they're posted, and know which ones are worth your time.**
 
@@ -12,11 +16,11 @@
 
 [Get started](#get-started) · [What it does](#what-it-does) · [A look inside](#a-look-inside) · [Design](#designed-to-be-calm) · [Full guide](docs/GUIDE.md)
 
-<img src="docs/screenshots/dashboard.png" alt="Today in Job Watcher: the number of open matches, how the last run went across every company, new matches and what to do next" width="900">
+<img src="docs/screenshots/dashboard.png" alt="Today in Pathfinder: the number of open matches, how the last run went across every company, new matches from your last run and earlier in the day, and what to do next" width="900">
 
 </div>
 
-Most job sites show you a posting a day or two late, next to everyone else. Job Watcher goes straight to the source: it reads about a thousand companies' own job boards a few times a day, keeps only the roles that fit you, and helps you act while they're fresh.
+Most job sites show you a posting a day or two late, next to everyone else. Pathfinder goes straight to the source: it reads about a thousand companies' own job boards a few times a day, keeps only the roles that fit you, and helps you act while they're fresh.
 
 ## What it does
 
@@ -34,15 +38,15 @@ Most job sites show you a posting a day or two late, next to everyone else. Job 
 > [!NOTE]
 > Windows is the smoothest. On a Mac or Linux, run `sh install.sh` in step 2 instead.
 
-**1. Get Job Watcher.** Press the green **Code** button above, then **Download ZIP** and unzip it. Or, if you use git:
+**1. Get Pathfinder.** Press the green **Code** button above, then **Download ZIP** and unzip it. Or, if you use git:
 
 ```bash
 git clone https://github.com/PDixant/findJobApplications.git
 ```
 
-**2. Double-click `Install Job Watcher`** in the folder. It sets everything up in a few minutes, installing Python first if your computer needs it.
+**2. Double-click `Install Pathfinder`** in the folder. It sets everything up in a few minutes, installing Python first if your computer needs it.
 
-**3. Open Job Watcher** from your Desktop or Start menu. A few quick questions (the jobs you want, where, your skills), and it starts looking.
+**3. Open Pathfinder** from your Desktop or Start menu. A few quick questions (the jobs you want, where, your skills), and it starts looking.
 
 > [!TIP]
 > Add your keys under **Settings → Keys** to switch on the extras. All of them are optional:
@@ -57,14 +61,15 @@ git clone https://github.com/PDixant/findJobApplications.git
 
 | To | Do this |
 |---|---|
-| **Open it** | Click **Job Watcher** on your Desktop or Start menu, or type `jobwatcher` in any terminal. |
-| **Check for jobs now** | Press **Run now**, low in the side bar. Its progress shows right there on every screen, and in full on **Today**. While the window is open, it also checks by itself a few times a day. |
+| **Open it** | Click **Pathfinder** on your Desktop or Start menu, or type `pathfinder` in any terminal. |
+| **Check for jobs now** | Press **Run now**, low in the side bar. Its progress shows right there on every screen, and in full on **Today**, step by step: reading the job boards, then saving the postings, finding your matches and saving your tracker. While the window is open, it also checks by itself a few times a day. |
+| **See what's new since last time** | **Today** splits new matches into **From your last run** and **Earlier in the last day**, so a morning run shows exactly what was posted overnight. In **Jobs**, the **Found** filter does the same, and a dot marks each job your last run found. |
 | **Change what it looks for** | Open **Settings**. The **In plain words** card sums up what your settings do and marks what your unsaved changes affect. |
 | **Close it** | Close the window. Nothing keeps running in the background. |
 
 ## Staying up to date
 
-When there's a new version on GitHub, **New version ready** appears at the top right of the app. Open it to see what changed, then press **Update now**: Job Watcher downloads it and reopens on the new version a few seconds later.
+When there's a new version on GitHub, **New version ready** appears at the top right of the app. Open it to see what changed, then press **Update now**: Pathfinder downloads it and reopens on the new version a few seconds later.
 
 > [!IMPORTANT]
 > Updates never touch your settings, company list, jobs or keys. Those live in your own files (`my_settings.toml`, `my_companies.csv` and your data), which stay on your computer and are never shared.
@@ -94,14 +99,14 @@ When there's a new version on GitHub, **New version ready** appears at the top r
 
 ## Designed to be calm
 
-Job Watcher follows **[Kanso](docs/design/README.md)**, a design language for calm, crafted software: warm paper, black ink and one colour of light.
+Pathfinder follows **[Kanso](docs/design/README.md)**, a design language for calm, crafted software: warm paper, black ink and one colour of light.
 
 - **What matters first.** Each screen opens on the one thing to know, like your open matches on **Today**.
 - **Detail on request.** Your companies show as one bar. **Show every company** opens a square for each one.
 - **Plain words.** Settings explains itself in short checks, and marks what your unsaved changes affect.
 - **Light and dark.** It follows your computer's setting.
 
-**[Read the design language (PDF)](docs/design/Kanso-Design-Language.pdf)** or see [how Job Watcher uses it](docs/design/README.md).
+**[Read the design language (PDF)](docs/design/Kanso-Design-Language.pdf)** or see [how Pathfinder uses it](docs/design/README.md).
 
 ## Your data stays yours
 
@@ -114,18 +119,18 @@ Job Watcher follows **[Kanso](docs/design/README.md)**, a design language for ca
 ## Something not working?
 
 <details>
-<summary><b>The <code>jobwatcher</code> command isn't found</b></summary>
+<summary><b>The <code>pathfinder</code> command isn't found</b></summary>
 <br>
 
-Close the terminal and open a new one. Still not found? Double-click **Install Job Watcher** again.
+Close the terminal and open a new one. Still not found? Double-click **Install Pathfinder** again. (`jobwatcher`, the app's first name, still works too.)
 
 </details>
 
 <details>
-<summary><b>Clicking Job Watcher does nothing</b></summary>
+<summary><b>Clicking Pathfinder does nothing</b></summary>
 <br>
 
-What went wrong is written to `job_watcher_errors.log` in the Job Watcher folder. Typing `jobwatcher` in a terminal shows the same messages as they happen.
+What went wrong is written to `job_watcher_errors.log` in the Pathfinder folder. Typing `pathfinder` in a terminal shows the same messages as they happen.
 
 </details>
 
@@ -133,7 +138,7 @@ What went wrong is written to `job_watcher_errors.log` in the Job Watcher folder
 <summary><b>Setup stopped with "Permission denied"</b></summary>
 <br>
 
-Another program (often antivirus) was holding a file. Restart your computer, then double-click **Install Job Watcher** again, with a normal double-click rather than "Run as administrator".
+Another program (often antivirus) was holding a file. Restart your computer, then double-click **Install Pathfinder** again, with a normal double-click rather than "Run as administrator".
 
 </details>
 
@@ -141,7 +146,7 @@ Another program (often antivirus) was holding a file. Restart your computer, the
 <summary><b>Windows says "Windows protected your PC"</b></summary>
 <br>
 
-Job Watcher isn't code-signed yet. Choose **More info**, then **Run anyway**.
+Pathfinder isn't code-signed yet. Choose **More info**, then **Run anyway**.
 
 </details>
 
@@ -149,7 +154,7 @@ Job Watcher isn't code-signed yet. Choose **More info**, then **Run anyway**.
 <summary><b>I installed Python from the Microsoft Store</b></summary>
 <br>
 
-Job Watcher can't use that version. **Install Job Watcher** skips it and sets up Python from python.org instead, so just double-click it again.
+Pathfinder can't use that version. **Install Pathfinder** skips it and sets up Python from python.org instead, so just double-click it again.
 
 </details>
 
@@ -184,4 +189,6 @@ More in the [developer notes](docs/GUIDE.md#for-developers).
 
 ## License
 
-[MIT](LICENSE): free to use, change and share. Job Watcher reads public job boards for your own job search, so please use it politely.
+[MIT](LICENSE): free to use, change and share. Pathfinder reads public job boards for your own job search, so please use it politely.
+
+Made by [Dixant Patel](https://github.com/PDixant). Pathfinder was called Job Watcher at first; if you installed it under that name, it renames its shortcuts by itself the next time it opens, and your settings, jobs and keys stay where they are.

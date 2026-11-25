@@ -425,7 +425,7 @@ def create_app(token, dev=False, schedule=False):
         yield
         detach()
 
-    app = FastAPI(title="Job Watcher", docs_url="/api/docs" if dev else None, redoc_url=None,
+    app = FastAPI(title="Pathfinder", docs_url="/api/docs" if dev else None, redoc_url=None,
                   openapi_url="/api/openapi.json" if dev else None, lifespan=lifespan)
     app.state.runs, app.state.hub, app.state.files, app.state.detach = runs, hub, files, detach
     scheduler = Scheduler(runs, lambda: not runs.active() and not lock_held_elsewhere())
@@ -437,7 +437,7 @@ def create_app(token, dev=False, schedule=False):
     async def guard(request: Request, call_next):
         host = (request.headers.get("host") or "").rsplit(":", 1)[0].strip("[]")
         if host not in ALLOWED_HOSTS:
-            return JSONResponse({"detail": "This server only answers the Job Watcher window."}, 403)
+            return JSONResponse({"detail": "This server only answers the Pathfinder window."}, 403)
         if request.url.path.startswith("/api/"):
             given = request.headers.get("x-token") or request.query_params.get("token") or ""
             if not hmac.compare_digest(given.encode(), token.encode()):
@@ -668,7 +668,7 @@ def create_app(token, dev=False, schedule=False):
         cfg = config_or_fail()
         if not os.environ.get("NTFY_TOPIC", "").strip():
             raise HTTPException(400, "Make your ntfy topic first, in Settings under Runs and alerts.")
-        if not alerts.send(cfg, "Job Watcher test", "Phone alerts work. New matches will show up here."):
+        if not alerts.send(cfg, "Pathfinder test", "Phone alerts work. New matches will show up here."):
             raise HTTPException(400, "ntfy didn't accept the alert. Check the topic and server.")
         return {"sent": True}
 

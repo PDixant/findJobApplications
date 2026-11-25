@@ -1,4 +1,4 @@
-"""Opens Job Watcher, and the `jobwatcher` command that works from any folder.
+"""Opens Pathfinder, and the `pathfinder` command (also `jobwatcher`) that works from any folder.
 
     jobwatcher                      open the app (a second launch brings the open window forward)
     jobwatcher --browser            open it in your web browser instead of its own window
@@ -150,9 +150,9 @@ def main(argv=None):
     try:
         return open_app(argv)
     except Exception as exc:  # without a terminal, an error here would otherwise close it without a word
-        logging.getLogger("job_watcher").exception("Job Watcher could not start.")
-        return fail(f"Job Watcher could not start: {exc}\n\n"
-                    "The details are at the end of job_watcher.log in the Job Watcher folder.")
+        logging.getLogger("job_watcher").exception("Pathfinder could not start.")
+        return fail(f"Pathfinder could not start: {exc}\n\n"
+                    "The details are at the end of job_watcher.log in the Pathfinder folder.")
 
 
 def open_folder(path):
@@ -169,7 +169,7 @@ def open_folder(path):
 
 def open_app(argv):
     parser = argparse.ArgumentParser(
-        prog="jobwatcher", description="Open the Job Watcher app.",
+        prog="jobwatcher", description="Open the Pathfinder app.",
         epilog="Also: jobwatcher run [options], jobwatcher outreach [options], jobwatcher folder")
     parser.add_argument("--browser", action="store_true", help="open in your web browser instead of a window")
     parser.add_argument("--dev", action="store_true", help="API on port 8765 for the interface's dev server")
@@ -184,9 +184,9 @@ def open_app(argv):
         from .config import load_env
         from .server import create_app
     except ImportError as exc:
-        return fail(f"The app needs a few more packages ({exc.name} is missing). In the Job Watcher folder run:\n"
+        return fail(f"The app needs a few more packages ({exc.name} is missing). In the Pathfinder folder run:\n"
                     "    pip install -r requirements-app.txt\n"
-                    "or double-click \"Install Job Watcher\".")
+                    "or double-click \"Install Pathfinder\".")
 
     handlers = [logging.FileHandler(LOG_PATH, encoding="utf-8")]
     if CONSOLE:  # no terminal behind the Desktop and Start menu shortcuts
@@ -195,6 +195,7 @@ def open_app(argv):
                         handlers=handlers)
     logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
     guard_logs()
+    migrate_install()
     if os.environ.pop("JOBWATCHER_AFTER_UPDATE", None):
         time.sleep(1.5)  # let the copy that updated finish closing
     from .updates import install_packages_if_needed
@@ -208,7 +209,7 @@ def open_app(argv):
                 webbrowser.open(f"http://127.0.0.1:{port}/#token={token}")
             else:
                 _call(port, token, "window/focus", "POST")
-            say("Job Watcher is already open; brought it to the front.")
+            say("Pathfinder is already open; brought it to the front.")
             return None
 
     if args.tray and not keep_in_tray():
@@ -231,7 +232,7 @@ def open_app(argv):
     marker.write_text(json.dumps({"port": port, "token": token, "pid": os.getpid()}), encoding="utf-8")
     url = f"http://127.0.0.1:{port}/#token={token}"
     runs = app.state.runs
-    log.info("Job Watcher app opened (data folder: %s).", BASE)
+    log.info("Pathfinder app opened (data folder: %s).", BASE)
 
     try:
         if args.dev:
@@ -239,7 +240,7 @@ def open_app(argv):
                 f"    http://localhost:5173/#token={token}\nPress Ctrl+C to stop.")
             wait_forever()
         elif args.browser:
-            say(f"Opening Job Watcher in your browser. Keep this window open while you use it.\n    {url}\n"
+            say(f"Opening Pathfinder in your browser. Keep this window open while you use it.\n    {url}\n"
                 "Press Ctrl+C to stop.")
             webbrowser.open(url)
             wait_forever()
@@ -263,7 +264,7 @@ def open_app(argv):
 
 
 def relaunch():
-    """Open Job Watcher again after an update, the way the Desktop shortcut does, so the new
+    """Open Pathfinder again after an update, the way the Desktop shortcut does, so the new
     version is what runs."""
     from .base import BASE, log
     scripts = Path(sys.executable).parent
@@ -281,7 +282,7 @@ def relaunch():
             subprocess.Popen([sys.executable, str(app_py)], cwd=str(BASE), env=env, stdin=subprocess.DEVNULL,
                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
     except OSError as exc:
-        log.warning("Updated, but couldn't open Job Watcher again (%s). Open it from the Desktop or Start menu.",
+        log.warning("Updated, but couldn't open Pathfinder again (%s). Open it from the Desktop or Start menu.",
                     exc.__class__.__name__)
 
 
@@ -303,7 +304,7 @@ def fail(text):
         print(text)
     elif sys.platform == "win32":
         import ctypes
-        ctypes.windll.user32.MessageBoxW(None, text, "Job Watcher", 0x10)
+        ctypes.windll.user32.MessageBoxW(None, text, "Pathfinder", 0x10)
     sys.exit(1)
 
 
@@ -325,9 +326,11 @@ def open_window(url, app, runs, base, start_hidden=False):
         wait_forever()
         return
 
+    from .base import APP_NAME
+    use_own_taskbar_icon()
     tray = Tray(app, runs) if Tray.available() and (start_hidden or keep_in_tray()) else None
-    window = webview.create_window("Job Watcher", url, width=1340, height=880, min_size=(1000, 640),
-                                   background_color="#F4F6FA", text_select=True,
+    window = webview.create_window(APP_NAME, url, width=1340, height=880, min_size=(1000, 640),
+                                   background_color="#FDFBF2", text_select=True,
                                    hidden=bool(start_hidden and tray))
 
     def bring_forward():
@@ -358,7 +361,7 @@ def open_window(url, app, runs, base, start_hidden=False):
             return True
         return window.create_confirmation_dialog(
             "A run is going",
-            "Quit Job Watcher and stop the run? The boards being read now finish first, then "
+            "Quit Pathfinder and stop the run? The boards being read now finish first, then "
             "everything found so far is saved.")
 
     window.events.closing += on_closing
@@ -374,6 +377,91 @@ def open_window(url, app, runs, base, start_hidden=False):
             tray.stop()
 
 
+def use_own_taskbar_icon(platform: str = sys.platform):
+    """Windows files a window under the program running it, here python.exe, so the taskbar showed
+    Python's icon. With an app ID of its own, the taskbar shows Pathfinder's icon instead. Must run
+    before the window is made."""
+    if platform != "win32":
+        return False
+    try:
+        import ctypes
+        from .base import APP_ID
+        return ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(ctypes.c_wchar_p(APP_ID)) == 0
+    except (AttributeError, OSError):
+        return False
+
+
+def migrate_install(root=None):
+    """Job Watcher is called Pathfinder now. The shortcuts the installer made under the old name take
+    the new one (they open the same program), and a `pathfinder` command joins `jobwatcher`. Only
+    touches what the installer recorded in .venv; runs once, then there's nothing left to do."""
+    from .base import APP_NAME, OLD_APP_NAMES, SOURCE_DIR, log
+    manifest = Path(root or SOURCE_DIR) / ".venv" / "jobwatcher-install.json"
+    try:
+        made = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    done, shortcuts = [], []
+    for item in made.get("shortcuts", []):
+        path = new = Path(item)
+        try:
+            if path.stem in OLD_APP_NAMES and (path.exists() or path.is_symlink()):
+                new = path.with_name(APP_NAME + path.suffix)
+                if path.is_symlink():  # the Mac app at the top of the folder: a link to the bundle
+                    target = Path(os.readlink(path))
+                    if target.stem in OLD_APP_NAMES:
+                        target = target.with_name(APP_NAME + target.suffix)
+                    path.unlink()
+                    if not (new.exists() or new.is_symlink()):
+                        new.symlink_to(target, target_is_directory=True)
+                elif not new.exists():
+                    path.rename(new)
+                else:
+                    new = path
+                if new != path:
+                    done.append(f"{path.name} is now {new.name}")
+            if new.suffix == ".desktop" and new.is_file() and not new.is_symlink():
+                text = new.read_text(encoding="utf-8")
+                fixed = "\n".join(f"Name={APP_NAME}" if line.strip() in {f"Name={o}" for o in OLD_APP_NAMES} else line
+                                  for line in text.split("\n"))
+                if fixed != text:
+                    new.write_text(fixed, encoding="utf-8")
+            plist = new / "Contents" / "Info.plist"
+            if new.suffix == ".app" and not new.is_symlink() and plist.is_file():
+                text = plist.read_text(encoding="utf-8")
+                for old in OLD_APP_NAMES:
+                    text = text.replace(f"<key>CFBundleName</key><string>{old}</string>",
+                                        f"<key>CFBundleName</key><string>{APP_NAME}</string>")
+                plist.write_text(text, encoding="utf-8")
+        except OSError as exc:
+            log.warning("Couldn't rename the shortcut %s to %s (%s).", path, APP_NAME, exc.__class__.__name__)
+            new = path
+        shortcuts.append(str(new))
+    commands = list(made.get("commands") or ([made["command"]] if made.get("command") else []))
+    try:
+        cmd = Path(commands[0]) if commands else None
+        alias = cmd.with_name(cmd.name.replace("jobwatcher", "pathfinder")) if cmd else None
+        if cmd and alias != cmd and str(alias) not in commands and (cmd.exists() or cmd.is_symlink()):
+            if cmd.is_symlink():
+                alias.unlink(missing_ok=True)
+                alias.symlink_to(os.readlink(cmd))
+            else:
+                alias.write_bytes(cmd.read_bytes())
+            commands.append(str(alias))
+            done.append(f"added the {alias.stem} command")
+    except OSError as exc:
+        log.warning("Couldn't add the pathfinder command (%s).", exc.__class__.__name__)
+    if shortcuts != made.get("shortcuts", []) or commands != made.get("commands"):
+        made.update(shortcuts=shortcuts, commands=commands)
+        try:
+            manifest.write_text(json.dumps(made, indent=2), encoding="utf-8")
+        except OSError:
+            pass
+    if done:
+        log.info("Job Watcher is Pathfinder now: %s.", "; ".join(done))
+    return done
+
+
 def window_icon(platform: str = sys.platform) -> Path:
     """The window's icon. Windows needs the .ico: pywebview hands the file to .NET's Icon class,
     which throws "Argument 'picture' must be a picture that can be used as a Icon" for a .png and
@@ -384,7 +472,7 @@ def window_icon(platform: str = sys.platform) -> Path:
 
 def keep_in_tray():
     """Settings, Automatic runs, 'keep running after closing'. Off by default: closing the window
-    quits Job Watcher."""
+    quits Pathfinder."""
     from .config import ConfigError, load_config
     try:
         return bool(load_config()["schedule"].get("keep_in_tray"))
@@ -393,7 +481,7 @@ def keep_in_tray():
 
 
 class Tray:
-    """The icon by the clock, only when you turn on 'keep running after closing': Job Watcher then
+    """The icon by the clock, only when you turn on 'keep running after closing': Pathfinder then
     keeps running there when you close the window, so scheduled runs happen. Windows only for now."""
 
     @staticmethod
@@ -434,19 +522,19 @@ class Tray:
             try:
                 self.runs.start("full", source="tray")
             except Exception as exc:  # already running, or another run elsewhere
-                self.notify("Job Watcher", getattr(exc, "detail", str(exc)))
+                self.notify("Pathfinder", getattr(exc, "detail", str(exc)))
 
         def quit_app(icon, item):
             self.quitting = True
             window.destroy()
 
         menu = pystray.Menu(
-            pystray.MenuItem("Open Job Watcher", lambda icon, item: show(), default=True),
+            pystray.MenuItem("Open Pathfinder", lambda icon, item: show(), default=True),
             pystray.MenuItem("Run now", run_now),
             pystray.MenuItem("Pause automatic runs", toggle_pause, checked=paused),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Quit", quit_app))
-        self.icon = pystray.Icon("jobwatcher", image, "Job Watcher", menu)
+        self.icon = pystray.Icon("jobwatcher", image, "Pathfinder", menu)
         threading.Thread(target=self.icon.run, name="jobwatcher-tray", daemon=True).start()
         self.app.state.tray = True
         self.runs.notify = self.notify
@@ -461,7 +549,7 @@ class Tray:
     def hidden_once(self):
         if not self.told:
             self.told = True
-            self.notify("Job Watcher is still running",
+            self.notify("Pathfinder is still running",
                         "It keeps checking on schedule. Right-click the icon by the clock to open or quit it.")
 
     def stop(self):

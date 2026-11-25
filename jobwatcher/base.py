@@ -1,4 +1,4 @@
-"""Shared imports, paths, constants and small helpers used by every part of Job Watcher."""
+"""Shared imports, paths, constants and small helpers used by every part of Pathfinder."""
 from __future__ import annotations
 
 
@@ -43,13 +43,22 @@ except ImportError:  # pragma: no cover
     except ImportError:
         tomllib = None
 
+# The app's name, who made it, and where it lives. It was called Job Watcher at first: the package,
+# the jobwatcher command, the data folders and the name your keys are saved under keep that name, so
+# nothing you've set up has to move.
+APP_NAME = "Pathfinder"
+APP_AUTHOR = "Dixant Patel"
+APP_REPO_URL = "https://github.com/PDixant/findJobApplications"
+APP_ID = "PDixant.Pathfinder"  # Windows groups the taskbar button by this, with Pathfinder's own icon
+OLD_APP_NAMES = ("Job Watcher",)
+
 # The folder that holds your settings (my_settings.toml), company list (my_companies.csv) and data:
 #   JOBWATCHER_HOME if set; otherwise the source folder when running from it (as always);
 #   otherwise, for the installed app, the user's app-data folder, set up with the defaults.
 SOURCE_DIR = Path(__file__).resolve().parent.parent
 DEFAULT_FILES = ("about_me.example.md", ".env.example", "resume_rules.example.md")
 # config.toml and companies.csv are the settings and company list everyone starts from (they are in
-# git). Yours are my_settings.toml and my_companies.csv, made from them the first time: Job Watcher
+# git). Yours are my_settings.toml and my_companies.csv, made from them the first time: Pathfinder
 # only ever writes yours, and git ignores them.
 MY_SETTINGS, MY_COMPANIES = "my_settings.toml", "my_companies.csv"
 
@@ -515,7 +524,7 @@ class RunLock:
 
     def __enter__(self):
         if not self.acquire():
-            raise Busy("Another Job Watcher run is in progress (the app, a terminal or the "
+            raise Busy("Another Pathfinder run is in progress (the app, a terminal or the "
                        "scheduled task). Try again when it finishes.")
         return self
 

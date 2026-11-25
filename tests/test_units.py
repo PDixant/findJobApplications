@@ -1,6 +1,8 @@
 """Unit checks for link recognition, search queries, company matching, page parsing and settings."""
 import datetime as dt
 import json
+import os
+from pathlib import Path
 
 import pytest
 
@@ -486,7 +488,7 @@ def test_a_click_hands_over_to_a_hidden_console(monkeypatch, tmp_path):
 
 def test_installer_puts_a_shortcut_at_the_top_of_the_folder(monkeypatch, tmp_path):
     """Nobody should have to dig into .venv\\Scripts for the app: on Windows the installer adds a
-    Job Watcher shortcut to the Job Watcher folder itself, as well as the Start menu and Desktop."""
+    Pathfinder shortcut to the Pathfinder folder itself, as well as the Start menu and Desktop."""
     inst = _load("install/install.py", "jw_install_shortcuts")
     inst.configure(tmp_path)
     monkeypatch.setattr(inst, "windows_folder", lambda name: tmp_path / name)
@@ -496,14 +498,14 @@ def test_installer_puts_a_shortcut_at_the_top_of_the_folder(monkeypatch, tmp_pat
 
 def test_uninstall_removes_a_link_to_the_app_but_not_the_app(tmp_path):
     inst = _load("install/install.py", "jw_install_remove")
-    bundle = tmp_path / "Applications" / "Job Watcher.app"
+    bundle = tmp_path / "Applications" / "Pathfinder.app"
     (bundle / "Contents").mkdir(parents=True)
-    link = tmp_path / "Job Watcher.app"
+    link = tmp_path / "Pathfinder.app"
     try:
         link.symlink_to(bundle, target_is_directory=True)
     except OSError:  # Windows without symlink rights; the Mac installer is the one that makes these
         pytest.skip("can't make symbolic links here")
-    shortcut = tmp_path / "Job Watcher.lnk"
+    shortcut = tmp_path / "Pathfinder.lnk"
     shortcut.write_bytes(b"lnk")
     inst.remove_shortcut(link)
     inst.remove_shortcut(shortcut)
@@ -595,3 +597,78 @@ def test_a_half_merged_file_is_not_copied(tmp_path, monkeypatch):
     make_my_copies(home)
     jw.config_from_text((home / "my_settings.toml").read_text())  # parses
     assert (home / "my_companies.csv").read_text() == "company\nShared Co\n"
+
+
+def test_job_watcher_shortcuts_become_pathfinder(tmp_path):
+    """Job Watcher is called Pathfinder now: shortcuts the installer recorded take the new name and
+    open the same program, a `pathfinder` command joins `jobwatcher`, and nothing else is touched."""
+    from jobwatcher import desktop
+    venv = tmp_path / ".venv"
+    venv.mkdir()
+    lnk = tmp_path / "Job Watcher.lnk"
+    lnk.write_bytes(b"shortcut")
+    apps = tmp_path / "apps"
+    apps.mkdir()
+    entry = apps / "jobwatcher.desktop"
+    entry.write_text("[Desktop Entry]\nType=Application\nName=Job Watcher\nExec=x\n", encoding="utf-8")
+    here = tmp_path / "Job Watcher.desktop"
+    here.write_text(entry.read_text(encoding="utf-8"), encoding="utf-8")
+    bundle = tmp_path / "Applications" / "Job Watcher.app"
+    (bundle / "Contents").mkdir(parents=True)
+    (bundle / "Contents" / "Info.plist").write_text(
+        "<dict><key>CFBundleName</key><string>Job Watcher</string></dict>", encoding="utf-8")
+    link = tmp_path / "top" / "Job Watcher.app"
+    link.parent.mkdir()
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    command = bin_dir / "jobwatcher"
+    try:
+        link.symlink_to(bundle, target_is_directory=True)
+        command.symlink_to(tmp_path / "jobwatcher.exe")
+    except OSError:
+        pytest.skip("can't make symbolic links here")
+    untouched = tmp_path / "Mine.lnk"
+    untouched.write_bytes(b"yours")
+    made = {"shortcuts": [str(lnk), str(entry), str(here), str(bundle), str(link), str(untouched)],
+            "command": str(command), "path_entry": None}
+    (venv / "jobwatcher-install.json").write_text(json.dumps(made), encoding="utf-8")
+
+    done = desktop.migrate_install(tmp_path)
+    assert done and not lnk.exists() and (tmp_path / "Pathfinder.lnk").read_bytes() == b"shortcut"
+    assert "Name=Pathfinder" in entry.read_text(encoding="utf-8")
+    assert (tmp_path / "Pathfinder.desktop").exists() and "Name=Pathfinder" in (tmp_path / "Pathfinder.desktop").read_text()
+    renamed = tmp_path / "Applications" / "Pathfinder.app"
+    assert renamed.is_dir() and "<string>Pathfinder</string>" in (renamed / "Contents" / "Info.plist").read_text()
+    new_link = tmp_path / "top" / "Pathfinder.app"
+    assert new_link.is_symlink() and new_link.resolve() == renamed.resolve() and not link.is_symlink()
+    assert (bin_dir / "pathfinder").is_symlink() and os.readlink(bin_dir / "pathfinder") == os.readlink(command)
+    assert untouched.read_bytes() == b"yours"
+    saved = json.loads((venv / "jobwatcher-install.json").read_text(encoding="utf-8"))
+    assert str(tmp_path / "Pathfinder.lnk") in saved["shortcuts"] and str(untouched) in saved["shortcuts"]
+    assert saved["commands"] == [str(command), str(bin_dir / "pathfinder")]
+    assert desktop.migrate_install(tmp_path) == []  # once is enough
+
+    win = tmp_path / "win"
+    (win / ".venv").mkdir(parents=True)
+    shim = win / "jobwatcher.cmd"
+    shim.write_text('@"C:\\x\\jobwatcher.exe" %*\r\n', encoding="utf-8")
+    (win / ".venv" / "jobwatcher-install.json").write_text(json.dumps({"shortcuts": [], "command": str(shim)}))
+    desktop.migrate_install(win)
+    assert (win / "pathfinder.cmd").read_bytes() == shim.read_bytes()  # Windows: a copy of the command file
+    assert desktop.migrate_install(tmp_path / "nothing installed here") == []
+
+
+def test_pathfinder_logo_files():
+    """One logo everywhere: the .ico has every size Windows asks for, small ones as plain bitmaps
+    (.NET's Icon class needs them), and the SVG the window, the app and the README use."""
+    import struct
+    from jobwatcher import desktop
+    assets = Path(desktop.__file__).resolve().parent / "assets"
+    data = (assets / "icon.ico").read_bytes()
+    frames = {}
+    for i in range(struct.unpack("<HHH", data[:6])[2]):
+        w, _h, _c, _r, _p, _b, size, off = struct.unpack("<BBBBHHII", data[6 + 16 * i:22 + 16 * i])
+        frames[w or 256] = "png" if data[off:off + 4] == b"\x89PNG" else "bmp"
+    assert frames == {16: "bmp", 24: "bmp", 32: "bmp", 48: "bmp", 64: "bmp", 128: "bmp", 256: "png"}
+    assert "Pathfinder" in (assets / "logo.svg").read_text(encoding="utf-8")
+    assert desktop.use_own_taskbar_icon("linux") is False  # only Windows needs its own taskbar ID

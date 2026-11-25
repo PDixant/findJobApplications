@@ -35,6 +35,19 @@ export function Jewels({ lit = false }: { lit?: boolean }) {
   return <span className={`jewels ${lit ? "is-lit" : ""}`} aria-hidden="true"><i /><i /><i /><i /></span>;
 }
 
+/** Pathfinder's mark: two ink L-brackets around one jewel of paint, the job you were looking for,
+ *  found. The same drawing as jobwatcher/assets/logo.svg, drawn in the theme's own paper and ink so it
+ *  sits quietly in dark mode too. Lit, the jewel glows while a run goes. */
+export function Logo({ size = 28, lit = false }: { size?: number; lit?: boolean }) {
+  return (
+    <svg className={`logo ${lit ? "is-lit" : ""}`} width={size} height={size} viewBox="0 0 256 256" aria-hidden="true">
+      <rect className="logo-tile" x="0.5" y="0.5" width="255" height="255" rx="56" fill="#FDFBF2" stroke="#E1DFD7" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+      <path className="logo-ink" d="M65 134V65H134M122 191H191V122" fill="none" stroke="#111314" strokeWidth="18" strokeLinecap="butt" strokeLinejoin="miter" />
+      <circle className="logo-jewel" cx="128" cy="128" r="24" fill="#1C4286" />
+    </svg>
+  );
+}
+
 /** A 2 px line of light: how far a piece of work has got, or a sweep when that isn't known. */
 export function LineProgress({ share, label }: { share: number | null; label: string }) {
   const pct = share == null ? null : Math.max(0, Math.min(100, share * 100));

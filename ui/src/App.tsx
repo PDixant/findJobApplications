@@ -1,7 +1,8 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, TOKEN } from "./api";
-import { Icon, Jewels } from "./components/bits";
+import { External, Icon, Logo } from "./components/bits";
+import { APP_NAME, AUTHOR, REPO_URL } from "./brand";
 import { Welcome } from "./components/Welcome";
 import { RunControls } from "./components/RunControls";
 import { UpdateNotice } from "./components/Update";
@@ -72,7 +73,7 @@ export function App() {
   if (!TOKEN) {
     return (
       <div className="no-token">
-        <h1>Open Job Watcher from its window</h1>
+        <h1>Open {APP_NAME} from its window</h1>
         <p>This page only works inside the window that <code>python app.py</code> opens.</p>
       </div>
     );
@@ -100,8 +101,11 @@ export function App() {
     <div className="shell" data-paint={PAINT[route.screen]}>
       <aside className="sidenav">
         <div className="brand">
-          <Jewels lit={running || busyElsewhere} />
-          Job Watcher
+          <Logo size={32} lit={running || busyElsewhere} />
+          <span className="brand-text">
+            <span className="brand-name">{APP_NAME}</span>
+            <External href={REPO_URL} className="brand-by">by {AUTHOR}</External>
+          </span>
         </div>
         <SideNav groups={groups} screen={route.screen} />
         <RunControls lastRun={summary.data?.last_run ?? null} busyElsewhere={busyElsewhere} />

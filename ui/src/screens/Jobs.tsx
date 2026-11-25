@@ -7,7 +7,7 @@ import { Drawer, Empty, ErrorNote, External, Icon, PillSelect, SearchInput, Tabs
 import { FitBadge, Flags, payRange, payText, payUnit, WORKPLACES } from "../components/Fit";
 import { toast } from "../live";
 import { Table, TableSkeleton } from "../components/Table";
-import { ago, day, n, plural, when } from "../format";
+import { ago, day, foundAt, fromRun, n, plural, when, withinDay } from "../format";
 import { loadPrefs, savePrefs, useEditJob, useJobs, useMeta, useSummary } from "../queries";
 import { go, useRoute } from "../router";
 import { useRunActions } from "../components/RunControls";
@@ -35,11 +35,12 @@ export function JobsScreen({ view }: { view: "jobs" | "postings" }) {
 
 type Filters = {
   text: string; regions: string[]; level: string; status: string; outreach: string; fit: string; workplace: string;
-  only: string; closed: boolean;
+  only: string; closed: boolean; found: string;
 };
 const NO_FILTERS: Filters = {
-  text: "", regions: [], level: "", status: "", outreach: "", fit: "", workplace: "", only: "", closed: false,
+  text: "", regions: [], level: "", status: "", outreach: "", fit: "", workplace: "", only: "", closed: false, found: "",
 };
+const FOUND_CHOICES: Record<string, string> = { run: "Your last run", day: "Last 24 hours" };
 const FIT_CHOICES: Record<string, string> = { APPLY: "Apply", STRETCH: "Stretch", SKIP: "Skip", none: "Not scored" };
 const ONLY: Record<string, (j: Job) => boolean> = {
   "With a pay range": (j) => Boolean(j.pay),
@@ -55,7 +56,13 @@ function Matches() {
   const meta = useMeta();
   const route = useRoute();
   const picked = route.params.get("job");
-  const [filters, setFilters] = useState<Filters>(() => loadPrefs("jobFilters", NO_FILTERS));
+  const foundParam = route.params.get("found");
+  const summary = useSummary();
+  const lastRun = summary.data?.last_run ?? null;
+  const [filters, setFilters] = useState<Filters>(() => {
+    const saved = loadPrefs("jobFilters", NO_FILTERS);
+    return foundParam && foundParam in FOUND_CHOICES ? { ...NO_FILTERS, found: foundParam } : saved;
+  });
   const [selected, setSelected] = useState<string | null>(picked);
   useEffect(() => { if (picked) setSelected(picked); }, [picked]);
   useEffect(() => savePrefs("jobFilters", filters), [filters]);
@@ -73,14 +80,16 @@ function Matches() {
       if (filters.fit && (j.fit?.verdict ?? "none") !== filters.fit) return false;
       if (filters.workplace && j.workplace !== filters.workplace) return false;
       if (filters.only && ONLY[filters.only] && !ONLY[filters.only](j)) return false;
+      if (filters.found === "run" && !fromRun(j.found, lastRun)) return false;
+      if (filters.found === "day" && !withinDay(j.found)) return false;
       const hay = `${j.title} ${j.company} ${j.locations.join(" ")} ${j.stack.join(" ")}`.toLowerCase();
       return words.every((w) => hay.includes(w));
     });
-  }, [jobs.data, filters, picked]);
+  }, [jobs.data, filters, picked, lastRun]);
 
   const editJob = useEditJob();
   const onEdit = editJob.mutate;
-  const columns = useMemo(() => jobColumns(meta.data, (key, changes) => onEdit({ key, changes })), [meta.data, onEdit]);
+  const columns = useMemo(() => jobColumns(meta.data, lastRun, (key, changes) => onEdit({ key, changes })), [meta.data, lastRun, onEdit]);
   const job = jobs.data?.find((j) => j.key === selected) ?? null;
   const filtered = JSON.stringify({ ...filters, closed: false }) !== JSON.stringify(NO_FILTERS);
   const close = () => {
@@ -93,6 +102,8 @@ function Matches() {
       <div className="toolbar" role="search">
         <SearchInput value={filters.text} onChange={(text) => set({ text })} label="Search your matches"
           placeholder="Title, company, place or stack" />
+        <PillSelect label="Found" value={filters.found} onChange={(found) => set({ found })} options={Object.keys(FOUND_CHOICES)}
+          labels={FOUND_CHOICES} any="Any time" />
         <RegionFilter regions={meta.data?.regions.map((r) => r.name) ?? []} value={filters.regions} onChange={(regions) => set({ regions })} />
         <PillSelect label="Fit" value={filters.fit} onChange={(fit) => set({ fit })} options={Object.keys(FIT_CHOICES)} labels={FIT_CHOICES} />
         <PillSelect label="Status" value={filters.status} onChange={(status) => set({ status })} options={meta.data?.statuses ?? []} />
@@ -222,11 +233,19 @@ function OutreachSelect({ job, meta, onEdit, quiet }: { job: Job; meta?: Meta; o
   );
 }
 
-function jobColumns(meta: Meta | undefined, onEdit: (key: string, c: JobEdit) => void): ColumnDef<Job, any>[] { // eslint-disable-line @typescript-eslint/no-explicit-any
+function jobColumns(meta: Meta | undefined, lastRun: string | null, onEdit: (key: string, c: JobEdit) => void): ColumnDef<Job, any>[] { // eslint-disable-line @typescript-eslint/no-explicit-any
   return [
     {
-      id: "found", header: "Found", accessorFn: (j) => j.found ?? "", size: 88,
-      cell: (c) => <span className="quiet num" title={when(c.row.original.found)}>{day(c.row.original.found)}</span>,
+      id: "found", header: "Found", accessorFn: (j) => j.found ?? "", size: 104,
+      cell: (c) => {
+        const latest = fromRun(c.row.original.found, lastRun);
+        return (
+          <span className={`found-cell num ${latest ? "is-latest" : ""}`} title={`${latest ? "From your last run. " : ""}Found ${when(c.row.original.found)}`}>
+            {latest && <span className="jewel" aria-label="From your last run" />}
+            {foundAt(c.row.original.found)}
+          </span>
+        );
+      },
     },
     {
       id: "title", header: "Title", accessorFn: (j) => j.title.toLowerCase(),
@@ -452,7 +471,7 @@ function ResumePanel({ job }: { job: Job }) {
       ) : (
         <p className="hint">
           {ai.data && !ai.data.resume_tex_found
-            ? `Put your base LaTeX resume in the Job Watcher folder as ${ai.data.resume_tex} and Claude rewrites it for this posting.`
+            ? `Put your base LaTeX resume in the Pathfinder folder as ${ai.data.resume_tex} and Claude rewrites it for this posting.`
             : "Claude rewrites your base LaTeX resume for this posting, using only facts already in it, and saves a .tex (and a PDF when LaTeX is installed)."}
         </p>
       )}

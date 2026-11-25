@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Job Watcher
+Pathfinder
 
 Checks company career sites on Greenhouse, Ashby, Lever, Workday, SmartRecruiters and
 Workable directly through their public JSON feeds, plus companies' own careers websites,

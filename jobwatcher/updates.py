@@ -1,4 +1,4 @@
-"""Keeping Job Watcher up to date: the app tells you when there's a newer version on GitHub, and its
+"""Keeping Pathfinder up to date: the app tells you when there's a newer version on GitHub, and its
 Update button installs it and restarts.
 
 How a copy updates depends on how it was set up:
@@ -8,7 +8,7 @@ How a copy updates depends on how it was set up:
              one this folder has, and updating downloads that commit and copies its files over Job
              Watcher's own. Your files (settings, company list, data, keys) are never in a download.
   installed  the Windows installer: new releases on GitHub; updating means downloading the new installer.
-When an update changes the packages Job Watcher needs, they're installed as the app starts again.
+When an update changes the packages Pathfinder needs, they're installed as the app starts again.
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from .config import find_git, make_my_copies
 
 REPO = os.environ.get("JOBWATCHER_UPDATE_REPO", "PDixant/findJobApplications")
 BRANCH = os.environ.get("JOBWATCHER_UPDATE_BRANCH", "main")
-ROOT = SOURCE_DIR  # the Job Watcher folder being updated
+ROOT = SOURCE_DIR  # the Pathfinder folder being updated
 CHECK_EVERY = dt.timedelta(hours=3)
 PACKAGE_FILES = ("pyproject.toml", "requirements.txt", "requirements-app.txt")
 SHARED_FILES = ("config.toml", "companies.csv")  # yours are copies of these, so they can be put back
@@ -67,10 +67,10 @@ def _github(path):
 
 
 def git(*args, timeout=60):
-    """git in the Job Watcher folder, never asking for a password or opening a console window."""
+    """git in the Pathfinder folder, never asking for a password or opening a console window."""
     exe = find_git()
     if not exe:
-        raise UpdateProblem("Job Watcher can't find git. Install Git from git-scm.com, or update this folder "
+        raise UpdateProblem("Pathfinder can't find git. Install Git from git-scm.com, or update this folder "
                             "with GitHub Desktop (Fetch origin, then Pull origin).")
     env = {**os.environ, "GIT_TERMINAL_PROMPT": "0", "GIT_SSH_COMMAND": "ssh -o BatchMode=yes"}
     try:
@@ -97,7 +97,7 @@ def _check_git():
     fetched = git("fetch", "--quiet", "origin", timeout=60)
     if fetched.returncode != 0:
         return {"commit": head[:7], "date": date, "newer": False,
-                "problem": "Couldn't reach GitHub to check for updates. Job Watcher tries again later."}
+                "problem": "Couldn't reach GitHub to check for updates. Pathfinder tries again later."}
     upstream = _out(git("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")) or f"origin/{BRANCH}"
     behind = int(_out(git("rev-list", "--count", f"HEAD..{upstream}")) or 0)
     ahead = int(_out(git("rev-list", "--count", f"{upstream}..HEAD")) or 0)
@@ -107,7 +107,7 @@ def _check_git():
     problem = None
     if behind and ahead:
         problem = ("This folder has commits that aren't on GitHub, so it can't update by itself. "
-                   "Run git pull in the Job Watcher folder.")
+                   "Run git pull in the Pathfinder folder.")
     return {"commit": head[:7], "date": date, "latest": latest[:7], "newer": behind > 0, "behind": behind,
             "changes": changes, "can_update": behind > 0 and not ahead, "problem": problem,
             "url": f"https://github.com/{REPO}/compare/{head[:12]}...{latest[:12]}" if behind else None}
@@ -125,7 +125,7 @@ def _check_download():
     latest = _github(f"repos/{REPO}/commits/{BRANCH}")
     if not latest:
         return {"commit": (mine.get("commit") or "")[:7] or None, "date": mine.get("date"), "newer": False,
-                "problem": "Couldn't reach GitHub to check for updates. Job Watcher tries again later."}
+                "problem": "Couldn't reach GitHub to check for updates. Pathfinder tries again later."}
     sha, info = latest["sha"], latest.get("commit") or {}
     when = (info.get("committer") or {}).get("date")
     out = {"commit": (mine.get("commit") or "")[:7] or None, "date": mine.get("date"), "latest": sha[:7],
@@ -155,7 +155,7 @@ def _check_installed(current):
 
 
 def check(current, force=False):
-    """Is there a newer Job Watcher? Asks GitHub at most every few hours unless forced."""
+    """Is there a newer Pathfinder? Asks GitHub at most every few hours unless forced."""
     data = load_json(cache_path(), {})
     how = kind()
     fresh = (data.get("kind") == how and data.get("checked")
@@ -186,13 +186,13 @@ def apply():
         packages_flag().parent.mkdir(parents=True, exist_ok=True)
         packages_flag().write_text("pyproject.toml changed", encoding="utf-8")
     cache_path().unlink(missing_ok=True)
-    log.info("Updated Job Watcher from %s to %s.", result.get("from") or "an older version", result["to"])
+    log.info("Updated Pathfinder from %s to %s.", result.get("from") or "an older version", result["to"])
     return result
 
 
 def _apply_git():
     if (ROOT / ".git" / "MERGE_HEAD").exists():
-        raise UpdateProblem("A git merge is half done in this folder. In the Job Watcher folder run "
+        raise UpdateProblem("A git merge is half done in this folder. In the Pathfinder folder run "
                             "git merge --abort, then press Update again.")
     status = git("status", "--porcelain", "--untracked-files=no").stdout or ""
     dirty = [line[3:].strip().strip('"') for line in status.splitlines() if len(line) > 3]
@@ -201,7 +201,7 @@ def _apply_git():
     others = [d for d in dirty if d not in SHARED_FILES]
     if others:
         listed = ", ".join(others[:5]) + (" and more" if len(others) > 5 else "")
-        raise UpdateProblem(f"You've changed {listed} in the Job Watcher folder. Updating would overwrite that, "
+        raise UpdateProblem(f"You've changed {listed} in the Pathfinder folder. Updating would overwrite that, "
                             "so it stopped. Commit or undo those changes (git stash), then press Update again.")
     old = _out(git("rev-parse", "HEAD"))
     pulled = git("pull", "--ff-only", "--quiet", timeout=300)
@@ -209,7 +209,7 @@ def _apply_git():
         said = (pulled.stderr or pulled.stdout or "").strip()
         if "fast-forward" in said or "diverg" in said:
             raise UpdateProblem("This folder has commits that aren't on GitHub, so it can't update by itself. "
-                                "Run git pull in the Job Watcher folder.")
+                                "Run git pull in the Pathfinder folder.")
         raise UpdateProblem("git couldn't download the update: " + (said.splitlines()[-1] if said else "no reason given"))
     new = _out(git("rev-parse", "HEAD"))
     changed = _out(git("diff", "--name-only", old, new)).splitlines()
@@ -259,23 +259,23 @@ def _apply_download():
 
 
 def install_packages_if_needed():
-    """After an update that changed Job Watcher's packages: install them, as the app starts again
+    """After an update that changed Pathfinder's packages: install them, as the app starts again
     (before, Windows would refuse to replace files the running app had open)."""
     flag = packages_flag()
     if not flag.exists() or getattr(sys, "frozen", False):
         return False
     flag.unlink(missing_ok=True)
     if sys.prefix == sys.base_prefix:
-        log.warning("Job Watcher was updated and needs new packages, but it isn't running from its own "
-                    "environment. Double-click Install Job Watcher to install them.")
+        log.warning("Pathfinder was updated and needs new packages, but it isn't running from its own "
+                    "environment. Double-click Install Pathfinder to install them.")
         return False
     cmd = [sys.executable, "-m", "pip", "install", "--disable-pip-version-check", "-q", "-e",
            f"{ROOT}[app,extras]"]
     env = {**os.environ, "PIP_CACHE_DIR": str(Path(sys.prefix) / "pip-cache")}
-    log.info("Installing the packages this version of Job Watcher needs...")
+    log.info("Installing the packages this version of Pathfinder needs...")
     done = subprocess.run(cmd, capture_output=True, text=True, env=env, creationflags=NO_WINDOW)
     if done.returncode != 0:
-        log.warning("Couldn't install the new packages: %s Double-click Install Job Watcher to finish the update.",
+        log.warning("Couldn't install the new packages: %s Double-click Install Pathfinder to finish the update.",
                     (done.stderr or done.stdout or "").strip()[-400:])
         return False
     return True

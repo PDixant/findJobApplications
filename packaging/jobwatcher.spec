@@ -1,8 +1,8 @@
-# PyInstaller build of Job Watcher, for people without Python. From the main folder:
+# PyInstaller build of Pathfinder, for people without Python. From the main folder:
 #     pip install -e ".[app]" pyinstaller
 #     pyinstaller --noconfirm packaging/jobwatcher.spec
 # Makes dist/JobWatcher/ with two programs sharing one set of files:
-#     "Job Watcher.exe"   the app, no terminal window (what the shortcuts open)
+#     "Pathfinder.exe"   the app, no terminal window (what the shortcuts open)
 #     "jobwatcher.exe"    the same for terminals: jobwatcher run, jobwatcher outreach, ...
 # Settings and data live in %APPDATA%\JobWatcher, set up with config.toml and companies.csv
 # from this folder the first time it opens.
@@ -34,6 +34,6 @@ a = Analysis(
     excludes=["tkinter", "yfinance", "pandas", "numpy", "matplotlib", "pytest"],
 )
 pyz = PYZ(a.pure)
-app = EXE(pyz, a.scripts, [], exclude_binaries=True, name="Job Watcher", console=False, icon=ICON)
+app = EXE(pyz, a.scripts, [], exclude_binaries=True, name="Pathfinder", console=False, icon=ICON)
 cli = EXE(pyz, a.scripts, [], exclude_binaries=True, name="jobwatcher", console=True, icon=ICON)
 COLLECT(app, cli, a.binaries, a.datas, name="JobWatcher")

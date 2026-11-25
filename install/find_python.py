@@ -1,8 +1,8 @@
-"""Prints this Python's path if Job Watcher can be installed with it, and nothing otherwise.
+"""Prints this Python's path if Pathfinder can be installed with it, and nothing otherwise.
 
-"Install Job Watcher.bat" asks each Python it finds. Usable means 3.10 or newer and not the
+"Install Pathfinder.bat" asks each Python it finds. Usable means 3.10 or newer and not the
 Microsoft Store build: that one keeps files it writes under AppData in a private copy, so the
-`jobwatcher` command and the Start menu shortcut it makes are invisible to the rest of Windows,
+`pathfinder` command and the Start menu shortcut it makes are invisible to the rest of Windows,
 and the app can't open from a click.
 """
 import sys

@@ -1,4 +1,4 @@
-# Job Watcher guide
+# Pathfinder guide
 
 Everything in detail. New here? Start with the [README](../README.md).
 
@@ -12,18 +12,20 @@ Everything in detail. New here? Start with the [README](../README.md).
 
 ## How it finds jobs
 
-- **Every company, every run.** Each company's job board is read through its public feed, usually in one request. For a company whose board isn't known yet, Job Watcher reads its careers page, which usually names the board.
+- **Every company, every run.** Each company's job board is read through its public feed, usually in one request. For a company whose board isn't known yet, Pathfinder reads its careers page, which usually names the board.
 - **Two lists.** Every open posting is saved in `postings.db` (and `all_postings.csv` for Excel). Only postings that pass your filters become your **matches**. Filtering happens on your computer, so after changing a filter, **Re-filter saved postings** (offered right after you save, and under **Other ways to run**) applies it instantly without asking any website again.
 - **One run at a time.** A second run, from the app or a terminal, waits its turn.
-- **Polite to job sites.** Requests are spaced out. If a site says "too many requests", Job Watcher waits as asked and comes back on the next run.
+- **Polite to job sites.** Requests are spaced out. If a site says "too many requests", Pathfinder waits as asked and comes back on the next run.
+- **New since your last run.** **Today** lists what your latest run found apart from what came earlier in the day, and **Jobs → Found: Your last run** filters to the same jobs. Run it at night and again in the morning, and the morning list is just what was posted overnight.
 - **"What did I miss?"** Under **Run now**, **Other ways to run → Run and list what's new** shows only postings that appeared since you last looked.
+- **Every step shows.** After the job boards are read, a run still saves the postings, finds your matches, writes `all_postings.csv` and saves your tracker. **Today** lists those steps as they happen, and **Cancel** gives way to "Finishing up" once there's nothing left to stop.
 
 ## Settings
 
 Change them in the app under **Settings**. Beside the form, **In plain words** sums up what they do: the checks a job must pass, how new companies are found and what else is on. As you edit, it shows the result of your unsaved changes and marks each check they affect.
 
 > [!NOTE]
-> Your settings are saved in `my_settings.toml`, made the first time you run Job Watcher from `config.toml` (the starting point everyone shares). Only your copy ever changes, and git ignores it. Updates never touch it, and your changes never reach anyone else.
+> Your settings are saved in `my_settings.toml`, made the first time you run Pathfinder from `config.toml` (the starting point everyone shares). Only your copy ever changes, and git ignores it. Updates never touch it, and your changes never reach anyone else.
 
 Settings has six tabs:
 
@@ -43,7 +45,7 @@ Settings has six tabs:
 
 ## Finding new companies
 
-Your list only covers companies you already know. To find more, Job Watcher runs the same search you'd type into Google, once or twice a day, for postings from the past day:
+Your list only covers companies you already know. To find more, Pathfinder runs the same search you'd type into Google, once or twice a day, for postings from the past day:
 
 ```text
 site:jobs.ashbyhq.com (intitle:"Frontend" OR intitle:"Full Stack") ("Vancouver" OR "Canada") -India
@@ -88,15 +90,15 @@ Board IDs by hand: `job-boards.greenhouse.io/acme` is greenhouse `acme`, `jobs.l
 
 ## Running by itself
 
-By default, Job Watcher runs only while its window is open, and closing the window quits it. While it's open, it also checks at the times under **Settings → Runs and alerts** (8:00, 12:00, 16:00 and 20:00 to start).
+By default, Pathfinder runs only while its window is open, and closing the window quits it. While it's open, it also checks at the times under **Settings → Runs and alerts** (8:00, 12:00, 16:00 and 20:00 to start).
 
 Want it checking all day? Turn on **Keep running after closing**. Closing the window then leaves it in the tray by the clock (Windows), and **Start when you sign in** opens it there each time you sign in.
 
 ## Updates
 
-When a new version is on GitHub, **New version ready** appears at the top right of the app, with what changed. **Update now** downloads it, installs anything new it needs, and reopens Job Watcher on it. **Settings → Updates** shows your version and has **Check for updates**.
+When a new version is on GitHub, **New version ready** appears at the top right of the app, with what changed. **Update now** downloads it, installs anything new it needs, and reopens Pathfinder on it. **Settings → Updates** shows your version and has **Check for updates**.
 
-| How you got Job Watcher | How it updates |
+| How you got Pathfinder | How it updates |
 |---|---|
 | `git clone` | Pulls the new commits. If you changed code yourself, it stops and tells you which files. |
 | Download ZIP | Downloads the newest files into your folder. |
@@ -131,7 +133,7 @@ Filter by them in **Jobs** with **Fit**, and under **More** with **Where you wor
 ## People you know
 
 1. On LinkedIn: **Settings → Data privacy → Get a copy of your data**, pick **Connections**. LinkedIn emails you `Connections.csv` within about 10 minutes.
-2. In Job Watcher: **Settings → Claude and email → People you know → Import Connections.csv**.
+2. In Pathfinder: **Settings → Claude and email → People you know → Import Connections.csv**.
 
 Every match then shows how many people you know there, with their names in the match's details. The list stays on your computer.
 
@@ -142,7 +144,7 @@ Applying and then writing to a recruiter usually gets more attention than applyi
 1. Set **Outreach** to **Email** on a job, then open **Outreach**.
 2. **Find people** finds a recruiter and an engineering lead (one [Hunter](https://hunter.io) credit).
 3. **Write drafts with Claude** writes short emails from your `about_me.md` and resume, never inventing anything.
-4. Edit, then **Open in mail app** (resume attached) or **Gmail draft**. Press **I sent it** after sending, and Job Watcher reminds you to follow up.
+4. Edit, then **Open in mail app** (resume attached) or **Gmail draft**. Press **I sent it** after sending, and Pathfinder reminds you to follow up.
 
 > [!NOTE]
 > Nothing is ever sent for you. Fill in `about_me.md` first (copy `about_me.example.md`), and put your resume in the folder as `resume.pdf`.
@@ -154,7 +156,7 @@ The **Pipeline** screen has a column per status: New, Applied, Interviewing, Off
 ## Phone alerts
 
 1. Install the free [ntfy](https://ntfy.sh) app on your phone.
-2. In Job Watcher: **Settings → Runs and alerts → Make me a private topic**.
+2. In Pathfinder: **Settings → Runs and alerts → Make me a private topic**.
 3. In ntfy, tap **+** and subscribe to that topic. **Send a test alert** to check.
 
 New matches arrive with the company, title and a link.
@@ -163,22 +165,22 @@ New matches arrive with the company, title and a link.
 
 ## Commands
 
-After installing, `jobwatcher` works in any terminal.
+After installing, `pathfinder` works in any terminal. `jobwatcher`, the app's first name, is the same command and still works.
 
 | Command | What it does |
 |---|---|
-| `jobwatcher` | Open the app (or bring it to the front) |
-| `jobwatcher --browser` | Open it in your web browser |
-| `jobwatcher run` | A run in the terminal |
-| `jobwatcher run --refilter` | Re-apply your filters to saved postings, without asking any website |
-| `jobwatcher run --since-last-check` | Only what's new since you last looked (`--hours 72` for a fixed window) |
-| `jobwatcher run --search` | Search for new companies now (`--look-back week` to look further back) |
-| `jobwatcher run --add <link>` | Watch a company from any job link |
-| `jobwatcher run --import list.xlsx` | Add the companies in a spreadsheet |
-| `jobwatcher run --find-career-pages` | Look up careers pages for companies with no board |
-| `jobwatcher run --show-config` | Explain your settings in plain words |
-| `jobwatcher outreach` | Prepare recruiter emails from the terminal |
-| `jobwatcher folder` | Open the folder with your settings and data |
+| `pathfinder` | Open the app (or bring it to the front) |
+| `pathfinder --browser` | Open it in your web browser |
+| `pathfinder run` | A run in the terminal |
+| `pathfinder run --refilter` | Re-apply your filters to saved postings, without asking any website |
+| `pathfinder run --since-last-check` | Only what's new since you last looked (`--hours 72` for a fixed window) |
+| `pathfinder run --search` | Search for new companies now (`--look-back week` to look further back) |
+| `pathfinder run --add <link>` | Watch a company from any job link |
+| `pathfinder run --import list.xlsx` | Add the companies in a spreadsheet |
+| `pathfinder run --find-career-pages` | Look up careers pages for companies with no board |
+| `pathfinder run --show-config` | Explain your settings in plain words |
+| `pathfinder outreach` | Prepare recruiter emails from the terminal |
+| `pathfinder folder` | Open the folder with your settings and data |
 
 `python job_watcher.py` and `python outreach.py` take the same options.
 
@@ -202,14 +204,14 @@ Your own files are listed in `.gitignore`, so they never reach GitHub and update
 
 | Do this | What you see |
 |---|---|
-| Click **Job Watcher** on the Desktop, in the Start menu or at the top of the Job Watcher folder | Just the app window |
-| Type `jobwatcher` in any terminal | The app window, with its log in the terminal |
+| Click **Pathfinder** on the Desktop, in the Start menu or at the top of the Pathfinder folder | Just the app window |
+| Type `pathfinder` in any terminal | The app window, with its log in the terminal |
 
-Moved or renamed the folder? Double-click **Install Job Watcher** again so the shortcuts follow. **Uninstall Job Watcher** removes the shortcuts and the command, and keeps your data.
+Moved or renamed the folder? Double-click **Install Pathfinder** again so the shortcuts follow. **Uninstall Pathfinder** removes the shortcuts and the command, and keeps your data.
 
 ## The Windows installer
 
-`packaging/` builds `JobWatcherSetup.exe`, which needs no Python and no admin rights, and keeps its data in `%APPDATA%\JobWatcher`. To publish one, copy `packaging/release.yml` to `.github/workflows/` and push a version tag:
+`packaging/` builds `PathfinderSetup.exe`, which needs no Python and no admin rights, and keeps its data in `%APPDATA%\JobWatcher`. To publish one, copy `packaging/release.yml` to `.github/workflows/` and push a version tag:
 
 ```bash
 git tag v0.6.0

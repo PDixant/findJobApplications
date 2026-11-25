@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Recruiter outreach prep for Job Watcher.
+Recruiter outreach prep for Pathfinder.
 
 Mark jobs in job_tracker.xlsx by setting the Outreach column to "Email", then run:
 

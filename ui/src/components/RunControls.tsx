@@ -2,22 +2,71 @@ import { useRef, useState } from "react";
 import { api, type Run, type RunMode } from "../api";
 import { setRun, toast, useLive } from "../live";
 import { n, plural, when } from "../format";
-import { LineProgress, useDismiss } from "./bits";
+import { Icon, Jewels, LineProgress, useDismiss } from "./bits";
 
 export const PHASES: Record<string, string> = {
   starting: "Starting",
   search: "Searching the web for new companies",
-  career_pages: "Looking for careers pages",
+  career_pages: "Looking up careers pages",
   metrics: "Updating company scores",
   boards: "Reading job boards",
-  filter: "Filtering saved postings",
+  postings: "Saving the postings",
+  filter: "Finding your matches",
+  export: "Writing all_postings.csv",
   save: "Saving your tracker",
   cancelling: "Stopping after the boards being read now",
 };
 
+/** What each step is called while it happens and once it's done. */
+const STEP: Record<string, { doing: string; done: string }> = {
+  search: { doing: "Searching the web for new companies", done: "Searched the web for new companies" },
+  career_pages: { doing: "Looking up careers pages", done: "Looked up careers pages" },
+  metrics: { doing: "Updating company scores", done: "Updated company scores" },
+  boards: { doing: "Reading job boards", done: "Checked the job boards" },
+  postings: { doing: "Saving the postings the boards listed", done: "Saved the postings" },
+  filter: { doing: "Finding your matches", done: "Found your matches" },
+  export: { doing: "Writing all_postings.csv", done: "Wrote all_postings.csv" },
+  save: { doing: "Saving your tracker", done: "Saved your tracker" },
+};
+/** Steps after the boards: the run can't be stopped any more, it is finishing up. */
+export const FINISHING = ["postings", "filter", "export", "save"];
+
+export type Step = { id: string; label: string; state: "done" | "doing" | "todo" };
+
+/** The run's steps in order: the ones it has been through, then the ones still to come. */
+export function runSteps(run: Run, seen: string[]): Step[] {
+  const tail = run.mode === "refilter" ? ["filter", "export", "save"] : run.mode === "scores" ? ["metrics"]
+    : ["boards", "postings", "filter", "export", "save"];
+  const shown = (s: string) => s in STEP && (s !== "metrics" || run.mode === "scores");
+  const current = run.phase === "cancelling" ? "boards" : run.phase;
+  const order = [...seen.filter(shown)];
+  if (shown(current) && !order.includes(current)) order.push(current);
+  for (const s of tail) if (!order.includes(s)) order.push(s);
+  const at = order.indexOf(current);
+  return order.map((id, i) => ({
+    id,
+    state: at === -1 ? "todo" : i < at ? "done" : i === at ? "doing" : "todo",
+    label: i < at && id === "boards" && run.total ? `Checked ${n(run.total)} job boards` : i < at ? STEP[id].done : STEP[id].doing,
+  }));
+}
+
 export function phaseText(run: Run) {
-  if (run.cancelled) return PHASES.cancelling;
+  if (run.cancelled && !FINISHING.includes(run.phase)) return PHASES.cancelling;
   return PHASES[run.phase] ?? "Working";
+}
+
+/** The steps as a short list: done ones ticked, the current one lit, the rest waiting. */
+export function RunSteps({ steps }: { steps: Step[] }) {
+  return (
+    <ol className="run-steps" aria-label="Steps of this run">
+      {steps.map((s) => (
+        <li key={s.id} className={`run-step is-${s.state}`} aria-current={s.state === "doing" ? "step" : undefined}>
+          <span className="run-step-mark">{s.state === "doing" ? <Jewels lit /> : <Icon name={s.state === "done" ? "check" : "dash"} />}</span>
+          {s.label}
+        </li>
+      ))}
+    </ol>
+  );
 }
 
 /** How long the rest of the boards should take, once enough are read to judge. */
@@ -61,7 +110,7 @@ const OTHER_RUNS: { mode: RunMode; label: string; what: string }[] = [
 
 /** The run, low in the side nav on every screen: start one, or see how far it has got and stop it. */
 export function RunControls({ lastRun, busyElsewhere }: { lastRun: string | null; busyElsewhere: boolean }) {
-  const { run, boardsStartedAt } = useLive();
+  const { run, boardsStartedAt, phases } = useLive();
   const { start, cancel, busy } = useRunActions();
   const [menu, setMenu] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -70,9 +119,12 @@ export function RunControls({ lastRun, busyElsewhere }: { lastRun: string | null
 
   if (running) {
     const boards = run.phase === "boards" && run.total ? run.total : 0;
+    const finishing = FINISHING.includes(run.phase);
+    const steps = runSteps(run, phases);
+    const at = steps.findIndex((s) => s.state === "doing");
     const note = boards
       ? [`${n(run.done)} of ${n(boards)}`, timeLeft(run.done, boards, boardsStartedAt)].filter(Boolean).join(", ")
-      : run.source === "schedule" ? "Your scheduled run" : run.label;
+      : at >= 0 ? `Step ${at + 1} of ${steps.length}` : run.source === "schedule" ? "Your scheduled run" : run.label;
     return (
       <div className="run-box" role="status" aria-live="polite">
         <div className="run-box-status">
@@ -81,9 +133,13 @@ export function RunControls({ lastRun, busyElsewhere }: { lastRun: string | null
           {run.new.length > 0 && <span className="run-box-note">{plural(run.new.length, "new match", "new matches")} so far</span>}
         </div>
         <LineProgress share={boards && !run.cancelled ? run.done / boards : null} label="Run progress" />
-        <button className="button small wide" onClick={cancel} disabled={busy || run.cancelled}>
-          {run.cancelled ? "Stopping" : "Cancel run"}
-        </button>
+        {finishing ? (
+          <span className="run-box-note">The boards are read. Finishing up, which can't be stopped now.</span>
+        ) : (
+          <button className="button small wide" onClick={cancel} disabled={busy || run.cancelled}>
+            {run.cancelled ? "Stopping" : "Cancel run"}
+          </button>
+        )}
       </div>
     );
   }

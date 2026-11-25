@@ -282,16 +282,16 @@ def _usable(path):
     if not path.exists():
         return None
     if CONFLICT_MARKERS.search(path.read_text(encoding="utf-8-sig", errors="replace")):
-        log.warning("%s has unresolved git conflict markers, so Job Watcher starts your copy from the "
+        log.warning("%s has unresolved git conflict markers, so Pathfinder starts your copy from the "
                     "shared defaults instead. To finish the pull: git checkout --theirs %s", path.name, path.name)
         return None
     return path
 
 
 def make_my_copies(home=None):
-    """Your settings live in my_settings.toml and your company list in my_companies.csv. Job Watcher
+    """Your settings live in my_settings.toml and your company list in my_companies.csv. Pathfinder
     only ever writes these two, and git ignores them, so your changes never reach anyone else and
-    updating Job Watcher never clashes with them. The first time, they start as copies of
+    updating Pathfinder never clashes with them. The first time, they start as copies of
     config.toml and companies.csv, edits included; in a clone of the repository those two then go
     back to the shared versions, so `git pull` brings new defaults without conflicts."""
     global _copies_checked
@@ -333,7 +333,7 @@ def make_my_copies(home=None):
     if not made:
         return made
     log.info("Your settings are now in %s and your company list in %s. Only these two change from now on, "
-             "and git ignores them, so updating Job Watcher never clashes with your edits.", MY_SETTINGS, MY_COMPANIES)
+             "and git ignores them, so updating Pathfinder never clashes with your edits.", MY_SETTINGS, MY_COMPANIES)
     if in_clone:
         for name in ("config.toml", "companies.csv"):
             if tracked_by_git(home, name):

@@ -4,7 +4,7 @@ import { n, plural } from "../format";
 import { useLive, type BoardOutcome } from "../live";
 import { loadPrefs, savePrefs } from "../queries";
 import { Icon, LineProgress, useTip } from "./bits";
-import { phaseText, timeLeft } from "./RunControls";
+import { FINISHING, phaseText, RunSteps, runSteps, timeLeft } from "./RunControls";
 
 type Props = {
   companies: Company[];
@@ -17,7 +17,7 @@ const SKIPPED = ["MANUAL", "OFF"]; // never read on a run
 /** Your companies, simply: one bar of what happened on the last run, or how far this run has got.
  *  "Show every company" opens the full map, one square per company. */
 export function CompanyStatus({ companies, onPickResult, onPickCompany }: Props) {
-  const { run, boards, boardsStartedAt } = useLive();
+  const { run, boards, boardsStartedAt, phases } = useLive();
   const running = run?.status === "running";
   const reading = running && run.phase === "boards";
   const [open, setOpen] = useState(() => loadPrefs("companyMap", { open: false }).open);
@@ -39,12 +39,13 @@ export function CompanyStatus({ companies, onPickResult, onPickCompany }: Props)
           {open ? "Show less" : "Show every company"}
         </button>
         <p className="status-sub">
-          {running ? (run.source === "schedule" ? "Your scheduled run" : run.label)
+          {running ? (FINISHING.includes(run.phase) ? "The job boards are read. Pathfinder is finishing up, step by step."
+            : run.source === "schedule" ? "Your scheduled run" : run.label)
             : `${plural(watched, "company", "companies")} watched. The last run read ${plural(read, "job board")}.`}
         </p>
       </header>
 
-      {running ? <RunProgress run={run} boards={boards} since={boardsStartedAt} reading={reading} />
+      {running ? <RunProgress run={run} boards={boards} since={boardsStartedAt} reading={reading} phases={phases} />
         : <StackBar counts={counts} total={companies.length} onPick={onPickResult} />}
 
       {open && <CompanyMap companies={companies} live={boards} reading={reading} onPick={onPickCompany} />}
@@ -89,11 +90,15 @@ function StackBar({ counts, total, onPick }: { counts: Map<string, number>; tota
 /** A run in progress: the one number that matters (boards read), a line of light, and what's happening. */
 const OUTCOME_TONE: Record<BoardOutcome, string> = { read: "ok", missing: "missing", paused: "paused", error: "error" };
 
-function RunProgress({ run, boards, since, reading }: { run: Run; boards: Record<string, BoardOutcome>; since: number | null; reading: boolean }) {
+function RunProgress({ run, boards, since, reading, phases }: {
+  run: Run; boards: Record<string, BoardOutcome>; since: number | null; reading: boolean; phases: string[];
+}) {
   if (!reading || !run.total) {
+    // Every other step: a sweep, and the list of steps so you can see where the run is
     return (
       <>
         <LineProgress share={null} label={phaseText(run)} />
+        <RunSteps steps={runSteps(run, phases)} />
         {run.new.length > 0 && <NewSoFar lines={run.new} />}
       </>
     );

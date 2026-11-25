@@ -1,12 +1,13 @@
-"""Sets Job Watcher up to open with one click, and adds a `jobwatcher` command for any terminal.
+"""Sets Pathfinder up to open with one click, and adds a `pathfinder` command for any terminal.
 
-Run by "Install Job Watcher.bat" (Windows) or install.sh (Mac and Linux). It:
-  1. makes a private Python environment in .venv inside the Job Watcher folder, so nothing
+Run by "Install Pathfinder.bat" (Windows) or install.sh (Mac and Linux). It:
+  1. makes a private Python environment in .venv inside the Pathfinder folder, so nothing
      else on the computer is changed,
-  2. installs Job Watcher and the app's packages into it,
-  3. adds "Job Watcher" to the Start menu and the Desktop (Mac: Applications; Linux: the
-     app menu), with its icon, and a "Job Watcher" shortcut at the top of this folder too,
-  4. adds the `jobwatcher` command to your PATH, so it works in any terminal from any folder.
+  2. installs Pathfinder and the app's packages into it,
+  3. adds "Pathfinder" to the Start menu and the Desktop (Mac: Applications; Linux: the
+     app menu), with its icon, and a "Pathfinder" shortcut at the top of this folder too,
+  4. adds the `pathfinder` command (and `jobwatcher`, its first name) to your PATH, so it works in any
+     terminal from any folder.
 
 Your settings and data stay where they are. Run it again any time to repair or update.
 
@@ -27,11 +28,13 @@ from pathlib import Path
 
 WINDOWS = sys.platform == "win32"
 MAC = sys.platform == "darwin"
-NAME = "Job Watcher"
+NAME = "Pathfinder"
+OLD_NAMES = ("Job Watcher",)  # what it was called; shortcuts made under it are replaced
+COMMANDS = ("pathfinder", "jobwatcher")  # both work in any terminal
 
 
 def configure(root):
-    """Paths for the Job Watcher folder at root. (Uninstall runs a copy of this file from a
+    """Paths for the Pathfinder folder at root. (Uninstall runs a copy of this file from a
     temporary folder, because Windows can't delete a Python that is running.)"""
     global ROOT, VENV, SCRIPTS, PYTHON, MANIFEST
     ROOT = Path(root).resolve()
@@ -80,11 +83,11 @@ def pip_install(args):
     print(((second.stdout or "") + (second.stderr or "")).strip())
     sys.exit("\nThe packages couldn't be installed because Windows refused pip access to a file.\n"
              "This is usually antivirus software scanning the download, or a folder left behind by an\n"
-             "install that was run as administrator. Try these, then double-click Install Job Watcher again:\n"
+             "install that was run as administrator. Try these, then double-click Install Pathfinder again:\n"
              "  1. Restart the computer (it releases locked files).\n"
              "  2. Delete the folder  %LOCALAPPDATA%\\pip\\cache  (paste that into File Explorer's address bar).\n"
-             "  3. Don't run Install Job Watcher as administrator; a normal double-click is right.\n"
-             "Still stuck? Send the messages above to whoever shared Job Watcher with you.")
+             "  3. Don't run Install Pathfinder as administrator; a normal double-click is right.\n"
+             "Still stuck? Send the messages above to whoever shared Pathfinder with you.")
 
 
 def powershell(script):
@@ -122,14 +125,14 @@ def edit_user_path(folder, add):
 
 # ----------------------------------------------------------------- install
 def windows_shortcut_folders():
-    """Where the Windows shortcuts go: the Start menu, the Desktop, and the top of the Job Watcher
+    """Where the Windows shortcuts go: the Start menu, the Desktop, and the top of the Pathfinder
     folder itself, so nobody has to dig into .venv\\Scripts for the app."""
     return [windows_folder("Programs"), windows_folder("Desktop"), ROOT]
 
 
 def store_python(executable=None, base_prefix=None):
     """The Microsoft Store build of Python. Files it writes under AppData go to a private copy that
-    only it can see, so the jobwatcher command and the Start menu shortcut would be invisible to the
+    only it can see, so the pathfinder command and the Start menu shortcut would be invisible to the
     rest of Windows, and the app can fail to open from a click."""
     executable = sys.executable if executable is None else executable
     base_prefix = sys.base_prefix if base_prefix is None else base_prefix
@@ -155,12 +158,16 @@ def venv_needs_remaking(cfg_text, base_prefix):
 
 def install(minimal=False):
     if sys.version_info < (3, 10):
-        sys.exit(f"Job Watcher needs Python 3.10 or newer; this is {sys.version.split()[0]}.")
+        sys.exit(f"Pathfinder needs Python 3.10 or newer; this is {sys.version.split()[0]}.")
     if WINDOWS and store_python():
-        sys.exit("This is the Microsoft Store version of Python, which Job Watcher can't use: it keeps the\n"
-                 "files Job Watcher sets up in a private copy the rest of Windows can't see.\n"
-                 "Double-click \"Install Job Watcher\" instead; it installs the python.org version if needed.")
-    made = {"shortcuts": [], "command": None, "path_entry": None}
+        sys.exit("This is the Microsoft Store version of Python, which Pathfinder can't use: it keeps the\n"
+                 "files Pathfinder sets up in a private copy the rest of Windows can't see.\n"
+                 "Double-click \"Install Pathfinder\" instead; it installs the python.org version if needed.")
+    made = {"shortcuts": [], "command": None, "commands": [], "path_entry": None}
+    try:  # shortcuts from an earlier install, under the old name, go once the new ones are made
+        before = json.loads(MANIFEST.read_text(encoding="utf-8")).get("shortcuts", []) if MANIFEST.exists() else []
+    except ValueError:
+        before = []
 
     step("Making a private Python environment (.venv)")
     cfg = VENV / "pyvenv.cfg"
@@ -170,14 +177,14 @@ def install(minimal=False):
         try:
             shutil.rmtree(VENV)
         except OSError as exc:
-            sys.exit(f"Couldn't replace .venv ({exc}).\nClose Job Watcher and any terminal using it, "
-                     "then run Install Job Watcher again.")
+            sys.exit(f"Couldn't replace .venv ({exc}).\nClose Pathfinder and any terminal using it, "
+                     "then run Install Pathfinder again.")
     if not PYTHON.exists():
         venv.EnvBuilder(with_pip=True, upgrade_deps=False).create(VENV)
     else:
         print("   already there; updating it")
 
-    step("Installing Job Watcher and its packages (a few minutes the first time)")
+    step("Installing Pathfinder and its packages (a few minutes the first time)")
     extras = "app" if minimal else "app,extras"
     pip_install(["-e", f"{ROOT}[{extras}]"])
     run([PYTHON, "-c", "import jobwatcher.server, jobwatcher.desktop; import webview, tomlkit, keyring"])
@@ -187,7 +194,7 @@ def install(minimal=False):
     icon_ico = ROOT / "jobwatcher" / "assets" / "icon.ico"
     icon_png = ROOT / "jobwatcher" / "assets" / "icon.png"
 
-    step("Adding Job Watcher to your menu, your Desktop and this folder")
+    step("Adding Pathfinder to your menu, your Desktop and this folder")
     if WINDOWS:
         for folder in windows_shortcut_folders():
             link = folder / f"{NAME}.lnk"
@@ -233,35 +240,45 @@ def install(minimal=False):
         made["shortcuts"].append(str(here))
         print(f"   {here}")
 
-    step("Adding the jobwatcher command for any terminal")
+    for old in before:
+        if old not in made["shortcuts"] and Path(old).stem in OLD_NAMES:
+            remove_shortcut(old)
+            print(f"   removed the old {old}")
+
+    step("Adding the pathfinder command (and jobwatcher) for any terminal")
     if WINDOWS:
         bin_dir = Path(os.environ["LOCALAPPDATA"]) / "JobWatcher" / "bin"
         bin_dir.mkdir(parents=True, exist_ok=True)
-        shim = bin_dir / "jobwatcher.cmd"
-        shim.write_text(f'@"{cli_exe}" %*\r\n', encoding="utf-8")
-        made["command"] = str(shim)
+        for name in COMMANDS:
+            shim = bin_dir / f"{name}.cmd"
+            shim.write_text(f'@"{cli_exe}" %*\r\n', encoding="utf-8")
+            made["commands"].append(str(shim))
+            print(f"   {shim}")
         edit_user_path(bin_dir, add=True)
         made["path_entry"] = str(bin_dir)
-        print(f"   {shim}\n   Open a new terminal window for the command to work there.")
+        print("   Open a new terminal window for the commands to work there.")
     else:
         bin_dir = Path.home() / ".local" / "bin"
         bin_dir.mkdir(parents=True, exist_ok=True)
-        link = bin_dir / "jobwatcher"
-        if link.is_symlink() or link.exists():
-            link.unlink()
-        link.symlink_to(cli_exe)
-        made["command"] = str(link)
-        print(f"   {link}")
+        for name in COMMANDS:
+            link = bin_dir / name
+            if link.is_symlink() or link.exists():
+                link.unlink()
+            link.symlink_to(cli_exe)
+            made["commands"].append(str(link))
+            print(f"   {link}")
         if str(bin_dir) not in os.environ.get("PATH", "").split(os.pathsep):
             print(f"   Add {bin_dir} to your PATH to use it everywhere, for example:\n"
                   f"   echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> ~/{'.zprofile' if MAC else '.profile'}")
+    made["command"] = made["commands"][-1]  # older copies of this file read only this one
 
     MANIFEST.write_text(json.dumps(made, indent=2), encoding="utf-8")
     step("Done")
     print(f"Open {NAME} from the {'Start menu or Desktop' if WINDOWS else 'Applications folder' if MAC else 'app menu'}, "
-          "or type  jobwatcher  in a terminal.\n"
-          "  jobwatcher run       a run from the terminal (same options as job_watcher.py)\n"
-          "  jobwatcher folder    where your settings and data are")
+          "or type  pathfinder  in a terminal.\n"
+          "  pathfinder run       a run from the terminal (same options as job_watcher.py)\n"
+          "  pathfinder folder    where your settings and data are\n"
+          "jobwatcher works too, the same as pathfinder.")
 
 
 # ----------------------------------------------------------------- uninstall
@@ -283,14 +300,14 @@ def uninstall():
     made = {}
     if MANIFEST.exists():
         made = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    step("Removing the shortcuts and the jobwatcher command")
+    step("Removing the shortcuts and the pathfinder and jobwatcher commands")
     for item in made.get("shortcuts", []):
         path = Path(item)
         remove_shortcut(path)
         print(f"   removed {path}")
-    if made.get("command"):
-        Path(made["command"]).unlink(missing_ok=True)
-        print(f"   removed {made['command']}")
+    for command in dict.fromkeys(made.get("commands", []) + ([made["command"]] if made.get("command") else [])):
+        Path(command).unlink(missing_ok=True)
+        print(f"   removed {command}")
     if WINDOWS and made.get("path_entry"):
         edit_user_path(made["path_entry"], add=False)
     step("Removing .venv")
@@ -299,7 +316,7 @@ def uninstall():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Set up Job Watcher to open with one click.")
+    parser = argparse.ArgumentParser(description="Set up Pathfinder to open with one click.")
     parser.add_argument("--uninstall", action="store_true", help="remove the shortcuts, the command and .venv")
     parser.add_argument("--minimal", action="store_true", help="skip stock metrics and desktop pop-ups")
     parser.add_argument("--root", help=argparse.SUPPRESS)

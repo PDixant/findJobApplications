@@ -1,4 +1,4 @@
-/* Job Watcher, drawn in Kanso (design language v1.0).
+/* Pathfinder, drawn in Kanso (design language v1.0).
    Body: warm paper and ink. Paint: one Wada combination per screen, shown as light (the active line,
    the focus ring, the L-bracket), never as body colour. Structural is the default; Pipeline and
    Outreach wear Nori; Settings is Sumi (ink only). Every value below is a Kanso token. */
@@ -43,6 +43,7 @@
   --paint-text: #1C4286;
   --paint-soft: #F0F0EC;
   --light: var(--paint); /* the signature light: active line, focus ring, L-bracket */
+  --brand-jewel: #1C4286; /* the logo's jewel stays Structural blue in every paint */
 
   /* type */
   --font-display: "Instrument Serif", "Libre Caslon Display", Georgia, serif;
@@ -114,6 +115,7 @@
     --paint-text: #97ACC8;
     --paint-soft: #051230;
     --light: var(--paint-text); /* in the dark the accent glows softly: drawn in its light text value */
+    --brand-jewel: #97ACC8;
 
     --e2: inset 0 1px 0 rgba(252, 250, 240, 0.06), 0 8px 24px -12px rgba(17, 19, 20, 0.6);
     --e3: inset 0 1px 0 rgba(252, 250, 240, 0.06), 0 24px 64px -24px rgba(17, 19, 20, 0.7);
@@ -393,7 +395,16 @@ input[type="checkbox"]:focus-visible { outline: 2px solid var(--light); outline-
 .shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); height: 100%; }
 
 .sidenav { position: relative; z-index: 9; display: flex; flex-direction: column; min-height: 0; padding: 0 var(--s5) var(--s6) var(--s6); background: var(--canvas); }
-.brand { display: flex; align-items: center; gap: var(--s4); height: var(--bar); font: 500 17px/24px var(--font-sans); }
+.brand { display: flex; align-items: center; gap: var(--s4); min-height: var(--bar); padding-top: var(--s5); }
+.brand-text { display: flex; flex-direction: column; }
+.brand-name { font: 500 17px/22px var(--font-sans); }
+.brand-by { font: 400 13px/16px var(--font-sans); color: var(--text-tertiary); text-decoration: none; }
+.brand-by:hover { color: var(--text); text-decoration: underline; text-decoration-color: var(--light); }
+.logo { flex: none; display: block; }
+.logo-tile { fill: var(--surface); stroke: var(--line-hair); }
+.logo-ink { stroke: var(--text); }
+.logo-jewel { fill: var(--brand-jewel); }
+.logo.is-lit .logo-jewel { animation: jewel 1200ms var(--glide) infinite; }
 .nav { position: relative; display: flex; flex-direction: column; flex: 0 1 auto; min-height: 0; overflow-y: auto; margin: var(--s6) calc(-1 * var(--s2)) 0; padding: 0 var(--s2); }
 .nav-label { margin: var(--s6) 0 var(--s3); padding-left: var(--s5); }
 .nav > .nav-label:first-child { margin-top: 0; }
@@ -608,6 +619,11 @@ table.data { width: 100%; border-collapse: collapse; table-layout: fixed; font: 
 
 .dash-grid { display: grid; grid-template-columns: minmax(0, 8fr) minmax(280px, 4fr); gap: var(--s6); align-items: start; margin-top: var(--s6); }
 .side-stack { display: flex; flex-direction: column; gap: var(--s6); }
+.match-group + .match-group { margin-top: var(--s7); padding-top: var(--s6); border-top: 1px solid var(--line-hair); }
+.group-label { display: flex; align-items: baseline; gap: var(--s3); margin-bottom: var(--s2); font: 500 14px/20px var(--font-sans); }
+.group-label .quiet { font-weight: 400; }
+.group-label .num { margin-left: auto; font-weight: 400; color: var(--text-tertiary); }
+.group-empty { padding: var(--s4) 0; }
 .todo-line { display: flex; align-items: center; gap: var(--s3); }
 
 /* your companies: one bar by default, every company on request */
@@ -634,6 +650,12 @@ table.data { width: 100%; border-collapse: collapse; table-layout: fixed; font: 
 .run-figure .pct { margin-left: auto; font: 500 14px/20px var(--font-sans); font-variant-numeric: tabular-nums; color: var(--text-secondary); }
 .run-facts { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); margin-top: var(--s4); font: 400 14px/20px var(--font-sans); color: var(--text-secondary); }
 .run-facts .bad { color: var(--negative); display: inline-flex; gap: var(--s2); align-items: center; }
+.run-steps { list-style: none; margin: var(--s5) 0 0; padding: 0; display: grid; gap: var(--s2); }
+.run-step { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: center; min-height: 28px; font: 400 14px/20px var(--font-sans); color: var(--text-tertiary); }
+.run-step.is-done { color: var(--text-secondary); }
+.run-step.is-doing { color: var(--text); font-weight: 500; }
+.run-step-mark { display: grid; place-items: center start; }
+.run-step.is-done .icon { color: var(--positive); }
 .run-new { margin: var(--s5) 0 0; padding: 0; list-style: none; display: grid; gap: var(--s2); font: 400 14px/20px var(--font-sans); }
 .run-new li::before { content: "+ "; color: var(--positive); }
 
@@ -665,6 +687,9 @@ table.data { width: 100%; border-collapse: collapse; table-layout: fixed; font: 
 .filter-pop .checks { display: flex; flex-direction: column; gap: var(--s3); }
 
 /* ================================================================ jobs */
+.found-cell { display: inline-flex; align-items: center; gap: var(--s3); color: var(--text-tertiary); }
+.found-cell.is-latest { color: var(--text); }
+.jewel { width: 6px; height: 6px; border-radius: 50%; background: var(--light); flex: none; }
 .fit-cell { display: inline-flex; align-items: center; gap: var(--s3); }
 .fit-cell .num { color: var(--text-secondary); }
 .flags-line { display: flex; gap: var(--s3); align-items: center; font: 400 13px/16px var(--font-sans); color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -922,6 +947,8 @@ table.data { width: 100%; border-collapse: collapse; table-layout: fixed; font: 
 .welcome { position: fixed; inset: 0; z-index: 60; overflow: auto; background: var(--canvas); animation: fade var(--grand) var(--launch); }
 .welcome-band { position: relative; height: 160px; overflow: hidden; }
 .welcome-inner { max-width: 880px; padding: var(--s8) var(--margin) var(--s10); }
+.welcome-brand { display: flex; align-items: center; gap: var(--s4); margin-bottom: var(--s8); }
+.about-app { display: flex; gap: var(--s5); align-items: center; margin-top: var(--s4); }
 .welcome-steps { display: flex; flex-wrap: wrap; gap: var(--s6); margin-bottom: var(--s9); }
 .welcome-step { position: relative; padding-bottom: var(--s3); font: 400 14px/20px var(--font-sans); color: var(--text-tertiary); }
 .welcome-step.is-done { color: var(--text-secondary); }

@@ -44,12 +44,15 @@ config.json
 *.log
 .pytest_cache/
 
-# Shortcuts Install Job Watcher puts at the top of this folder
+# Shortcuts Install Pathfinder puts at the top of this folder (and their names before the rename)
+/Pathfinder.lnk
+/Pathfinder.app
+/Pathfinder.desktop
 /Job Watcher.lnk
 /Job Watcher.app
 /Job Watcher.desktop
 
-# Your own settings and company list. Job Watcher makes them from config.toml and
+# Your own settings and company list. Pathfinder makes them from config.toml and
 # companies.csv (the shared starting point) and only ever writes these.
 my_settings.toml
 my_companies.csv

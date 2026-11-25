@@ -54,3 +54,27 @@ export const hex = (c: string | null | undefined) => (c ? `#${c.replace(/^#/, ""
 export function plural(count: number, one: string, many = `${one}s`) {
   return `${n(count)} ${count === 1 ? one : many}`;
 }
+
+const ms = (iso: string | null | undefined) => (iso ? new Date(iso).getTime() : NaN);
+
+/** Found by the latest run? Jobs a run finds carry that run's start time, which is the summary's last_run. */
+export function fromRun(found: string | null | undefined, lastRun: string | null | undefined): boolean {
+  const f = ms(found), r = ms(lastRun);
+  return !Number.isNaN(f) && !Number.isNaN(r) && f >= r - 1000;
+}
+
+/** Within the last day. */
+export const withinDay = (iso: string | null | undefined) => Date.now() - ms(iso) <= 24 * 3600 * 1000;
+
+/** When a match was found, as short as a table cell allows: a time today, "Yesterday", or a date. */
+export function foundAt(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return timeFmt.format(d);
+  if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+  return dayFmt.format(d);
+}

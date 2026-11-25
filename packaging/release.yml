@@ -1,4 +1,4 @@
-# Builds JobWatcherSetup.exe and attaches it to a GitHub Release.
+# Builds PathfinderSetup.exe and attaches it to a GitHub Release.
 # To use it, copy this file to .github/workflows/release.yml, then:
 #     git tag v0.4.0
 #     git push origin v0.4.0
@@ -43,9 +43,9 @@ jobs:
           iscc /DAppVersion=$version packaging\JobWatcher.iss
       - uses: actions/upload-artifact@v4
         with:
-          name: JobWatcherSetup
-          path: packaging/Output/JobWatcherSetup.exe
+          name: PathfinderSetup
+          path: packaging/Output/PathfinderSetup.exe
       - uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: packaging/Output/JobWatcherSetup.exe
+          files: packaging/Output/PathfinderSetup.exe

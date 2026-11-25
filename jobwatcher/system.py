@@ -6,7 +6,8 @@ import subprocess
 from .base import *  # noqa: F401,F403
 
 RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
-VALUE = "Job Watcher"
+VALUE = "Pathfinder"
+OLD_VALUES = ("Job Watcher",)  # its name before; still counts, and goes when startup is set again
 
 
 def launch_command(tray=True):
@@ -40,8 +41,13 @@ def startup_enabled():
         import winreg
         try:
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, RUN_KEY) as key:
-                winreg.QueryValueEx(key, VALUE)
-                return True
+                for name in (VALUE, *OLD_VALUES):
+                    try:
+                        winreg.QueryValueEx(key, name)
+                        return True
+                    except OSError:
+                        pass
+                return False
         except OSError:
             return False
     if sys.platform.startswith("linux"):
@@ -50,22 +56,22 @@ def startup_enabled():
 
 
 def set_startup(on):
-    """Open Job Watcher in the tray when you sign in."""
+    """Open Pathfinder in the tray when you sign in."""
     if sys.platform == "win32":
         import winreg
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, RUN_KEY) as key:
             if on:
                 winreg.SetValueEx(key, VALUE, 0, winreg.REG_SZ, _quote(launch_command()))
-            else:
+            for name in OLD_VALUES if on else (VALUE, *OLD_VALUES):
                 try:
-                    winreg.DeleteValue(key, VALUE)
+                    winreg.DeleteValue(key, name)
                 except OSError:
                     pass
     elif sys.platform.startswith("linux"):
         path = _autostart_file()
         if on:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(f"[Desktop Entry]\nType=Application\nName=Job Watcher\nExec={_quote(launch_command())}\n")
+            path.write_text(f"[Desktop Entry]\nType=Application\nName={APP_NAME}\nExec={_quote(launch_command())}\n")
         else:
             path.unlink(missing_ok=True)
     else:

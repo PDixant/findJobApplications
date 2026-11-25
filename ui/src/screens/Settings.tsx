@@ -130,7 +130,7 @@ export function Settings() {
     <>
       <header className="page-head with-tabs">
         <h1>Settings</h1>
-        <p className="lede">Saved in my_settings.toml, which is yours alone: updates to Job Watcher never change it. Runs use your changes from their next start.</p>
+        <p className="lede">Saved in my_settings.toml, which is yours alone: updates to Pathfinder never change it. Runs use your changes from their next start.</p>
         <Tabs label="Settings" active={tab} onPick={(t) => go("settings", { tab: t })}
           items={TABS.map((t) => ({ id: t.id, label: t.label, count: changedIn(t) ? `${changedIn(t)} changed` : undefined }))} />
       </header>
@@ -574,8 +574,8 @@ function Background() {
       <h2 id="sec-background">Running in the background</h2>
       <p className="hint">
         {s.tray
-          ? "Closing the window keeps Job Watcher running by the clock, so automatic runs happen. Quit it from that icon."
-          : "Job Watcher runs only while its window is open. Closing the window quits it, so automatic runs happen only while it's open."}
+          ? "Closing the window keeps Pathfinder running by the clock, so automatic runs happen. Quit it from that icon."
+          : "Pathfinder runs only while its window is open. Closing the window quits it, so automatic runs happen only while it's open."}
       </p>
       {s.startup_supported && s.keep_in_tray && (
         <div className="field">
@@ -583,7 +583,7 @@ function Background() {
             <small>Opens quietly by the clock, so automatic runs happen without you opening it</small></div>
           <div className="field-control">
             <label className="switch"><input type="checkbox" checked={s.startup}
-              onChange={(e) => act(() => send("startup", "POST", { on: e.target.checked }), e.target.checked ? "Job Watcher starts when you sign in." : "Job Watcher no longer starts on its own.")} />
+              onChange={(e) => act(() => send("startup", "POST", { on: e.target.checked }), e.target.checked ? "Pathfinder starts when you sign in." : "Pathfinder no longer starts on its own.")} />
               {s.startup ? "On" : "Off"}</label>
           </div>
         </div>
@@ -598,7 +598,7 @@ function Background() {
       </div>
       {live.length > 0 && (
         <div className="old-tasks">
-          <p><strong>Your old Windows scheduled task still runs Job Watcher.</strong> The app runs on its own schedule now,
+          <p><strong>Your old Windows scheduled task still runs Pathfinder.</strong> The app runs on its own schedule now,
             so turn the old task off and runs won't double up. You can turn it back on in Task Scheduler.</p>
           {live.map((t) => (
             <div key={t.path + t.name} className="old-task">

@@ -497,7 +497,7 @@ def test_schedule_setup_and_updates(client, monkeypatch, tmp_path):
         assert client.post("/api/startup", json={"on": True}).json() == {"startup": True}
         assert "--tray" in (tmp_path / "autostart" / "jobwatcher.desktop").read_text()
         assert client.post("/api/startup", json={"on": False}).json() == {"startup": False}
-        # starting at sign-in only makes sense when Job Watcher stays in the tray; saving settings
+        # starting at sign-in only makes sense when Pathfinder stays in the tray; saving settings
         # with that off (the default) turns it off again
         assert client.get("/api/schedule").json()["keep_in_tray"] is False
         client.post("/api/startup", json={"on": True})
