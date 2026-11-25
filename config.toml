@@ -1,7 +1,13 @@
 # =====================================================================
-#  Job Watcher settings
+#  Job Watcher settings: the starting point everyone shares
 # =====================================================================
-#  How to edit this file:
+#  The first time Job Watcher runs, it copies this file to
+#  my_settings.toml. That copy is yours: the Settings screen saves into
+#  it, git ignores it, and it never changes for anyone else. Edit
+#  my_settings.toml, not this file. (The same goes for companies.csv
+#  and your own list, my_companies.csv.)
+#
+#  How to edit my_settings.toml:
 #    - Change the value to the right of the = sign, save, and the next
 #      run uses it. No restart needed.
 #    - Text goes in "double quotes". Lists go in [square brackets] with
@@ -12,8 +18,8 @@
 #  To see what your settings mean in plain English, run:
 #      python job_watcher.py --show-config
 #
-#  API keys never go in this file. They go in a file named .env next to
-#  job_watcher.py (copy .env.example to start).
+#  API keys never go in either file. Save them in the app (Settings,
+#  Keys and accounts) or in a file named .env next to job_watcher.py.
 # =====================================================================
 
 
@@ -24,12 +30,10 @@
 
 # A job title must contain at least one of these. Capital letters don't matter.
 titles = [
-  "Software Engineer", "Software Developer", "Software Development Engineer", "SDE",
-  "Web Developer", "Web Engineer", "Web Application", "Application Developer",
+  "Software Engineer", "Software Developer", "Web Developer",
   "Frontend", "Front End", "Front-End",
   "Full Stack", "Full-Stack", "Fullstack",
-  "UI Engineer", "UI Developer", "UX Engineer", "Design Engineer", "Design Systems",
-  "Product Engineer", "React", "JavaScript", "TypeScript", "Node.js", ".NET", "C#",
+  "UI Engineer", "Product Engineer", "React", "JavaScript",
 ]
 
 # Skip any title that contains one of these.
@@ -42,15 +46,14 @@ skip_titles = [
 
 # The job description must mention at least one of these.
 # To accept any tech stack, use an empty list:  must_mention = []
-must_mention = ["React", "React Native", "JavaScript", "TypeScript", "Node.js", "NodeJS", "Next.js",
-                "C#", ".NET", "ASP.NET"]
+must_mention = ["React", "React Native", "JavaScript", "TypeScript", "Node.js", "NodeJS", "Next.js"]
 
 # Only add jobs that were posted within this many hours.
 max_age_hours = 24
 
 # Your years of experience in the field. Postings that ask for more (for
 # example "8+ years of experience") are left out. 0 = don't check.
-years_experience = 5
+years_experience = 0
 
 # How many more years than yours a posting can ask for and still count.
 # With 5 years and 1 here, a 6+ year job counts and a 7+ year job doesn't.
@@ -142,18 +145,17 @@ runs_per_day = 2
 look_back = "day"
 
 # Job sites to search. Any of: ashby, greenhouse, lever, workable, smartrecruiters, workday
-sites = ["ashby", "greenhouse", "lever", "workable", "smartrecruiters", "workday"]
+sites = ["ashby", "greenhouse", "lever"]
 
 # true: search for the same titles as [jobs] titles above. A long list is split
 # over several searches per site, so no search passes Google's 32-word limit.
-same_titles_as_jobs = false
+same_titles_as_jobs = true
 
 # The titles to search for when same_titles_as_jobs = false.
-titles = ["Frontend", "Front End", "Full Stack", "Software Engineer", "Software Developer",
-          "UI Engineer", "Product Engineer", "React"]
+titles = ["Software Engineer", "Software Developer", "Web Developer"]
 
 # The posting must mention at least one of these places.
-places = ["Vancouver", "Ottawa", "Seattle", "California", "Toronto", "Canada", "Remote"]
+places = ["Toronto", "Vancouver", "Ottawa", "Canada"]
 
 # Leave out postings that contain any of these words.
 skip_words = ["India"]
@@ -173,7 +175,7 @@ my_queries = []
 
 # Result pages to read per search (10 results a page). 3 to 5 is plenty: most
 # searches run out of fresh results before page 5.
-pages_per_query = 2
+pages_per_query = 3
 
 # Never use more queries than this in one calendar month.
 monthly_query_limit = 1000
@@ -184,7 +186,7 @@ monthly_query_limit = 1000
 new_companies = "watch"
 
 # How many companies --find-career-pages looks up per run (one query each).
-career_page_lookups_per_run = 100
+career_page_lookups_per_run = 50
 
 
 # ---------------------------------------------------------------------
@@ -202,7 +204,7 @@ career_page_lookups_per_run = 100
 enabled = true
 
 # New job pages to read per site per run. Each page is only ever read once.
-new_pages_per_site_per_run = 50
+new_pages_per_site_per_run = 15
 
 
 # ---------------------------------------------------------------------
@@ -211,7 +213,8 @@ new_pages_per_site_per_run = 50
 [tracker]
 
 tracker_file   = "job_tracker.xlsx"
-companies_file = "companies.csv"
+# Your company list. It starts as a copy of companies.csv (the shared list).
+companies_file = "my_companies.csv"
 
 # Pop-up on your desktop when new matches arrive (needs: pip install plyer).
 desktop_notifications = true
@@ -245,7 +248,7 @@ retry_board_search_hours = 24
 
 # Your resume PDF, attached to every email unless a tailored one is found.
 # A path relative to this folder, or a full path.
-resume = "resume/resume.pdf"
+resume = "resume.pdf"
 
 # Folder of tailored resumes. A PDF whose file name contains the company name
 # (for example Your_Name_Shopify_Frontend.pdf) is used for that company.
@@ -282,7 +285,7 @@ drafts_folder = "[Gmail]/Drafts"
 [schedule]
 
 # Run at these times while Job Watcher is open.
-enabled = false
+enabled = true
 times = ["08:00", "12:00", "16:00", "20:00"]
 
 # false: closing the window quits Job Watcher completely.

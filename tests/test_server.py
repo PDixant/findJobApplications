@@ -266,18 +266,18 @@ def test_edit_add_and_import_companies(client):
 
 
 def test_settings_round_trip(client):
-    original = (HOME / "config.toml").read_text(encoding="utf-8")
+    original = (HOME / "my_settings.toml").read_text(encoding="utf-8")
     try:
         got = client.get("/api/settings").json()
         jobs = next(s for s in got["sections"] if s["id"] == "jobs")
         assert next(f for f in jobs["fields"] if f["key"] == "max_age_hours")["value"] == 24
         preview = client.post("/api/settings/preview", json={"changes": {"jobs": {"max_age_hours": 48}}})
         assert "48" in preview.json()["explain"]
-        assert (HOME / "config.toml").read_text(encoding="utf-8") == original  # preview saves nothing
+        assert (HOME / "my_settings.toml").read_text(encoding="utf-8") == original  # preview saves nothing
         saved = client.put("/api/settings", json={"changes": {"jobs": {"max_age_hours": 48, "skip_titles": ["Staff"]},
                                                               "search": {"enabled": False}}})
         assert saved.status_code == 200
-        text = (HOME / "config.toml").read_text(encoding="utf-8")
+        text = (HOME / "my_settings.toml").read_text(encoding="utf-8")
         assert "max_age_hours = 48" in text and "# Only add jobs that were posted" in text
         cfg = jw.load_config()
         assert cfg["max_posted_age_hours"] == 48 and cfg["titles_exclude"] == ["Staff"] and not cfg["search"]["enabled"]
@@ -286,7 +286,7 @@ def test_settings_round_trip(client):
         bad = client.put("/api/settings", json={"changes": {"places": {"region": [{"name": "X", "match": []}]}}})
         assert bad.status_code == 400
     finally:
-        (HOME / "config.toml").write_text(original, encoding="utf-8")
+        (HOME / "my_settings.toml").write_text(original, encoding="utf-8")
 
 
 class MemoryKeyring:
@@ -489,12 +489,12 @@ def test_schedule_setup_and_updates(client, monkeypatch, tmp_path):
         # with that off (the default) turns it off again
         assert client.get("/api/schedule").json()["keep_in_tray"] is False
         client.post("/api/startup", json={"on": True})
-        original = (HOME / "config.toml").read_text(encoding="utf-8")
+        original = (HOME / "my_settings.toml").read_text(encoding="utf-8")
         try:
             assert client.put("/api/settings", json={"changes": {"schedule": {"times": ["09:00"]}}}).status_code == 200
             assert client.get("/api/schedule").json()["startup"] is False
         finally:
-            (HOME / "config.toml").write_text(original, encoding="utf-8")
+            (HOME / "my_settings.toml").write_text(original, encoding="utf-8")
     assert client.get("/api/system/old-tasks").json()["tasks"] == []
 
 

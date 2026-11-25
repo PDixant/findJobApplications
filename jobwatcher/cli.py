@@ -18,7 +18,7 @@ def main():
                         help="with --since-last-check: look back this many hours instead "
                              "(does not move your last-check timestamp)")
     parser.add_argument("--verify", action="store_true",
-                        help="re-check every company in companies.csv, including ones marked not_found")
+                        help="re-check every company in your list, including ones marked not_found")
     parser.add_argument("--refresh-metrics", action="store_true",
                         help="refresh stock metrics and company scores now, then exit (needs yfinance)")
     parser.add_argument("--refilter", action="store_true",
@@ -36,7 +36,7 @@ def main():
                         help="watch a company from a job posting, job board or careers page link")
     parser.add_argument("--name", help="with --add: the company name to show")
     parser.add_argument("--import", dest="import_files", nargs="+", metavar="FILE",
-                        help="add the companies in these .xlsx or .csv files to companies.csv")
+                        help="add the companies in these .xlsx or .csv files to your company list")
     args = parser.parse_args()
     if args.hours and not args.since_last_check:
         args.since_last_check = True

@@ -450,7 +450,7 @@ def create_app(token, dev=False, schedule=False):
     def config_or_fail():
         cfg, problem = files.config()
         if cfg is None:
-            raise HTTPException(422, f"Settings problem in config.toml: {problem}")
+            raise HTTPException(422, f"Settings problem in {CONFIG_PATH.name}: {problem}")
         return cfg
 
     # ------------------------------------------------------------- reading
@@ -772,7 +772,7 @@ def create_app(token, dev=False, schedule=False):
             fields["careers_url"] = "https://" + str(fields["careers_url"]).strip()
         rows = files.company_rows(cfg)
         if not any(r["company"] == name and r.get("region") != "From config file" for r in rows):
-            raise HTTPException(404, "That company is not in companies.csv.")
+            raise HTTPException(404, "That company is not in your company list.")
 
         def change():
             fresh = load_company_rows(cfg)
@@ -784,7 +784,7 @@ def create_app(token, dev=False, schedule=False):
             return {"saved": True, "queued": False}
         queue_company_edit(cfg, name, fields)
         return {"saved": True, "queued": True,
-                "detail": "A run is using companies.csv, so this change is applied when the run saves."}
+                "detail": "A run is using your company list, so this change is applied when the run saves."}
 
     @app.post("/api/companies/add")
     def add(body: dict = Body(...)):
@@ -852,6 +852,7 @@ def create_app(token, dev=False, schedule=False):
 
     @app.post("/api/settings/preview")
     def preview_settings(body: dict = Body(...)):
+        make_my_copies()
         text = CONFIG_PATH.read_text(encoding="utf-8-sig") if CONFIG_PATH.exists() else ""
         try:
             _, cfg = settings_module.apply_changes(text, body.get("changes") or {})

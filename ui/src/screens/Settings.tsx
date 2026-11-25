@@ -108,7 +108,7 @@ export function Settings() {
     <div className="screen settings">
       <header className="screen-head">
         <h1>Settings</h1>
-        <p className="lede">Saved into config.toml, keeping its notes. Runs pick up changes on their next start.</p>
+        <p className="lede">Saved into my_settings.toml, which is yours alone: updates to Job Watcher never change it. Runs pick up changes on their next start.</p>
       </header>
       <ErrorNote error={settings.error} />
       {justSaved && (

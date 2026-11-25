@@ -43,11 +43,15 @@ except ImportError:  # pragma: no cover
     except ImportError:
         tomllib = None
 
-# The folder that holds config.toml, companies.csv and the data files:
+# The folder that holds your settings (my_settings.toml), company list (my_companies.csv) and data:
 #   JOBWATCHER_HOME if set; otherwise the source folder when running from it (as always);
 #   otherwise, for the installed app, the user's app-data folder, set up with the defaults.
 SOURCE_DIR = Path(__file__).resolve().parent.parent
-DEFAULT_FILES = ("config.toml", "companies.csv", "about_me.example.md", ".env.example", "resume_rules.example.md")
+DEFAULT_FILES = ("about_me.example.md", ".env.example", "resume_rules.example.md")
+# config.toml and companies.csv are the settings and company list everyone starts from (they are in
+# git). Yours are my_settings.toml and my_companies.csv, made from them the first time: Job Watcher
+# only ever writes yours, and git ignores them.
+MY_SETTINGS, MY_COMPANIES = "my_settings.toml", "my_companies.csv"
 
 
 def user_data_dir():
@@ -69,7 +73,7 @@ def find_home(env=None, source=SOURCE_DIR, frozen=None):
 
 
 def defaults_dir():
-    """Where the starting config.toml and companies list come from in an installed copy."""
+    """Where the starting config.toml and companies.csv come from."""
     bundled = getattr(sys, "_MEIPASS", None)
     return Path(bundled) / "defaults" if bundled else SOURCE_DIR
 
@@ -87,8 +91,9 @@ def set_up_home(home):
 
 BASE = find_home()
 if BASE != SOURCE_DIR and not os.environ.get("JOBWATCHER_HOME"):
-    set_up_home(BASE)  # the installed app: first launch gets the defaults
-CONFIG_PATH = BASE / "config.toml"
+    set_up_home(BASE)  # the installed app: first launch gets the example files
+CONFIG_PATH = BASE / MY_SETTINGS  # yours
+SHARED_CONFIG_PATH = BASE / "config.toml"  # the shipped starting point
 LEGACY_CONFIG_PATH = BASE / "config.json"
 ENV_PATH = BASE / ".env"
 STATE_PATH = BASE / "job_watcher_state.json"

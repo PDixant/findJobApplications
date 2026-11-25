@@ -103,7 +103,7 @@ export function Connections() {
   );
 }
 
-/** ntfy phone alerts. The topic is private, so it is saved with your keys, not in config.toml. */
+/** ntfy phone alerts. The topic is private, so it is saved with your keys, not in your settings file. */
 export function PhoneAlerts() {
   const client = useQueryClient();
   const [made, setMade] = useState<string | null>(null);
@@ -117,7 +117,7 @@ export function PhoneAlerts() {
     <div className="alerts-help">
       <p className="hint">
         Install the free ntfy app on your phone, tap +, and subscribe to a topic name only you know. Anyone who knows
-        the name can read the alerts, so use a long random one. It is kept with your keys (below), never in config.toml.
+        the name can read the alerts, so use a long random one. It is kept with your keys (below), never in your settings file.
         Alerts carry only the company, title and link.
       </p>
       {made && <p className="topic-made">Subscribe to this topic in the ntfy app: <code>{made}</code></p>}

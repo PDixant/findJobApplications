@@ -243,7 +243,7 @@ export const RESULTS: Record<string, { label: string; tone: string; explain: str
   ERROR: { label: "Error", tone: "error", explain: "Reading its board failed this run." },
   PENDING: { label: "Waiting", tone: "paused", explain: "Board detection is spread over several runs." },
   MANUAL: { label: "Check by hand", tone: "manual", explain: "Uses its own careers site; check it directly." },
-  OFF: { label: "Turned off", tone: "off", explain: "Disabled in companies.csv." },
+  OFF: { label: "Turned off", tone: "off", explain: "Turned off in your company list." },
   "": { label: "Not checked yet", tone: "off", explain: "Not read yet. It will be on the next run." },
 };
 

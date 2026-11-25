@@ -152,7 +152,7 @@ function CompanyDetails({ c, locked }: { c: Company; locked: boolean }) {
       <dl className="facts">
         <div><dt>Region</dt><dd>{c.region || "Not set"}{c.hubs && c.hubs !== c.region ? ` (hubs: ${c.hubs})` : ""}</dd></div>
         <div><dt>Board</dt><dd>{c.found_on ? boardOf(c) : c.board && c.board !== "auto"
-          ? `${boardOf(c)} (set in companies.csv, not found there)` : "None found yet"}</dd></div>
+          ? `${boardOf(c)} (set in your company list, not found there)` : "None found yet"}</dd></div>
         {c.careers_url && <div><dt>Careers page</dt><dd><External href={c.careers_url}>{c.careers_url}</External></dd></div>}
         <div><dt>Open postings</dt><dd>{c.open ?? "Not read"}</dd></div>
         <div><dt>Score</dt><dd>{c.score ? `${c.score} (tier ${c.tier})` : "Not scored"}</dd></div>

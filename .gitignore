@@ -48,3 +48,10 @@ config.json
 /Job Watcher.lnk
 /Job Watcher.app
 /Job Watcher.desktop
+
+# Your own settings and company list. Job Watcher makes them from config.toml and
+# companies.csv (the shared starting point) and only ever writes these.
+my_settings.toml
+my_companies.csv
+config.toml.old
+companies.csv.old

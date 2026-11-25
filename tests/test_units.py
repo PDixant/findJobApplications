@@ -268,17 +268,70 @@ def test_where_data_lives(tmp_path):
 
 
 def test_installed_app_starts_with_the_defaults(tmp_path, monkeypatch):
+    from jobwatcher.config import make_my_copies
     defaults = tmp_path / "defaults"
     defaults.mkdir()
-    (defaults / "config.toml").write_text("[jobs]\nmax_age_hours = 12\n")
+    (defaults / "config.toml").write_text('[jobs]\nmax_age_hours = 12\n[tracker]\ncompanies_file = "companies.csv"\n')
     (defaults / "companies.csv").write_text("company\nAcme\n")
+    (defaults / "about_me.example.md").write_text("me")
     monkeypatch.setattr(jw.base, "defaults_dir", lambda: defaults)
+    monkeypatch.setattr(jw.config, "defaults_dir", lambda: defaults)
     home = tmp_path / "home" / "JobWatcher"
     jw.set_up_home(home)
-    assert (home / "config.toml").read_text().startswith("[jobs]")
-    (home / "config.toml").write_text("# mine\n")
-    jw.set_up_home(home)  # never overwrites your settings
-    assert (home / "config.toml").read_text() == "# mine\n"
+    assert (home / "about_me.example.md").exists()
+    assert make_my_copies(home) == ["config.toml", "companies.csv"]
+    mine = (home / "my_settings.toml").read_text()
+    assert mine.startswith("[jobs]") and 'companies_file = "my_companies.csv"' in mine
+    assert (home / "my_companies.csv").read_text() == "company\nAcme\n"
+    (home / "my_settings.toml").write_text('# mine\n[tracker]\ncompanies_file = "my_companies.csv"\n')
+    assert make_my_copies(home) == []  # never overwrites yours
+    assert (home / "my_settings.toml").read_text().startswith("# mine")
+
+
+def test_an_older_folder_moves_to_your_own_files(tmp_path, monkeypatch):
+    """A folder from before my_settings.toml: your edited config.toml and companies.csv become
+    yours, and the old ones are set aside so nothing reads them by mistake."""
+    from jobwatcher.config import make_my_copies
+    monkeypatch.setattr(jw.config, "defaults_dir", lambda: tmp_path / "none")
+    home = tmp_path / "AppData" / "JobWatcher"
+    home.mkdir(parents=True)
+    (home / "config.toml").write_text('[jobs]\nmax_age_hours = 48\n[tracker]\ncompanies_file = "companies.csv"\n')
+    (home / "companies.csv").write_text("company\nMine Co\n")
+    assert make_my_copies(home) == ["config.toml", "companies.csv"]
+    assert "max_age_hours = 48" in (home / "my_settings.toml").read_text()
+    assert (home / "my_companies.csv").read_text() == "company\nMine Co\n"
+    assert (home / "config.toml.old").exists() and not (home / "config.toml").exists()
+
+
+def test_a_clone_keeps_the_shared_files_untouched(tmp_path, monkeypatch):
+    """In a clone of the repository, your edits move to your own files and config.toml and
+    companies.csv go back to the shared versions, so git pull never clashes."""
+    import subprocess as sp
+    from jobwatcher.config import find_git, make_my_copies
+    if not find_git():
+        pytest.skip("git is not installed")
+    home = tmp_path / "clone"
+    home.mkdir()
+    git = lambda *a: sp.run(["git", "-C", str(home), *a], check=True, capture_output=True)  # noqa: E731
+    git("init", "-q")
+    git("config", "user.email", "t@example.com")
+    git("config", "user.name", "t")
+    (home / "config.toml").write_text('[tracker]\ncompanies_file = "companies.csv"\n')
+    (home / "companies.csv").write_text("company\nShared Co\n")
+    git("add", ".")
+    git("commit", "-qm", "shared")
+    (home / "config.toml").write_text('[jobs]\nmax_age_hours = 6\n[tracker]\ncompanies_file = "companies.csv"\n')
+    (home / "companies.csv").write_text("company\nShared Co\nFound Co\n")
+    assert make_my_copies(home) == ["config.toml", "companies.csv"]
+    assert "max_age_hours = 6" in (home / "my_settings.toml").read_text()
+    assert "Found Co" in (home / "my_companies.csv").read_text()
+    assert git("status", "--porcelain").stdout.decode().split() == ["??", "my_companies.csv", "??", "my_settings.toml"]
+
+    # a settings file made by hand that still points at the shared list is moved to your own
+    (home / "my_companies.csv").unlink()
+    (home / "my_settings.toml").write_text('[tracker]\ncompanies_file = "companies.csv"\n')
+    assert make_my_copies(home) == ["companies.csv"]
+    assert 'companies_file = "my_companies.csv"' in (home / "my_settings.toml").read_text()
 
 
 def test_jobwatcher_folder_command(capsys, monkeypatch):
@@ -524,3 +577,21 @@ def test_your_own_searches():
     searched = " ".join(q["query"] for q in per_site)
     assert all(f'intitle:"{t}"' in searched for t in titles)
     assert all("-India" in q["query"] and '"Canada"' in q["query"] for q in built)
+
+
+def test_a_half_merged_file_is_not_copied(tmp_path, monkeypatch):
+    """A pull that stopped on a conflict leaves <<<<<<< markers; your copy starts from the shared
+    defaults instead of from a broken file."""
+    from jobwatcher.config import make_my_copies
+    defaults = tmp_path / "defaults"
+    defaults.mkdir()
+    (defaults / "config.toml").write_text('[jobs]\nmax_age_hours = 24\n[tracker]\ncompanies_file = "companies.csv"\n')
+    (defaults / "companies.csv").write_text("company\nShared Co\n")
+    monkeypatch.setattr(jw.config, "defaults_dir", lambda: defaults)
+    home = tmp_path / "home"
+    home.mkdir()
+    (home / "config.toml").write_text("[jobs]\n<<<<<<< HEAD\nmax_age_hours = 6\n=======\nmax_age_hours = 24\n>>>>>>> origin/main\n")
+    (home / "companies.csv").write_text("company\n<<<<<<< Updated upstream\nA\n=======\nB\n>>>>>>> Stashed changes\n")
+    make_my_copies(home)
+    jw.config_from_text((home / "my_settings.toml").read_text())  # parses
+    assert (home / "my_companies.csv").read_text() == "company\nShared Co\n"

@@ -386,7 +386,7 @@ def company_file(cfg, n, company, row, jobs, store, contacts, domain, pattern, i
     lines += [" | ".join(meta), ""]
     if not follow_up:
         note = "tailored for this company" if tailored else "main resume"
-        exists = "" if resume.exists() else "  **(file not found: fix the resume path in config.toml)**"
+        exists = "" if resume.exists() else "  **(file not found: fix the resume path in Settings, Recruiter emails)**"
         lines += [f"Resume to attach ({note}): `{resume}`{exists}", ""]
     lines += ["## Role" + ("s" if len(jobs) > 1 else ""), ""]
     for j in jobs:

@@ -6,9 +6,10 @@ Checks company career sites on Greenhouse, Ashby, Lever, Workday, SmartRecruiter
 Workable directly through their public JSON feeds, plus companies' own careers websites,
 filters postings by title, location and tech stack, scores each company on stock, growth,
 layoff and funding signals, and keeps a colour-coded Excel tracker up to date. A web search
-step finds companies you are not watching yet and adds them to companies.csv.
+step finds companies you are not watching yet and adds them to your list (my_companies.csv).
 
-Settings live in config.toml (plain-English notes inside). API keys go in .env.
+Your settings live in my_settings.toml, made from config.toml the first time (plain-English notes
+inside); only yours ever changes. API keys go in .env or the app's Settings.
 
 Usage:
   python job_watcher.py                 run once
@@ -29,13 +30,13 @@ Usage:
   python job_watcher.py --find-career-pages
                                         use web search to find careers pages for companies
                                         with no job board found yet
-  python job_watcher.py --verify        re-check every company in companies.csv,
+  python job_watcher.py --verify        re-check every company in your list,
                                         including ones previously marked not_found
   python job_watcher.py --refresh-metrics
                                         refresh stock metrics and scores now, then exit
                                         (needs: pip install yfinance)
   python job_watcher.py --refilter      re-run your filters on the saved postings only,
-                                        e.g. after editing config.toml; makes no requests
+                                        e.g. after editing my_settings.toml; makes no requests
 
 Every run keeps two lists: postings.db / all_postings.csv hold every open posting from
 every board, and job_tracker.xlsx holds the ones that pass your filters.

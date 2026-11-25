@@ -1,4 +1,4 @@
-"""The settings the desktop app edits, and saving them into config.toml with its notes kept."""
+"""The settings the desktop app edits, and saving them into my_settings.toml with its notes kept."""
 from __future__ import annotations
 
 from .base import *  # noqa: F401,F403
@@ -249,7 +249,8 @@ def _array(items, indent=2):
 
 
 def save(changes):
-    """Apply changes to config.toml and save it. Returns the new settings."""
+    """Apply changes to your settings (my_settings.toml) and save them. Returns the new settings."""
+    make_my_copies()
     text = CONFIG_PATH.read_text(encoding="utf-8-sig") if CONFIG_PATH.exists() else ""
     new_text, cfg = apply_changes(text, changes)
     tmp = CONFIG_PATH.with_suffix(".saving.toml")

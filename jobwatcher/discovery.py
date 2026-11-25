@@ -152,7 +152,7 @@ def _search_key(cfg):
     key = os.environ.get(SEARCH_KEYS[provider], "").strip()
     if not key:
         log.warning("Web search skipped: %s is not set. Put it in a .env file next to job_watcher.py "
-                    "(see .env.example), or set enabled = false under [search] in config.toml.",
+                    "(see .env.example), or turn the web search off in Settings.",
                     SEARCH_KEYS[provider])
     return provider, key
 
@@ -183,7 +183,7 @@ def run_search(cfg, state, rows, now, look_back=None):
     left, month, used = _queries_left(cfg, state, now)
     if left <= 0:
         log.info("Web search skipped: this month's limit of %s queries is used up "
-                 "(monthly_query_limit in config.toml).", s["monthly_query_limit"])
+                 "(Monthly search limit in Settings).", s["monthly_query_limit"])
         return False
     look_back = look_back or s["look_back"]
     found, queries, failed = {}, 0, None

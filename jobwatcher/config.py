@@ -1,6 +1,8 @@
 """Settings: defaults, config.toml and config.json loading, checks, and the plain-English summary."""
 from __future__ import annotations
 
+import subprocess
+
 from .base import *  # noqa: F401,F403
 
 
@@ -53,7 +55,7 @@ DEFAULTS = {
     "career_sites": {"enabled": True, "max_new_pages_per_site": 15},
     # 5. Tracker and timing
     "excel_file": "job_tracker.xlsx",
-    "companies_file": "companies.csv",
+    "companies_file": "my_companies.csv",
     "desktop_notifications": True,
     "since_last_check_by_default": False,
     "interval_minutes": 30,
@@ -227,25 +229,131 @@ _config_notice_shown = False
 def config_from_text(text):
     """Settings from config.toml text, checked. Returns (cfg, unknown settings)."""
     if tomllib is None:
-        raise ConfigError("config.toml needs Python 3.11 or newer, or run: pip install tomli")
+        raise ConfigError("Reading settings needs Python 3.11 or newer, or run: pip install tomli")
     try:
         doc = tomllib.loads(text)
     except tomllib.TOMLDecodeError as exc:
-        raise ConfigError(f"config.toml has a typo: {exc}. Check that text is in \"quotes\" "
+        raise ConfigError(f"{CONFIG_PATH.name} has a typo: {exc}. Check that text is in \"quotes\" "
                           "and list items are separated by commas.") from None
     cfg, unknown = _from_toml(doc)
     return _checked(cfg), unknown
 
 
+# ----------------------------------------------------------------- your own copies
+_copies_checked = False
+_COMPANIES_LINE = re.compile(r'^(\s*companies_file\s*=\s*)"([^"]*)"', re.M)
+
+
+def find_git():
+    """git, from PATH or from GitHub Desktop's own copy. None if neither is there."""
+    found = shutil.which("git")
+    if found or sys.platform != "win32":
+        return found
+    desktop = sorted(Path(os.environ.get("LOCALAPPDATA", "")).glob("GitHubDesktop/app-*/resources/app/git/cmd/git.exe"))
+    return str(desktop[-1]) if desktop else None
+
+
+def _git(home, *args):
+    git = find_git()
+    if not git:
+        return None
+    try:
+        return subprocess.run([git, "-C", str(home), *args], capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def tracked_by_git(home, name):
+    """True when name is a file git tracks here, i.e. a shared file in a clone of the repository.
+    A clone whose git can't be found counts its config.toml and companies.csv as shared too."""
+    if not (home / ".git").exists():
+        return False
+    r = _git(home, "ls-files", "--error-unmatch", "--", name)
+    return True if r is None else r.returncode == 0
+
+
+CONFLICT_MARKERS = re.compile(r"^(<{7}|={7}|>{7})( |$)", re.M)
+
+
+def _usable(path):
+    """path, unless it is missing or still has git's conflict markers in it from an unfinished pull."""
+    if not path.exists():
+        return None
+    if CONFLICT_MARKERS.search(path.read_text(encoding="utf-8-sig", errors="replace")):
+        log.warning("%s has unresolved git conflict markers, so Job Watcher starts your copy from the "
+                    "shared defaults instead. To finish the pull: git checkout --theirs %s", path.name, path.name)
+        return None
+    return path
+
+
+def make_my_copies(home=None):
+    """Your settings live in my_settings.toml and your company list in my_companies.csv. Job Watcher
+    only ever writes these two, and git ignores them, so your changes never reach anyone else and
+    updating Job Watcher never clashes with them. The first time, they start as copies of
+    config.toml and companies.csv, edits included; in a clone of the repository those two then go
+    back to the shared versions, so `git pull` brings new defaults without conflicts."""
+    global _copies_checked
+    home = Path(home or BASE)
+    if _copies_checked and home == BASE:
+        return []
+    if home == BASE:
+        _copies_checked = True
+    mine, shared_cfg = home / MY_SETTINGS, home / "config.toml"
+    in_clone = (home / ".git").exists()
+    made = []
+    point_at_mine = (lambda text: _COMPANIES_LINE.sub(lambda m: f'{m.group(1)}"{MY_COMPANIES}"', text, count=1))
+    if not mine.exists():
+        source = _usable(shared_cfg) or _usable(defaults_dir() / "config.toml")
+        if source is None:
+            return made
+        text = source.read_text(encoding="utf-8-sig")
+        named = _COMPANIES_LINE.search(text)
+        mine.write_text(point_at_mine(text), encoding="utf-8")
+        made.append("config.toml")
+        list_source = home / (named.group(2) if named else "companies.csv")  # your list until now
+    else:
+        text = mine.read_text(encoding="utf-8-sig")
+        named = _COMPANIES_LINE.search(text)
+        list_name = named.group(2) if named else MY_COMPANIES
+        if list_name == "companies.csv" and in_clone and tracked_by_git(home, "companies.csv"):
+            mine.write_text(point_at_mine(text), encoding="utf-8")  # still pointing at the shared list
+            list_source = home / "companies.csv"
+        elif list_name == MY_COMPANIES:
+            list_source = home / "companies.csv"  # used only if my_companies.csv is missing
+        else:
+            list_source = None  # a list file of your own: left as it is
+    my_list = home / MY_COMPANIES
+    if list_source is not None and not my_list.exists():
+        source = _usable(list_source) or _usable(defaults_dir() / "companies.csv")
+        if source is not None:
+            shutil.copy2(source, my_list)
+            made.append("companies.csv")
+    if not made:
+        return made
+    log.info("Your settings are now in %s and your company list in %s. Only these two change from now on, "
+             "and git ignores them, so updating Job Watcher never clashes with your edits.", MY_SETTINGS, MY_COMPANIES)
+    if in_clone:
+        for name in ("config.toml", "companies.csv"):
+            if tracked_by_git(home, name):
+                _git(home, "checkout", "--", name)  # back to the shared version; yours is copied
+    elif home != SOURCE_DIR:
+        for name in ("config.toml", "companies.csv"):  # an installed copy's old files, now replaced
+            old = home / name
+            if old.exists() and not (home / f"{name}.old").exists():
+                old.rename(home / f"{name}.old")
+    return made
+
+
 def load_config():
-    """Read config.toml (or the older config.json). Raises ConfigError with a readable reason."""
+    """Read your settings (or the older config.json). Raises ConfigError with a readable reason."""
     global _config_notice_shown
+    make_my_copies()
     if CONFIG_PATH.exists():
         cfg, unknown = config_from_text(CONFIG_PATH.read_text(encoding="utf-8-sig"))
         for item in unknown:
-            log.warning("config.toml: ignored unknown setting %s (check the spelling).", item)
+            log.warning("%s: ignored unknown setting %s (check the spelling).", CONFIG_PATH.name, item)
         if LEGACY_CONFIG_PATH.exists() and not _config_notice_shown:
-            log.info("Using config.toml. config.json is no longer read and can be deleted.")
+            log.info("Using %s. config.json is no longer read and can be deleted.", CONFIG_PATH.name)
         _config_notice_shown = True
     elif LEGACY_CONFIG_PATH.exists():
         try:
@@ -253,7 +361,7 @@ def load_config():
         except json.JSONDecodeError as exc:
             raise ConfigError(f"config.json is not valid JSON: {exc}") from None
     else:
-        log.info("No config.toml found; using the built-in defaults.")
+        log.info("No %s found; using the built-in defaults.", CONFIG_PATH.name)
         cfg = json.loads(json.dumps(DEFAULTS))
     return _checked(cfg)
 

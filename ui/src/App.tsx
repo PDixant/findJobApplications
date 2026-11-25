@@ -119,7 +119,7 @@ export function App() {
         )}
         {meta.data?.settings_problem && (
           <p className="banner">
-            config.toml has a problem: {meta.data.settings_problem}{" "}
+            Your settings file (my_settings.toml) has a problem: {meta.data.settings_problem}{" "}
             {route.screen !== "settings" && <button className="text-button" onClick={() => go("settings")}>Open Settings</button>}
           </p>
         )}

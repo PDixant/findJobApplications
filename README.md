@@ -145,8 +145,8 @@ Everything below is optional reading. Open a section when you need it.
 | `ui/`, `jobwatcher/ui_dist/` | The app's interface source, and the built copy (so you don't need Node) | Yes |
 | `Install Job Watcher.bat`, `Uninstall Job Watcher.bat`, `install.sh`, `install/`, `pyproject.toml`, `packaging/` | Setup, the `jobwatcher` command and the Windows installer build | Yes |
 | `tests/`, `requirements*.txt`, `.github/`, `docs/` | Tests, dependencies, the test workflow and README pictures | Yes |
-| `config.toml` | Your settings, with a note above each one. Never holds a key | Yes |
-| `companies.csv` | The companies to watch; grows by itself | Yes |
+| `config.toml`, `companies.csv` | The settings and company list everyone starts from. Job Watcher never changes them | Yes |
+| `my_settings.toml`, `my_companies.csv` | **Yours**: made from the two above the first time you run it. The Settings screen saves into `my_settings.toml`, and new companies go into `my_companies.csv` | No |
 | `about_me.example.md`, `resume_rules.example.md`, `.env.example` | Templates for your personal files | Yes |
 | `.env` | Keys, if you keep them in a file rather than the password store | No |
 | `about_me.md`, `resume.pdf`, `resume.tex`, `resume_rules.md`, `resumes/` | You, your resumes and your tailoring rules | No |
@@ -158,7 +158,7 @@ Everything below is optional reading. Open a section when you need it.
 <details>
 <summary><strong>How a run works</strong></summary>
 
-**Every company is checked on every run.** Each company's job board is read through its public feed, normally one request per board. For a company whose board isn't known yet, Job Watcher reads its careers page, which usually names the board, and otherwise guesses board names. Found boards are written back to `companies.csv`. Guessing for companies where nothing was found is retried once a day (`retry_board_search_hours`), so runs stay quick and job sites stay friendly.
+**Every company is checked on every run.** Each company's job board is read through its public feed, normally one request per board. For a company whose board isn't known yet, Job Watcher reads its careers page, which usually names the board, and otherwise guesses board names. Found boards are written back to your company list (`my_companies.csv`). Guessing for companies where nothing was found is retried once a day (`retry_board_search_hours`), so runs stay quick and job sites stay friendly.
 
 **Two lists.** Every open posting from every board is kept in `postings.db` (and `all_postings.csv` for Excel). Only the ones that pass your filters go to your matches and `job_tracker.xlsx`. Filtering happens on your computer, so changing a rule never costs a request: **Re-filter saved postings** (or `--refilter`) re-applies it instantly.
 
@@ -221,7 +221,7 @@ At the top: how many you've applied to, how often you've heard back, how many ar
 2. In Job Watcher, **Settings, Phone alerts, Make me a private topic**. It saves a long random topic name with your keys and shows it to you.
 3. In the ntfy app, tap **+** and subscribe to that name. **Send a test alert** to check.
 
-New matches then arrive on your phone with the company, title and a link. Anyone who knows the topic name can read it, which is why it's long, random and never stored in `config.toml`. Running your own ntfy server? Set `ntfy_server` under `[alerts]`.
+New matches then arrive on your phone with the company, title and a link. Anyone who knows the topic name can read it, which is why it's long, random and never stored in your settings file. Running your own ntfy server? Set `ntfy_server` under `[alerts]`.
 
 </details>
 
@@ -239,9 +239,11 @@ Applying and then writing to a recruiter or the hiring team usually gets more at
 </details>
 
 <details>
-<summary><strong>Settings (<code>config.toml</code>)</strong></summary>
+<summary><strong>Settings (<code>my_settings.toml</code>)</strong></summary>
 
-Edit them in the app's **Settings** screen (it keeps the file's notes, and shows what your settings mean in plain words as you type), or in `config.toml` itself:
+Your settings are yours alone. The first time Job Watcher runs it copies `config.toml` (the starting point that comes with it) to `my_settings.toml`, and from then on it only ever changes your copy, which git ignores. So pulling a new version never clashes with your changes, and your changes never reach anyone else. The same goes for the company list: `companies.csv` is the shared starting list, `my_companies.csv` is yours.
+
+Edit your settings in the app's **Settings** screen (it keeps the file's notes, and shows what your settings mean in plain words as you type), or in `my_settings.toml` itself:
 
 | Section | What it controls |
 |---|---|
@@ -256,12 +258,12 @@ Edit them in the app's **Settings** screen (it keeps the file's notes, and shows
 | `[alerts]` | The ntfy server for phone alerts |
 | `[advanced]` | Request pacing, retries, Workday search terms. Commented out, showing defaults |
 
-A deleted setting falls back to its default, a misspelled one is reported, and a typo such as a missing comma stops the run with the line number. **Keys never go in `config.toml`**: it's shared in git.
+A deleted setting falls back to its default, a misspelled one is reported, and a typo such as a missing comma stops the run with the line number. **Keys never go in a settings file**: save them in the app, or in `.env`.
 
 </details>
 
 <details>
-<summary><strong>The company list (<code>companies.csv</code>) and company scores</strong></summary>
+<summary><strong>The company list (<code>my_companies.csv</code>) and company scores</strong></summary>
 
 About 970 companies, sorted by region and name. Add more by pasting a link in **Companies, Add companies** (or `--add`), or by importing a spreadsheet with a Company column (or `--import`). The web search adds the companies it finds at the bottom, with region `Found by search`.
 
@@ -283,7 +285,7 @@ About 970 companies, sorted by region and name. Add more by pasting a link in **
 <details>
 <summary><strong>Finding new companies with web search</strong></summary>
 
-Your list only covers the companies in `companies.csv`. To find the rest, Job Watcher runs the search you'd type into Google, once per job site, limited to the past day:
+Your list only covers the companies in `my_companies.csv`. To find the rest, Job Watcher runs the search you'd type into Google, once per job site, limited to the past day:
 
 ```
 site:jobs.ashbyhq.com (intitle:"Software Engineer" OR intitle:"Software Developer") ("Toronto" OR "Vancouver" OR "Canada") -India
@@ -334,7 +336,7 @@ Have an old Windows scheduled task for `job_watcher.py`? **Settings, Running in 
 <details>
 <summary><strong>The Windows installer (no Python needed)</strong></summary>
 
-`packaging/` builds `JobWatcherSetup.exe`: no Python, no admin prompt, Start menu and Desktop shortcuts, and optionally the `jobwatcher` command. An installed copy keeps its data in `%APPDATA%\JobWatcher`, starting from this repository's `config.toml` and `companies.csv`, and uninstalling keeps it. To publish one, copy `packaging/release.yml` to `.github/workflows/` and push a version tag:
+`packaging/` builds `JobWatcherSetup.exe`: no Python, no admin prompt, Start menu and Desktop shortcuts, and optionally the `jobwatcher` command. An installed copy keeps its data in `%APPDATA%\JobWatcher`, starting from this repository's `config.toml` and `companies.csv` (copied to `my_settings.toml` and `my_companies.csv`), and uninstalling keeps it. To publish one, copy `packaging/release.yml` to `.github/workflows/` and push a version tag:
 
 ```
 git tag v0.6.0

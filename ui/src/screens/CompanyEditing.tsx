@@ -43,7 +43,7 @@ export function CompanyForm({ c, locked }: { c: Company; locked: boolean }) {
   }
 
   if (c.from_config) {
-    return <p className="hint">This company is listed in config.toml (extra_companies), so edit it there.</p>;
+    return <p className="hint">This company is listed in my_settings.toml (extra_companies), so edit it there.</p>;
   }
   const needsSlug = !["auto", "website", "other"].includes(form.board);
   return (

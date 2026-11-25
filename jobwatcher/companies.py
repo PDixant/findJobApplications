@@ -13,7 +13,7 @@ CSV_FIELDS = ["priority", "region", "company", "score", "tier", "type", "ticker"
 
 
 def companies_path(cfg):
-    return BASE / cfg.get("companies_file", "companies.csv")
+    return BASE / cfg.get("companies_file", MY_COMPANIES)
 
 
 def load_company_rows(cfg):

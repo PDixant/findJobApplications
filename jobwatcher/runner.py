@@ -212,7 +212,7 @@ def fetch_all(cfg, state, store, rows, rules, now, max_age, window_start, verify
                        "Retried in a few days.")
             else:
                 why = ("No job board found yet (board names are guessed again once a day). Add the "
-                       "careers_url or slug in companies.csv, or run --find-career-pages.")
+                       "careers_url or slug in your company list (Companies screen), or run --find-career-pages.")
             record.update(result="NOT FOUND", error=why)
             state["companies"][company] = record
             if row.get("status") != "not_found":
