@@ -53,6 +53,40 @@ def run(cmd, **kw):
     subprocess.run([str(c) for c in cmd], check=True, **kw)
 
 
+PIP_TROUBLE = ("Permission denied", "WinError 5", "WinError 32", "Access is denied",
+               "being used by another process", "OSError")
+
+
+def pip_install(args):
+    """pip install into .venv. pip keeps its downloads in a cache of its own inside .venv, not the
+    one shared by every Python on the computer: that shared cache can hold files another program
+    has locked (antivirus scanning them, an earlier install run as administrator), which stops
+    pip with "Permission denied". If pip still hits a locked file, it tries once more without any
+    cache, which only means downloading again."""
+    cmd = [str(PYTHON), "-m", "pip", "install", "--disable-pip-version-check", "-q", *map(str, args)]
+    env = {**os.environ, "PIP_CACHE_DIR": str(VENV / "pip-cache")}
+    print("   " + " ".join(f'"{c}"' if " " in c else c for c in cmd), flush=True)
+    first = subprocess.run(cmd, env=env, capture_output=True, text=True)
+    if first.returncode == 0:
+        return
+    said = (first.stdout or "") + (first.stderr or "")
+    if not any(t in said for t in PIP_TROUBLE):
+        print(said.strip())
+        raise subprocess.CalledProcessError(first.returncode, cmd, output=first.stdout, stderr=first.stderr)
+    print("   A file pip needed was locked or off limits. Trying again without pip's cache...", flush=True)
+    second = subprocess.run([*cmd[:4], "--no-cache-dir", *cmd[4:]], env=env, capture_output=True, text=True)
+    if second.returncode == 0:
+        return
+    print(((second.stdout or "") + (second.stderr or "")).strip())
+    sys.exit("\nThe packages couldn't be installed because Windows refused pip access to a file.\n"
+             "This is usually antivirus software scanning the download, or a folder left behind by an\n"
+             "install that was run as administrator. Try these, then double-click Install Job Watcher again:\n"
+             "  1. Restart the computer (it releases locked files).\n"
+             "  2. Delete the folder  %LOCALAPPDATA%\\pip\\cache  (paste that into File Explorer's address bar).\n"
+             "  3. Don't run Install Job Watcher as administrator; a normal double-click is right.\n"
+             "Still stuck? Send the messages above to whoever shared Job Watcher with you.")
+
+
 def powershell(script):
     subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
                    check=True, capture_output=True, text=True)
@@ -145,7 +179,7 @@ def install(minimal=False):
 
     step("Installing Job Watcher and its packages (a few minutes the first time)")
     extras = "app" if minimal else "app,extras"
-    run([PYTHON, "-m", "pip", "install", "--disable-pip-version-check", "-q", "-e", f"{ROOT}[{extras}]"])
+    pip_install(["-e", f"{ROOT}[{extras}]"])
     run([PYTHON, "-c", "import jobwatcher.server, jobwatcher.desktop; import webview, tomlkit, keyring"])
 
     app_exe = SCRIPTS / ("jobwatcher-app.exe" if WINDOWS else "jobwatcher-app")

@@ -458,3 +458,36 @@ def test_uninstall_removes_a_link_to_the_app_but_not_the_app(tmp_path):
     assert (bundle / "Contents").is_dir()  # removing the link left the app itself alone
     inst.remove_shortcut(bundle)
     assert not bundle.exists()
+
+
+def test_installer_retries_pip_without_the_cache(monkeypatch, tmp_path):
+    """A locked file in pip's cache (antivirus, an earlier admin install) shouldn't stop setup."""
+    import subprocess as sp
+    inst = _load("install/install.py", "jw_install_pip")
+    inst.configure(tmp_path)
+    calls = []
+
+    class Done:
+        def __init__(self, code, err=""):
+            self.returncode, self.stdout, self.stderr = code, "", err
+
+    def fake_run(cmd, env=None, capture_output=None, text=None):
+        calls.append((cmd, env))
+        if len(calls) == 1:
+            return Done(1, "ERROR: Could not install packages due to an OSError: [Errno 13] Permission denied: "
+                           "'C:\\Users\\x\\AppData\\Local\\pip\\cache\\wheels\\proxy_tools.whl'")
+        return Done(0)
+    monkeypatch.setattr(inst.subprocess, "run", fake_run)
+    inst.pip_install(["-e", "x[app]"])
+    assert len(calls) == 2 and "--no-cache-dir" in calls[1][0] and "--no-cache-dir" not in calls[0][0]
+    assert calls[0][1]["PIP_CACHE_DIR"].endswith("pip-cache")  # its own cache, not the shared one
+
+    calls.clear()
+    monkeypatch.setattr(inst.subprocess, "run", lambda cmd, **kw: calls.append(cmd) or Done(1, "No matching distribution"))
+    try:
+        inst.pip_install(["-e", "x[app]"])
+    except sp.CalledProcessError:
+        pass
+    else:
+        raise AssertionError("an ordinary pip failure should still fail")
+    assert len(calls) == 1  # no retry for problems the cache can't cause

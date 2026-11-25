@@ -117,7 +117,7 @@ enabled = true
 #   "serper"  -> SERPER_API_KEY   real Google results, 2,500 free queries when you sign up
 #   "brave"   -> BRAVE_API_KEY    Brave's own index, about 1,000 free queries a month
 #   "serpapi" -> SERPAPI_API_KEY  real Google results, 250 free queries a month
-provider = "serper"
+provider = "serpapi"
 
 # How many times a day to search.
 # Each search uses up to (number of sites) x (pages_per_query) queries.
@@ -127,7 +127,7 @@ runs_per_day = 2
 look_back = "day"
 
 # Job sites to search. Any of: ashby, greenhouse, lever, workable, smartrecruiters, workday
-sites = ["ashby", "greenhouse", "lever"]
+sites = ["ashby", "greenhouse", "lever", "workable", "smartrecruiters", "workday"]
 
 # The posting's title must contain one of these.
 # Keep this list short: search engines cut off long queries.
@@ -140,7 +140,7 @@ places = ["Toronto", "Vancouver", "Ottawa", "Canada"]
 skip_words = ["India"]
 
 # Result pages to read per site per search (10 results a page).
-pages_per_query = 3
+pages_per_query = 30
 
 # Never use more queries than this in one calendar month.
 monthly_query_limit = 1000
@@ -151,7 +151,7 @@ monthly_query_limit = 1000
 new_companies = "watch"
 
 # How many companies --find-career-pages looks up per run (one query each).
-career_page_lookups_per_run = 50
+career_page_lookups_per_run = 100
 
 
 # ---------------------------------------------------------------------
@@ -169,7 +169,7 @@ career_page_lookups_per_run = 50
 enabled = true
 
 # New job pages to read per site per run. Each page is only ever read once.
-new_pages_per_site_per_run = 15
+new_pages_per_site_per_run = 50
 
 
 # ---------------------------------------------------------------------
@@ -212,7 +212,7 @@ retry_board_search_hours = 24
 
 # Your resume PDF, attached to every email unless a tailored one is found.
 # A path relative to this folder, or a full path.
-resume = "resume.pdf"
+resume = "resume/resume.pdf"
 
 # Folder of tailored resumes. A PDF whose file name contains the company name
 # (for example Your_Name_Shopify_Frontend.pdf) is used for that company.
@@ -249,7 +249,7 @@ drafts_folder = "[Gmail]/Drafts"
 [schedule]
 
 # Run at these times while Job Watcher is open.
-enabled = true
+enabled = false
 times = ["08:00", "12:00", "16:00", "20:00"]
 
 # false: closing the window quits Job Watcher completely.

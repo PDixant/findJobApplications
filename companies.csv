@@ -165,7 +165,7 @@
 1,Vancouver / BC,Splunk,,,,,,,,website,,https://www.splunk.com/en_us/careers.html,,internal,Vancouver,yes,ok,2026-11-21,,,,,,Imported 2026-11-21: Data analytics
 1,Vancouver / BC,Spring Financial,64,B,private,,Late,,,auto,,,,,Vancouver / BC,yes,not_found,2026-11-09,,,,,,
 1,Vancouver / BC,Staffbase (Bananatag),,,,,,,,greenhouse,staffbase,https://staffbase.com/en/about/careers,,,Kelowna,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Employee Comms SaaS; Remote-first; TS, React, Node"
-1,Vancouver / BC,StarFish Medical,,,,,,,,website,,https://starfishmedical.com/careers,,,Victoria,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Medical Device Development; Onsite; C++, C#"
+1,Vancouver / BC,StarFish Medical,,,,,,,,website,,https://starfishmedical.com/careers,,,Victoria,yes,ok,2026-11-24,,,,,,"Imported 2026-11-21: Medical Device Development; Onsite; C++, C#"
 1,Vancouver / BC,STEMCELL Technologies,,,,,,,,website,,https://www.stemcell.com/careers,,,Vancouver,yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Life Sciences; Hybrid; C#, .NET, React"
 1,Vancouver / BC,Tantalus Systems,40,C,public,GRID.TO,,,,auto,tantalus,,,,Vancouver / BC,yes,not_found,2026-11-09,0.2,-1.2,-9.0,0.3,2026-11-21,Burnaby
 1,Vancouver / BC,Teck Resources,,,,,,,,website,,https://www.teck.com/careers,,,Vancouver,yes,ok,2026-11-22,,,,,,"Imported 2026-11-21: Mining / Digital; Hybrid; Python, .NET, React"
@@ -217,15 +217,15 @@
 2,Ottawa,Ford,47,C,public,F,,,,website,,https://corporate.ford.com/careers.html,,internal,Ottawa; Rest of Canada,yes,ok,2026-11-21,44.6,-13.8,-2.0,-4.2,2026-11-21,Ottawa software centre
 2,Ottawa,Fullscript,68,A,private,,Unicorn,,,lever,fullscript,,,,Ottawa,yes,ok,2026-11-09,,,,,,
 2,Ottawa,IBM,53,B,public,IBM,,,,website,,https://www.ibm.com/careers,,internal,Ottawa; Toronto / GTA; Rest of Canada,yes,ok,2026-11-21,212.1,-26.2,4.7,16.0,2026-11-21,Uses its own careers site
-2,Ottawa,Kinaxis,74,A,public,KXS.TO,,,,auto,,,,,Ottawa,yes,not_found,2026-11-22,6.0,26.0,19.1,14.3,2026-11-21,
+2,Ottawa,Kinaxis,74,A,public,KXS.TO,,,,workable,kinaxis,,,,Ottawa,yes,ok,2026-11-23,6.0,26.0,19.1,14.3,2026-11-21,
 2,Ottawa,Kivuto,64,B,private,,Late,,,auto,,,,,Ottawa,yes,not_found,2026-11-22,,,,,,
-2,Ottawa,Klipfolio,64,B,private,,Late,,,auto,,,,,Ottawa,yes,not_found,2026-11-22,,,,,,
+2,Ottawa,Klipfolio,64,B,private,,Late,,,workable,klipfolio,,,,Ottawa,yes,ok,2026-11-23,,,,,,
 2,Ottawa,Lightspeed,45,C,public,LSPD,,,,ashby,Lightspeed,,,,Ottawa; Rest of Canada,yes,ok,2026-11-09,1.2,-13.5,1.5,-5.5,2026-11-21,"Montreal HQ, Ottawa office"
 2,Ottawa,Martello,36,C,public,MTLO.V,,,,auto,,,,,Ottawa,yes,not_found,2026-11-22,0.0,0.0,-6.2,-25.1,2026-11-21,
-2,Ottawa,MindBridge,55,B,private,,Series B,,,auto,mindbridge,,,,Ottawa,yes,not_found,2026-11-22,,,,,,
+2,Ottawa,MindBridge,55,B,private,,Series B,,,workable,mindbridge,,,,Ottawa,yes,ok,2026-11-23,,,,,,
 2,Ottawa,Mitel,64,B,private,,Late,,,auto,,,,,Ottawa,yes,not_found,2026-11-22,,,,,,
 2,Ottawa,Noibu,55,B,private,,Series B,,,ashby,Noibu,,,,Ottawa,yes,ok,2026-11-09,,,,,,
-2,Ottawa,Nokia,63,B,public,NOK,,,,website,,https://www.nokia.com/about-us/careers/,,,Ottawa,yes,ok,2026-11-21,38.9,13.0,9.7,3.8,2026-11-21,Uses its own careers site
+2,Ottawa,Nokia,63,B,public,NOK,,,,website,,https://www.nokia.com/about-us/careers/,,,Ottawa,yes,not_found,2026-11-24,38.9,13.0,9.7,3.8,2026-11-21,Uses its own careers site
 2,Ottawa,Pythian,64,B,private,,Late,,,workable,pythian,,,,Ottawa,yes,ok,2026-11-09,,,,,,Data consulting
 2,Ottawa,Recollective,55,B,private,,Bootstrapped,,,auto,,,,,Ottawa,yes,not_found,2026-11-09,,,,,,
 2,Ottawa,Rewind,55,B,private,,Series B,,,ashby,Rewind,,,,Ottawa,yes,ok,2026-11-09,,,,,,
@@ -271,7 +271,7 @@
 3,Seattle,Highspot,68,A,private,,Unicorn,,,lever,highspot,,,,Seattle,yes,ok,2026-11-09,,,,,,
 3,Seattle,Hiya,64,B,private,,Late,,,ashby,Hiya,,,,Seattle,yes,ok,2026-11-09,,,,,,
 3,Seattle,Howie,47,C,private,,Early-stage,,,auto,,,,,Seattle,yes,not_found,2026-11-22,,,,,,AI startup
-3,Seattle,Icertis,68,A,private,,Unicorn,,,auto,,,,,Seattle,yes,not_found,2026-11-22,,,,,,
+3,Seattle,Icertis,68,A,private,,Unicorn,,,workable,icertis,,,,Seattle,yes,ok,2026-11-22,,,,,,
 3,Seattle,Impinj,55,B,public,PI,,,,greenhouse,Impinj,,,,Seattle,yes,ok,2026-11-09,4.4,-8.6,16.7,-2.5,2026-11-21,
 3,Seattle,Indeed,58,B,private,,Subsidiary,,,other,,https://www.indeed.jobs,,internal,Seattle; Toronto / GTA,yes,not_found,2026-11-21,,,,,,Owned by Recruit
 3,Seattle,Leafly,,,public,LFLY,,,,auto,,,,,Seattle,yes,not_found,2026-11-09,,,,,2026-11-21,
@@ -301,7 +301,7 @@
 3,Seattle,Rec Room,68,A,private,,Unicorn,,,auto,recroom,,,,Seattle,yes,not_found,2026-11-22,,,,,,
 3,Seattle,Redfin,58,B,private,,Subsidiary,,,website,,https://www.redfin.com/about/jobs,,greenhouse,Seattle,yes,ok,2026-11-21,,,,,,Owned by Rocket Companies
 3,Seattle,REI,,,,,,,,website,,https://www.rei.com/jobs,,internal,"Seattle, WA",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Retail; Remote OK; US only; Java, React"
-3,Seattle,Remitly,81,A,public,RELY,,,,auto,,,,,Seattle,yes,not_found,2026-11-22,4.2,58.8,21.5,19.1,2026-11-21,
+3,Seattle,Remitly,81,A,public,RELY,,,,workable,remitly,,,,Seattle,yes,ok,2026-11-22,4.2,58.8,21.5,19.1,2026-11-21,
 3,Seattle,Rover,64,B,private,,Late,,,lever,rover,,,,Seattle,yes,ok,2026-11-09,,,,,,Private since 2024
 3,Seattle,SeekOut,60,B,private,,Series C,,,greenhouse,SeekOut,,,,Seattle,yes,ok,2026-11-09,,,,,,
 3,Seattle,Seeq,60,B,private,,Series C,,,auto,,,,,Seattle,yes,not_found,2026-11-22,,,,,,
@@ -698,7 +698,7 @@
 7,Remote / other US,Allstate,,,,,,,,workday,allstate/wd5/allstate_careers,https://www.allstate.jobs,,internal,"Northbrook, IL",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Insurance; Remote OK; Yes - Markham (Allstate Canada); Java, .NET"
 7,Remote / other US,American Express,,,,,,,,website,,https://www.americanexpress.com/en-us/careers,,internal,"New York, NY",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Financial Services; Hybrid; Yes - Toronto; Java, React"
 7,Remote / other US,Anaplan,,,,,,,,website,,https://www.anaplan.com/careers,,internal,"Miami, FL",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Planning SaaS; Hybrid; Check; Java, React"
-7,Remote / other US,Angi,,,,,,,,website,,https://www.angi.com/careers,,greenhouse,"Denver, CO",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Local Marketplace; Remote-first; Check; Java, React"
+7,Remote / other US,Angi,,,,,,,,website,,https://www.angi.com/careers,,greenhouse,"Denver, CO",yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Local Marketplace; Remote-first; Check; Java, React"
 7,Remote / other US,Ansys,,,,,,,,website,,https://www.ansys.com/careers,,internal,"Canonsburg, PA",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Simulation Software; Remote OK; Yes - Waterloo, ON office; C++, Python"
 7,Remote / other US,Anthology,,,,,,,,website,,https://www.anthology.com/careers,,internal,"Boca Raton, FL",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: EdTech / LMS; Remote-first; Check; Java, React"
 7,Remote / other US,Applied Systems,,,,,,,,auto,,https://www1.appliedsystems.com/en-us/careers,,internal,"Chicago, IL",yes,not_found,2026-11-21,,,,,,"Imported 2026-11-21: Insurance Software; Remote-first; Yes - Ontario offices; C#, .NET, React"
@@ -882,7 +882,7 @@
 7,Remote / other US,project44,,,,,,,,greenhouse,project44,https://www.project44.com/careers,,greenhouse,"Chicago, IL",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Logistics Tech; Remote-first; Check; Java, React"
 7,Remote / other US,Prudential Financial,,,,,,,,auto,,https://jobs.prudential.com,,internal,"Newark, NJ",yes,not_found,2026-11-21,,,,,,"Imported 2026-11-21: Insurance; Hybrid; US only; Java, React"
 7,Remote / other US,PTC,,,,,,,,workday,ptc/wd1/PTC,https://www.ptc.com/en/careers,,internal,"Boston, MA",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Industrial Software; Hybrid; Yes; C++, Java, React"
-7,Remote / other US,R1 RCM,,,,,,,,website,,https://www.r1rcm.com/careers,,internal,"Murray, UT",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Healthcare RCM; Remote OK; US only; C#, .NET"
+7,Remote / other US,R1 RCM,,,,,,,,website,,https://www.r1rcm.com/careers,,internal,"Murray, UT",yes,not_found,2026-11-22,,,,,,"Imported 2026-11-21: Healthcare RCM; Remote OK; US only; C#, .NET"
 7,Remote / other US,Railway,55,B,private,,Series B,,,ashby,Railway,,,,Remote / other US,yes,ok,2026-11-09,,,,,,
 7,Remote / other US,Ramp,68,A,private,,Unicorn,,,ashby,ramp,https://ramp.com/careers,,ashby,Remote / other US,yes,ok,2026-11-09,,,,,,New York
 7,Remote / other US,Rapid7,,,,,,,,website,,https://www.rapid7.com/careers,,greenhouse,"Boston, MA",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Cybersecurity; Remote OK; Check; Java, React"
@@ -961,11 +961,15 @@
 7,Remote / other US,Zapier,55,B,private,,Bootstrapped,,,ashby,Zapier,https://zapier.com/jobs,,greenhouse,Remote / other US,yes,ok,2026-11-09,,,,,,
 7,Remote / other US,Zed,55,B,private,,Series B,,,auto,zedindustries,,,,Remote / other US,yes,not_found,2026-11-09,,,,,,
 7,Remote / other US,Zocdoc,,,,,,,,greenhouse,zocdoc,https://www.zocdoc.com/about/careers,,greenhouse,"New York, NY",yes,ok,2026-11-21,,,,,,"Imported 2026-11-21: Health Marketplace; Hybrid; US only; .NET, C#, React"
+8,Found by search,Alan,,,,,,,,ashby,alan,,,,,yes,ok,2026-11-24,,,,,,Found by search 2026-11-24: Fullstack Software Engineer (x/f/m) - Growth @ Alan
 8,Found by search,Alpaca,,,,,,,,greenhouse,alpaca,,,,,yes,ok,2026-11-21,,,,,,Found by search 2026-11-21: Senior Software Engineer – Developer Platform
 8,Found by search,Capco,,,,,,,,greenhouse,capco,,,,,yes,ok,2026-11-22,,,,,,"Found by search 2026-11-22: Software Engineer, Implementation & Support"
 8,Found by search,Geocomply 2,,,,,,,,lever,geocomply-2,,,,,yes,ok,2026-11-21,,,,,,Found by search 2026-11-21: Software Engineer Intern (Infrastructure & Platform)
 8,Found by search,Going,,,,,,,,ashby,going,,,,,yes,ok,2026-11-21,,,,,,Found by search 2026-11-21: Senior Full Stack Software Engineer @ Going
+8,Found by search,Homebase,,,,,,,,ashby,homebase,,,,,yes,ok,2026-11-24,,,,,,"Found by search 2026-11-24: Principal Software Engineer, Growth (Hybrid) @ Homebase"
 8,Found by search,Jobgether,,,,,,,,lever,jobgether,,,,,yes,ok,2026-11-21,,,,,,"Found by search 2026-11-21: Jobgether - Senior Software Engineer, Data Solutions"
+8,Found by search,Prolucid Technologies,,,,,,,,workable,prolucid-technologies,,,,,yes,ok,2026-11-24,,,,,,Found by search 2026-11-24: Intermediate Software Engineer/Developer
+8,Found by search,Rerun,,,,,,,,ashby,rerun,,,,,yes,ok,2026-11-24,,,,,,"Found by search 2026-11-24: Software Engineer, Infrastructure @ Rerun"
 8,Found by search,Rivianvw.Tech,,,,,,,,ashby,rivianvw.tech,,,,,yes,ok,2026-11-21,,,,,,"Found by search 2026-11-21: Staff Software Engineer, Vehicle Access Cloud"
 8,Found by search,SalesJack,,,,,,,,ashby,salesjack,,,,,yes,ok,2026-11-21,,,,,,Found by search 2026-11-21: Software Engineer @ SalesJack
 8,Found by search,True Talent Solutions Partners,,,,,,,,ashby,true-talent-solutions-partners,,,,,yes,ok,2026-11-22,,,,,,"Found by search 2026-11-22: Senior Software Engineer, Infrastructure"
