@@ -135,6 +135,37 @@
   :where([data-theme="dark"]) [data-paint="nori"] { --paint: #004F46; --on-paint: #EBD3A2; --paint-text: #EBD3A2; --paint-soft: #112F2C; --light: #EBD3A2; }
   :where([data-theme="dark"]) [data-paint="sumi"] { --paint: #FCFAF0; --on-paint: #111314; --paint-text: #FCFAF0; --paint-soft: #242E33; --light: #FCFAF0; }
 
+/* ================================================================ whole themes
+   Settings, Appearance, Theme. Kanso keeps one body and swaps only the paint; a whole theme also tints
+   the body with the same Wada combination, in light and dark. Every colour below is that combination
+   mixed into Kanso's own body the way Kanso derives its neutrals, and every text pairing is checked
+   against WCAG 2.2 AA (text 7:1, labels 4.5:1, input borders and focus 3:1). Status colours never change. */
+/* Structural (Wada No. 126, dark No. 139) */
+:root[data-paint-choice="structural"]:not([data-theme="dark"]) { --canvas: #F0F0EC; --surface: #FFFFFF; --surface-raised: #FFFFFF; --surface-sunken: #E5E7E7; --surface-highlight: #E4E8F0; --text: #111314; --text-secondary: #142136; --text-tertiary: #444F5E; --text-disabled: #9B9C9A; --line-hair: #D2D8DE; --line-strong: #6C747F; --line-character: #111314; --steel: #B0BCCD; --paint: #1C4286; --on-paint: #FFFFFF; --paint-text: #1C4286; --paint-soft: #DFE2E4; --light: #1C4286; --brand-jewel: #1C4286; }
+:root[data-paint-choice="structural"][data-theme="dark"] { --canvas: #051230; --surface: #0C1A38; --surface-raised: #12203E; --surface-sunken: #12203E; --surface-highlight: #1B2947; --text: #FCFAF0; --text-secondary: #D9DFE2; --text-tertiary: #A4ACB6; --text-disabled: #545C6D; --line-hair: #182644; --line-strong: #556784; --line-character: #FCFAF0; --steel: #475774; --paint: #1C4286; --on-paint: #FFFFFF; --paint-text: #97ACC8; --paint-soft: #14213F; --light: #97ACC8; --brand-jewel: #97ACC8; }
+/* Tiger Eye (Wada No. 33, 243, dark 263) */
+:root[data-paint-choice="tiger-eye"]:not([data-theme="dark"]) { --canvas: #F8F0E2; --surface: #FFFFFF; --surface-raised: #FFFFFF; --surface-sunken: #F5EAD9; --surface-highlight: #F7EEE5; --text: #111314; --text-secondary: #442F19; --text-tertiary: #6C5945; --text-disabled: #A09C94; --line-hair: #EFDEC8; --line-strong: #8C7C69; --line-character: #111314; --steel: #E6CAA9; --paint: #BB7125; --on-paint: #111314; --paint-text: #AE5224; --paint-soft: #F3E6D3; --light: #BB7125; --brand-jewel: #BB7125; }
+:root[data-paint-choice="tiger-eye"][data-theme="dark"] { --canvas: #221C16; --surface: #2C241B; --surface-raised: #342A20; --surface-sunken: #342A20; --surface-highlight: #413326; --text: #FCFAF0; --text-secondary: #F7E2C9; --text-tertiary: #C2B09C; --text-disabled: #68635C; --line-hair: #3D3024; --line-strong: #927050; --line-character: #FCFAF0; --steel: #7E6046; --paint: #BB7125; --on-paint: #111314; --paint-text: #EEB480; --paint-soft: #362B21; --light: #EEB480; --brand-jewel: #EEB480; }
+/* Infrared (Wada No. 221, dark text No. 332) */
+:root[data-paint-choice="infrared"]:not([data-theme="dark"]) { --canvas: #F7EDE5; --surface: #FFFFFF; --surface-raised: #FFFFFF; --surface-sunken: #F3E3DC; --surface-highlight: #F4E6E7; --text: #111314; --text-secondary: #3E1A1E; --text-tertiary: #67484A; --text-disabled: #A09A96; --line-hair: #ECD2CD; --line-strong: #886E6E; --line-character: #111314; --steel: #DFB3B1; --paint: #A62C37; --on-paint: #FFFFFF; --paint-text: #A62C37; --paint-soft: #F1DED7; --light: #A62C37; --brand-jewel: #A62C37; }
+:root[data-paint-choice="infrared"][data-theme="dark"] { --canvas: #201618; --surface: #2B1C1D; --surface-raised: #332122; --surface-sunken: #332122; --surface-highlight: #402828; --text: #FCFAF0; --text-secondary: #FAD4CA; --text-tertiary: #C4A49E; --text-disabled: #665F5D; --line-hair: #3C2626; --line-strong: #955853; --line-character: #FCFAF0; --steel: #804C49; --paint: #A62C37; --on-paint: #FFFFFF; --paint-text: #F58E84; --paint-soft: #352223; --light: #F58E84; --brand-jewel: #F58E84; }
+/* Nori (Wada No. 94, dark No. 84) */
+:root[data-paint-choice="nori"]:not([data-theme="dark"]) { --canvas: #EBEFE6; --surface: #FFFFFF; --surface-raised: #FFFFFF; --surface-sunken: #DFE7DE; --surface-highlight: #E0EAE9; --text: #111314; --text-secondary: #0C2523; --text-tertiary: #3D514E; --text-disabled: #989B96; --line-hair: #CAD9D0; --line-strong: #657671; --line-character: #111314; --steel: #A4BFB6; --paint: #004F46; --on-paint: #EBD3A2; --paint-text: #004F46; --paint-soft: #D8E2D9; --light: #004F46; --brand-jewel: #004F46; }
+:root[data-paint-choice="nori"][data-theme="dark"] { --canvas: #112F2C; --surface: #1C3732; --surface-raised: #253E37; --surface-sunken: #253E37; --surface-highlight: #32483E; --text: #FCFAF0; --text-secondary: #F6ECD5; --text-tertiary: #BDBDAB; --text-disabled: #5C706B; --line-hair: #2D443B; --line-strong: #89896D; --line-character: #FCFAF0; --steel: #737961; --paint: #004F46; --on-paint: #EBD3A2; --paint-text: #EBD3A2; --paint-soft: #273F38; --light: #EBD3A2; --brand-jewel: #EBD3A2; }
+/* the small previews in Settings show each theme in the current light or dark */
+.theme-preview.is-screen, .theme-preview.is-sumi { --pv-canvas: #FDFBF2; --pv-surface: #FFFFFF; --pv-light: #111314; }
+.theme-preview.is-screen { --pv-light: #1C4286; }
+:where([data-theme="dark"]) .theme-preview.is-screen, :where([data-theme="dark"]) .theme-preview.is-sumi { --pv-canvas: #111314; --pv-surface: #1D2428; --pv-light: #FCFAF0; }
+:where([data-theme="dark"]) .theme-preview.is-screen { --pv-light: #97ACC8; }
+.theme-preview.is-structural { --pv-canvas: #F0F0EC; --pv-surface: #FFFFFF; --pv-light: #1C4286; }
+:where([data-theme="dark"]) .theme-preview.is-structural { --pv-canvas: #051230; --pv-surface: #0C1A38; --pv-light: #97ACC8; }
+.theme-preview.is-tiger-eye { --pv-canvas: #F8F0E2; --pv-surface: #FFFFFF; --pv-light: #BB7125; }
+:where([data-theme="dark"]) .theme-preview.is-tiger-eye { --pv-canvas: #221C16; --pv-surface: #2C241B; --pv-light: #EEB480; }
+.theme-preview.is-infrared { --pv-canvas: #F7EDE5; --pv-surface: #FFFFFF; --pv-light: #A62C37; }
+:where([data-theme="dark"]) .theme-preview.is-infrared { --pv-canvas: #201618; --pv-surface: #2B1C1D; --pv-light: #F58E84; }
+.theme-preview.is-nori { --pv-canvas: #EBEFE6; --pv-surface: #FFFFFF; --pv-light: #004F46; }
+:where([data-theme="dark"]) .theme-preview.is-nori { --pv-canvas: #112F2C; --pv-surface: #1C3732; --pv-light: #EBD3A2; }
+
 /* ================================================================ base */
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
@@ -1055,13 +1086,10 @@ code { font-family: var(--font-mono); font-size: 0.85em; }
 .theme-swatch.is-system { background: linear-gradient(90deg, #FDFBF2 0 50%, #111314 50%); }
 .theme-group { font: 500 16px/22px var(--font-sans); margin-top: var(--s7); }
 .theme-group + .hint { margin-top: var(--s1); }
-.paint-choices .theme-choice.is-on { border-color: var(--light); }
-/* each paint shown as it appears in the app: as light, a 20 x 2 active line and a jewel */
-.paint-swatch { display: flex; align-items: center; justify-content: center; gap: var(--s2); width: 48px; height: 32px; border-radius: var(--r-s); border: 1px solid var(--line-hair); background: var(--canvas); }
-.paint-swatch > span { position: relative; width: 20px; height: 2px; border-radius: 1px; background: var(--light); }
-.paint-swatch:not(.is-screen) > span::after { content: ""; position: absolute; right: -10px; top: -2px; width: 6px; height: 6px; border-radius: 50%; background: var(--light); }
-.paint-swatch.is-screen { flex-direction: column; gap: 4px; }
-.paint-swatch.is-screen > span { width: 20px; }
+/* a theme preview: its canvas, a card in its surface, and its paint as light (a 20 x 2 active line) */
+.theme-preview { position: relative; width: 48px; height: 32px; border-radius: var(--r-s); border: 1px solid var(--line-hair); background: var(--pv-canvas); overflow: hidden; }
+.theme-preview::before { content: ""; position: absolute; left: 8px; top: 7px; right: 0; bottom: 0; border-radius: 4px 0 0 0; background: var(--pv-surface); }
+.theme-preview::after { content: ""; position: absolute; left: 14px; top: 15px; width: 20px; height: 2px; border-radius: 1px; background: var(--pv-light); }
 
 /* Run now's update question */
 .update-ask .versions { margin-top: var(--s5); }

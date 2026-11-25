@@ -96,7 +96,7 @@ class Files:
 
 
 THEMES = ("system", "light", "dark")  # Settings, Appearance: follow the computer, or always light or dark
-# Settings, Appearance: the Kanso paint. "screen" keeps each screen's own paint; the rest use one everywhere.
+# Settings, Appearance, Theme: "screen" is Kanso itself (one body, a paint per screen); the rest are whole themes.
 PAINTS = ("screen", "structural", "tiger-eye", "infrared", "nori", "sumi")
 AFTER_UPDATE_MODES = ("full", "since", "search")  # runs that can wait for an update to finish first
 

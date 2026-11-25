@@ -25,9 +25,10 @@ media?.addEventListener?.("change", () => {
   if (currentChoice() === "system") applyTheme("system");
 });
 
-// The Kanso paint: "screen" lets each screen wear its own (Structural by default, Nori on Pipeline and
-// Outreach, Sumi in Settings); any other choice wears that one paint on every screen. Still one paint
-// per screen either way. The page arrives marked with it (data-paint-choice on <html>).
+// The theme. "screen" is Kanso itself: one paper-and-ink body, and each screen wears its own paint
+// (Structural by default, Nori on Pipeline and Outreach, Sumi in Settings). Any other choice is a whole
+// theme: the page, cards, text and accent all take that paint's colours, in light and dark (styles.css,
+// "whole themes"). The page arrives marked with it (data-paint-choice on <html>).
 export type PaintChoice = "screen" | "structural" | "tiger-eye" | "infrared" | "nori" | "sumi";
 const PAINTS: PaintChoice[] = ["screen", "structural", "tiger-eye", "infrared", "nori", "sumi"];
 const listeners = new Set<() => void>();

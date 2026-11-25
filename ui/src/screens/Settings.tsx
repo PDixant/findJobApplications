@@ -471,12 +471,12 @@ const THEME_CHOICES: { id: ThemeChoice; label: string; note: string }[] = [
 ];
 
 const PAINT_CHOICES: { id: PaintChoice; label: string; note: string }[] = [
-  { id: "screen", label: "By screen", note: "Kanso's own pairing: Structural blue for finding jobs, Nori green for your applications, ink in Settings." },
-  { id: "structural", label: "Structural", note: "Deep blue, steady and calm, on every screen." },
-  { id: "tiger-eye", label: "Tiger Eye", note: "Warm raw sienna, on every screen." },
-  { id: "infrared", label: "Infrared", note: "Carmine red, on every screen. Losses and errors keep their own red, with a sign or an icon." },
-  { id: "nori", label: "Nori", note: "Dusky green, on every screen." },
-  { id: "sumi", label: "Sumi", note: "Ink only, no colour at all." },
+  { id: "screen", label: "Kanso", note: "Warm paper and ink, with a colour that changes by screen: blue for finding jobs, green for your applications, ink in Settings." },
+  { id: "structural", label: "Structural", note: "Cool grey paper and deep blue. In dark, a midnight blue." },
+  { id: "tiger-eye", label: "Tiger Eye", note: "Warm sand and burnt orange. In dark, a deep brown." },
+  { id: "infrared", label: "Infrared", note: "Blush paper and carmine red. In dark, a red-tinged black. Losses and errors keep their own red, with a sign or an icon." },
+  { id: "nori", label: "Nori", note: "Pale sage and dusky green. In dark, a deep forest green with ivory light." },
+  { id: "sumi", label: "Sumi", note: "Paper and ink only, no colour at all." },
 ];
 
 type AppearanceChoice = { theme: ThemeChoice; paint: PaintChoice };
@@ -517,19 +517,13 @@ function Appearance() {
         ))}
       </div>
 
-      <h3 className="theme-group" id="appearance-paint">Paint</h3>
-      <p className="hint">The one colour of light: the line under where you are, the focus ring, the corners of a chosen card. Each paint comes from the Kanso design language and works in light and dark.</p>
-      <div className="theme-choices paint-choices" role="radiogroup" aria-labelledby="appearance-paint">
+      <h3 className="theme-group" id="appearance-paint">Theme</h3>
+      <p className="hint">The whole look: page, cards, text and accent. Each theme comes from one colour combination in the Kanso design language, and has a light and a dark version.</p>
+      <div className="theme-choices" role="radiogroup" aria-labelledby="appearance-paint">
         {PAINT_CHOICES.map((c) => (
           <label key={c.id} className={`theme-choice ${paint === c.id ? "is-on" : ""}`}>
             <input type="radio" name="paint" value={c.id} checked={paint === c.id} onChange={() => save({ paint: c.id })} />
-            {c.id === "screen" ? (
-              <span className="paint-swatch is-screen" aria-hidden="true">
-                <span data-paint="structural" /><span data-paint="nori" /><span data-paint="sumi" />
-              </span>
-            ) : (
-              <span className="paint-swatch" data-paint={c.id} aria-hidden="true"><span /></span>
-            )}
+            <span className={`theme-preview is-${c.id}`} aria-hidden="true" />
             <span className="theme-text">
               <span className="theme-label">{c.label}</span>
               <span className="hint">{c.note}</span>
