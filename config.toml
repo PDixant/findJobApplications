@@ -24,10 +24,12 @@
 
 # A job title must contain at least one of these. Capital letters don't matter.
 titles = [
-  "Software Engineer", "Software Developer", "Web Developer",
+  "Software Engineer", "Software Developer", "Software Development Engineer", "SDE",
+  "Web Developer", "Web Engineer", "Web Application", "Application Developer",
   "Frontend", "Front End", "Front-End",
   "Full Stack", "Full-Stack", "Fullstack",
-  "UI Engineer", "Product Engineer", "React", "JavaScript",
+  "UI Engineer", "UI Developer", "UX Engineer", "Design Engineer", "Design Systems",
+  "Product Engineer", "React", "JavaScript", "TypeScript", "Node.js", ".NET", "C#",
 ]
 
 # Skip any title that contains one of these.
@@ -40,10 +42,22 @@ skip_titles = [
 
 # The job description must mention at least one of these.
 # To accept any tech stack, use an empty list:  must_mention = []
-must_mention = ["React", "React Native", "JavaScript", "TypeScript", "Node.js", "NodeJS", "Next.js"]
+must_mention = ["React", "React Native", "JavaScript", "TypeScript", "Node.js", "NodeJS", "Next.js",
+                "C#", ".NET", "ASP.NET"]
 
 # Only add jobs that were posted within this many hours.
 max_age_hours = 24
+
+# Your years of experience in the field. Postings that ask for more (for
+# example "8+ years of experience") are left out. 0 = don't check.
+years_experience = 5
+
+# How many more years than yours a posting can ask for and still count.
+# With 5 years and 1 here, a 6+ year job counts and a 7+ year job doesn't.
+years_over_ok = 1
+
+# "skip" leaves those jobs out; "flag" keeps them, marked with the years asked.
+too_many_years = "skip"
 
 
 # ---------------------------------------------------------------------
@@ -117,7 +131,7 @@ enabled = true
 #   "serper"  -> SERPER_API_KEY   real Google results, 2,500 free queries when you sign up
 #   "brave"   -> BRAVE_API_KEY    Brave's own index, about 1,000 free queries a month
 #   "serpapi" -> SERPAPI_API_KEY  real Google results, 250 free queries a month
-provider = "serpapi"
+provider = "serper"
 
 # How many times a day to search.
 # Each search uses up to (number of searches) x (pages_per_query) queries:
@@ -132,13 +146,14 @@ sites = ["ashby", "greenhouse", "lever", "workable", "smartrecruiters", "workday
 
 # true: search for the same titles as [jobs] titles above. A long list is split
 # over several searches per site, so no search passes Google's 32-word limit.
-same_titles_as_jobs = true
+same_titles_as_jobs = false
 
 # The titles to search for when same_titles_as_jobs = false.
-titles = ["Software Engineer", "Software Developer", "Web Developer"]
+titles = ["Frontend", "Front End", "Full Stack", "Software Engineer", "Software Developer",
+          "UI Engineer", "Product Engineer", "React"]
 
 # The posting must mention at least one of these places.
-places = ["Toronto", "Vancouver", "Ottawa", "Canada"]
+places = ["Vancouver", "Ottawa", "Seattle", "California", "Toronto", "Canada", "Remote"]
 
 # Leave out postings that contain any of these words.
 skip_words = ["India"]
@@ -158,7 +173,7 @@ my_queries = []
 
 # Result pages to read per search (10 results a page). 3 to 5 is plenty: most
 # searches run out of fresh results before page 5.
-pages_per_query = 30
+pages_per_query = 2
 
 # Never use more queries than this in one calendar month.
 monthly_query_limit = 1000

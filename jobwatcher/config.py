@@ -18,6 +18,7 @@ DEFAULTS = {
                        "Next.js"],
     "require_stack_match": True,
     "max_posted_age_hours": 24,
+    "years_experience": 0, "years_over_ok": 1, "too_many_years": "skip",
     # 2. Where
     "locations_exclude": ["India", "Bengaluru", "Bangalore", "Hyderabad", "Pune", "Chennai",
                           "Gurugram", "Gurgaon", "Noida", "Mumbai", "Delhi"],
@@ -96,7 +97,9 @@ DEFAULTS = {
 # Where each config.toml setting lands. A tuple means a setting inside a group.
 CONFIG_LAYOUT = {
     "jobs": {"titles": "titles_include", "skip_titles": "titles_exclude",
-             "must_mention": "stack_keywords", "max_age_hours": "max_posted_age_hours"},
+             "must_mention": "stack_keywords", "max_age_hours": "max_posted_age_hours",
+             "years_experience": "years_experience", "years_over_ok": "years_over_ok",
+             "too_many_years": "too_many_years"},
     "places": {"skip": "locations_exclude", "region": "regions"},
     "search": {k: ("search", k) for k in DEFAULTS["search"]},
     "career_sites": {"enabled": ("career_sites", "enabled"),
@@ -326,6 +329,10 @@ def describe_config(cfg):
     if cfg["locations_exclude"]:
         lines.append(f"    and not only in: {', '.join(cfg['locations_exclude'])}")
     lines.append(f"  - it was posted within the last {cfg['max_posted_age_hours']:g} hours")
+    if cfg.get("years_experience"):
+        most = cfg["years_experience"] + (cfg.get("years_over_ok") or 0)
+        lines.append(f"  - it asks for at most {most:g} years of experience (you have {cfg['years_experience']:g})"
+                     + ("" if cfg.get("too_many_years", "skip") == "skip" else "; ones asking more are kept and marked"))
     lines.append("")
     key_name = SEARCH_KEYS[s["provider"]]
     has_key = bool(os.environ.get(key_name))

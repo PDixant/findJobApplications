@@ -12,6 +12,12 @@ FIELDS = {
         ("skip_titles", "list", "Skip any title that contains one of these"),
         ("must_mention", "list", "The description must mention at least one of these. Leave empty to accept any stack"),
         ("max_age_hours", "number", "Only add jobs posted within this many hours"),
+        ("years_experience", "number", "Your years of experience in the field. Postings that ask for more are "
+                                       "left out (or marked, below). 0 = don't check"),
+        ("years_over_ok", "number", "How many more years than yours a posting can ask for and still count. With 5 "
+                                    "years and 1 here, a 6+ year job counts and a 7+ year job doesn't"),
+        ("too_many_years", "choice:skip,flag", "skip = leave those jobs out; flag = keep them, marked with the "
+                                               "years they ask for"),
     ],
     "places": [
         ("region", "regions", "A job must be in one of these regions. The first region that matches wins"),

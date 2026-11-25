@@ -23,6 +23,7 @@ const LABELS: Record<string, string> = {
   model: "Claude model", times: "Run at", keep_in_tray: "Keep running after closing", score_new_matches: "Score new matches", monthly_limit: "Monthly Claude limit",
   resume_tex: "Base resume (.tex)", resume_rules: "Resume rules file", ntfy_topic: "ntfy topic", ntfy_server: "ntfy server",
   tailored_resumes_folder: "Tailored resumes folder", built_queries: "Built searches", my_queries: "Your own searches", same_titles_as_jobs: "Same titles as Which jobs",
+  years_experience: "Your years of experience", years_over_ok: "Stretch allowance (years)", too_many_years: "Jobs asking for more",
 };
 const SWATCHES = ["C6EFCE", "DDEBF7", "D9F2F2", "FCE4D6", "E4DFEC", "FFF2CC", "F8CBAD", "EDEDED"];
 

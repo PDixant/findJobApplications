@@ -245,7 +245,7 @@ Edit them in the app's **Settings** screen (it keeps the file's notes, and shows
 
 | Section | What it controls |
 |---|---|
-| `[jobs]` | `titles` to include, `skip_titles`, `must_mention` stack keywords and `max_age_hours` |
+| `[jobs]` | `titles` to include, `skip_titles`, `must_mention` stack keywords, `max_age_hours`, and your `years_experience`: postings asking for more years than yours (plus `years_over_ok`) are left out or marked |
 | `[places]` | Places to `skip`, and your regions: a name, a colour and the place names to match |
 | `[search]` | The new-company web search: service, how often, sites, title words, places, query budget, and whether new companies are watched or held for review |
 | `[career_sites]` | Reading companies' own careers websites |

@@ -115,3 +115,18 @@ def test_closing_the_window_quits_by_default():
     from jobwatcher import desktop
     assert jw.load_config()["schedule"]["keep_in_tray"] is False
     assert desktop.keep_in_tray() is False
+
+
+def test_years_of_experience():
+    from jobwatcher.filters import Rules
+    from jobwatcher.signals import years_required
+    assert years_required("You have 7+ years of professional software development experience.") == 7
+    assert years_required("3-5 years of experience building web apps. 2+ years of React experience.") == 3
+    assert years_required("At least eight years of experience in software engineering") == 8
+    assert years_required("10+ years of experience preferred. 5 years of experience required.") == 5
+    assert years_required("We've been helping customers for 20 years. Experience with React.") is None
+    cfg = jw.load_config()
+    assert not Rules(cfg).too_many_years(9)  # 0 = off
+    rules = Rules({**cfg, "years_experience": 5, "years_over_ok": 1})
+    assert not rules.too_many_years(6) and rules.too_many_years(7) and not rules.too_many_years(None)
+    assert "at most 6 years" in jw.describe_config({**cfg, "years_experience": 5, "years_over_ok": 1})

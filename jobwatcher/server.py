@@ -28,6 +28,7 @@ from .tracked import *  # noqa: F401,F403
 from .discovery import add_company, import_companies
 from .runner import run_once, refresh_scores
 from .scheduler import Scheduler
+from .filters import Rules
 from . import ai, alerts, outreach_app, referrals, signals, system, updates
 from . import __version__
 from . import keys as keystore
@@ -523,6 +524,7 @@ def create_app(token, dev=False, schedule=False):
         cfg = config_or_fail()
         scores = {r["company"]: (r.get("score", ""), r.get("tier", "")) for r in files.company_rows(cfg)}
         tracked = files.jobs(cfg)
+        years_rules = Rules(cfg)
         found, history = job_signals.for_jobs(cfg, tracked)
         known = referrals.counts(cfg, {j.get("company", "") for j in tracked.values()})
         out = []
@@ -530,7 +532,8 @@ def create_app(token, dev=False, schedule=False):
             score, tier = scores.get(j.get("company"), ("", ""))
             sig = found.get(j["key"]) or {}
             fit = j.get("fit") or {}
-            out.append({**{k: sig.get(k) for k in ("pay", "work_auth", "workplace", "relocation")},
+            out.append({**{k: sig.get(k) for k in ("pay", "work_auth", "workplace", "relocation", "years")},
+                "years_over": years_rules.too_many_years(sig.get("years")),
                 **(history.get(j["key"]) or {}), "connections": known.get(j.get("company", ""), 0),
                 "fit": {k: fit.get(k) for k in ("verdict", "score", "summary")} if fit else None,
                 "tailored": bool(j.get("tailored")),

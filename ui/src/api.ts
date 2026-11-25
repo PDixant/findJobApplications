@@ -136,6 +136,8 @@ export type Job = {
   work_auth: { id: string; label: string }[] | null;
   workplace: "remote" | "hybrid" | "on-site" | null;
   relocation: boolean | null;
+  years: number | null;
+  years_over: boolean;
   reposted?: boolean;
   open_days?: number | null;
   long_open?: boolean;

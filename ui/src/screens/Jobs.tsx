@@ -47,6 +47,7 @@ const ONLY: Record<string, (j: Job) => boolean> = {
   "With a pay range": (j) => Boolean(j.pay),
   "Where you know someone": (j) => j.connections > 0,
   "No work permit limits": (j) => !(j.work_auth ?? []).length,
+  "Within your years": (j) => !j.years_over,
   "Relocation help": (j) => j.relocation === true,
   "Fresh (not reposted)": (j) => !j.reposted && !j.long_open,
 };
@@ -297,6 +298,9 @@ function JobDetails({ job, meta, onEdit }: { job: Job; meta?: Meta; onEdit: (c: 
       <dl className="facts">
         {job.pay && <div><dt>Pay</dt><dd>{payText(job.pay)} <span className="quiet">({job.pay.text})</span></dd></div>}
         {job.workplace && <div><dt>Where you work</dt><dd>{WORKPLACES[job.workplace]}</dd></div>}
+        {job.years != null && (
+          <div><dt>Experience</dt><dd>Asks for {job.years}+ years{job.years_over ? ", more than you set in Settings" : ""}</dd></div>
+        )}
         {job.relocation != null && <div><dt>Relocation</dt><dd>{job.relocation ? "Help offered" : "Not offered"}</dd></div>}
         {(job.work_auth ?? []).length > 0 && (
           <div><dt>Work permit</dt><dd>{job.work_auth!.map((a) => a.label).join(", ")}</dd></div>

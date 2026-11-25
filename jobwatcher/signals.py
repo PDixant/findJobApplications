@@ -112,11 +112,42 @@ def relocation(text):
     return None
 
 
+NUMBER_WORDS = {w: i for i, w in enumerate(
+    "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen".split())}
+_N = r"\d{1,2}|" + "|".join(NUMBER_WORDS)
+YEARS = re.compile(rf"(?<![\d.$,])({_N})\s*(?:\+|plus)?\s*(?:(?:-|to|\u2013|\u2014)\s*(?:{_N})\s*\+?\s*)?"
+                   rf"(?:or more\s+)?(?:years?|yrs?)\b", re.I)
+WANTED_ONLY = re.compile(r"\b(prefer|preferred|nice to have|nice-to-have|bonus|ideally|asset|a plus|desirable|"
+                         r"would be great|not required)\b", re.I)
+
+
+def years_required(text):
+    """The most years of experience the posting asks for (the low end of a range such as 3 to 5),
+    or None. Only sentences about experience count, and not ones that call it preferred or a
+    bonus: "7+ years of experience" counts, "we've been around for 20 years" and "10+ years
+    preferred" don't."""
+    if not text:
+        return None
+    most = None
+    for sentence in re.split(r"(?<=[.!?;])\s+|\n+|\u2022", text):
+        if not re.search(r"experience|\bexp\b|background in|track record", sentence, re.I):
+            continue
+        if WANTED_ONLY.search(sentence):
+            continue
+        for m in YEARS.finditer(sentence):
+            n = m.group(1).lower()
+            years = NUMBER_WORDS.get(n, None) if not n.isdigit() else int(n)
+            if years and 1 <= years <= 15:
+                most = years if most is None else max(most, years)
+    return most
+
+
 def read(job, text):
     """All the signals for one tracked job."""
     place = " ".join([job.get("region") or "", *(job.get("locations") or [])])
     return {"pay": pay_range(text, place), "work_auth": work_auth(text),
-            "workplace": workplace(job.get("title"), job.get("locations"), text), "relocation": relocation(text)}
+            "workplace": workplace(job.get("title"), job.get("locations"), text), "relocation": relocation(text),
+            "years": years_required(text)}
 
 
 def norm_title(title):

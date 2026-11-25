@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from .base import *  # noqa: F401,F403
+from .signals import years_required
 
 
 # ----------------------------------------------------------------- filtering
@@ -13,6 +14,9 @@ class Rules:
         self.loc_out = compile_terms(cfg.get("locations_exclude", []))
         self.regions = [(r["name"], compile_terms(r["match"])) for r in cfg["regions"]]
         self.require_stack = cfg.get("require_stack_match", True)
+        self.my_years = float(cfg.get("years_experience") or 0)
+        self.years_over = float(cfg.get("years_over_ok") or 0)
+        self.skip_too_many_years = cfg.get("too_many_years", "skip") == "skip"
         hours = cfg.get("max_posted_age_hours")
         if hours is None and cfg.get("max_posted_age_days"):
             hours = cfg["max_posted_age_days"] * 24
@@ -30,6 +34,10 @@ class Rules:
 
     def stack_for(self, title, text):
         return all_matches(self.stack, f"{title}\n{text or ''}")
+
+    def too_many_years(self, years):
+        """True when a posting asks for more years than yours plus the allowance."""
+        return bool(self.my_years and years and years > self.my_years + self.years_over)
 
 
 def level_for(title):
@@ -64,6 +72,9 @@ def find_new_matches(store, state, rules, now, max_age, window_start):
         stack = rules.stack_for(r["title"], text)
         if rules.require_stack and not stack:
             continue
+        years = years_required(text)
+        if rules.skip_too_many_years and rules.too_many_years(years):
+            continue  # asks for more experience than you have (Which jobs, years of experience)
         matches.append({"key": key, "company": r["company"], "provider": r["provider"], "title": r["title"],
                         "locations": locations, "region": region, "stack": stack, "url": r["url"],
                         "posted": posted})

@@ -35,6 +35,10 @@ export function Flags({ job }: { job: Job }) {
     text: `${job.connections} ${job.connections === 1 ? "person" : "people"} you know`, tone: "good",
     title: "From your LinkedIn connections",
   });
+  if (job.years) flags.push({
+    text: `Asks ${job.years}+ yrs`, tone: job.years_over ? "warn" : "plain",
+    title: job.years_over ? "Asks for more years of experience than you set in Settings" : "Years of experience the posting asks for",
+  });
   for (const a of job.work_auth ?? []) flags.push({ text: a.label, tone: "warn" });
   if (job.relocation) flags.push({ text: "Relocation help", tone: "good" });
   if (job.reposted) flags.push({ text: "Reposted", tone: "plain", title: "The same title was posted here before" });
