@@ -13,29 +13,28 @@ Everything in detail. New here? Start with the [README](../README.md).
 ## How it finds jobs
 
 - **Every company, every run.** Each company's job board is read through its public feed, usually in one request. For a company whose board isn't known yet, Job Watcher reads its careers page, which usually names the board.
-- **Two lists.** Every open posting is saved in `postings.db` (and `all_postings.csv` for Excel). Only postings that pass your filters become your **matches**. Filtering happens on your computer, so after changing a filter, **Re-filter saved postings** applies it instantly without asking any website again.
+- **Two lists.** Every open posting is saved in `postings.db` (and `all_postings.csv` for Excel). Only postings that pass your filters become your **matches**. Filtering happens on your computer, so after changing a filter, **Re-filter saved postings** (offered right after you save, and under **Other ways to run**) applies it instantly without asking any website again.
 - **One run at a time.** A second run, from the app or a terminal, waits its turn.
 - **Polite to job sites.** Requests are spaced out. If a site says "too many requests", Job Watcher waits as asked and comes back on the next run.
-- **"What did I miss?"** **Run and list since last check** shows only postings that appeared since you last looked.
+- **"What did I miss?"** Under **Run now**, **Other ways to run → Run and list what's new** shows only postings that appeared since you last looked.
 
 ## Settings
 
-Change them in the app under **Settings**. A side panel explains them in plain words as you type.
+Change them in the app under **Settings**. Beside the form, **In plain words** sums up what they do: the checks a job must pass, how new companies are found and what else is on. As you edit, it shows the result of your unsaved changes and marks each check they affect.
 
 > [!NOTE]
 > Your settings are saved in `my_settings.toml`, made the first time you run Job Watcher from `config.toml` (the starting point everyone shares). Only your copy ever changes, and git ignores it. Updates never touch it, and your changes never reach anyone else.
 
-| Section | What it controls |
+Settings has six tabs:
+
+| Tab | What's in it |
 |---|---|
-| **Which jobs** | Titles to include and skip, tech the description must mention, how recently it was posted, and your years of experience |
-| **Where** | Your regions, and places to skip |
-| **Finding new companies** | The web search: service, how often, job sites, places, your own searches and a monthly limit |
-| **Careers websites** | Reading companies' own careers pages |
-| **Runs and alerts** | Your tracker file, desktop pop-ups and "since last check" |
-| **Recruiter emails** | Your resume, about-me file, contacts per company and follow-up timing |
-| **Automatic runs** | When it runs by itself while open, and whether it stays in the tray |
-| **AI help (Claude)** | Fit scores for new matches, a monthly limit and your resume files |
-| **Phone alerts** | The ntfy server |
+| **Which jobs** | Titles to include and skip, tech the description must mention, how recently it was posted, your years of experience, and your regions and places to skip |
+| **Finding companies** | The web search (service, how often, job sites, places, your own searches and a monthly limit) and companies' own careers pages |
+| **Runs and alerts** | When it runs by itself, whether it keeps running after you close it, desktop pop-ups, "since last check" and phone alerts |
+| **Claude and email** | What Claude can see, fit scores, a monthly limit, your resume files, recruiter emails and people you know |
+| **Keys** | Your keys, saved in your computer's password store |
+| **Updates** | Your version, what's new and the Update button |
 
 **Years of experience.** Set yours, and postings asking for more (for example "8+ years of experience") are left out. **Stretch allowance** lets through jobs asking for a little more than you have: with 5 years and an allowance of 1, a 6+ year job counts and a 7+ doesn't. Choose **flag** instead of **skip** to keep those jobs, marked with the years they ask for.
 
@@ -53,9 +52,9 @@ site:jobs.ashbyhq.com (intitle:"Frontend" OR intitle:"Full Stack") ("Vancouver" 
 Every result links to a company's job board, so new companies are added and read directly from then on.
 
 1. Sign up at [serper.dev](https://serper.dev) (2,500 free searches, no card).
-2. Paste the key under **Settings → Keys and accounts**.
+2. Paste the key under **Settings → Keys**.
 
-**Seeing and editing the searches.** **Settings → Finding new companies** lists every search exactly as it will be sent, updated as you edit:
+**Seeing and editing the searches.** **Settings → Finding companies** lists every search exactly as it will be sent, updated as you edit:
 
 - **Same titles as Which jobs** searches for your job titles. A long list is split over a few searches, because Google ignores words past the 32nd.
 - **Your own searches**: one per line, in Google's search syntax. Keep a `site:` part so results link to job boards.
@@ -89,13 +88,13 @@ Board IDs by hand: `job-boards.greenhouse.io/acme` is greenhouse `acme`, `jobs.l
 
 ## Running by itself
 
-By default, Job Watcher runs only while its window is open, and closing the window quits it. While it's open, it also checks at the times under **Settings → Automatic runs** (8:00, 12:00, 16:00 and 20:00 to start).
+By default, Job Watcher runs only while its window is open, and closing the window quits it. While it's open, it also checks at the times under **Settings → Runs and alerts** (8:00, 12:00, 16:00 and 20:00 to start).
 
 Want it checking all day? Turn on **Keep running after closing**. Closing the window then leaves it in the tray by the clock (Windows), and **Start when you sign in** opens it there each time you sign in.
 
 ## Updates
 
-When a new version is on GitHub, a banner says so with what changed. **Update now** downloads it, installs anything new it needs, and reopens Job Watcher on it. **Settings → Updates** shows your version and has **Check for updates**.
+When a new version is on GitHub, **New version ready** appears at the top right of the app, with what changed. **Update now** downloads it, installs anything new it needs, and reopens Job Watcher on it. **Settings → Updates** shows your version and has **Check for updates**.
 
 | How you got Job Watcher | How it updates |
 |---|---|
@@ -109,7 +108,7 @@ Your settings, company list, jobs and keys are never touched.
 
 ## Claude's help
 
-Add your Anthropic key under **Settings → Keys and accounts**. Each use sends one posting plus your resume and `about_me.md` to Anthropic, and never more than your monthly limit (300 by default).
+Add your Anthropic key under **Settings → Keys**. Each use sends one posting plus your resume and `about_me.md` to Anthropic, and never more than your monthly limit (300 by default).
 
 - **Fit scores.** Claude marks each requirement **Have it**, **Partly** or **Missing**, and gives a verdict: **Apply**, **Stretch** (one gap you can bridge) or **Skip**. New matches are scored after each run.
 - **Tailored resumes.** Put your LaTeX resume in the folder as `resume.tex` (and your own rules as `resume_rules.md`, starting from `resume_rules.example.md`). **Tailor my resume** rewrites it for one posting without inventing anything. Numbers that would help come back as a "numbers to find" list. With [MiKTeX](https://miktex.org) or [Tectonic](https://tectonic-typesetting.github.io) installed you get a PDF too, and Outreach attaches it.
@@ -132,7 +131,7 @@ Filter by them in **Jobs** with **Fit**, **Where** and **Only**.
 ## People you know
 
 1. On LinkedIn: **Settings → Data privacy → Get a copy of your data**, pick **Connections**. LinkedIn emails you `Connections.csv` within about 10 minutes.
-2. In Job Watcher: **Settings → People you know → Import Connections.csv**.
+2. In Job Watcher: **Settings → Claude and email → People you know → Import Connections.csv**.
 
 Every match then shows how many people you know there, with their names in the match's details. The list stays on your computer.
 
@@ -155,7 +154,7 @@ The **Pipeline** screen has a column per status: New, Applied, Interviewing, Off
 ## Phone alerts
 
 1. Install the free [ntfy](https://ntfy.sh) app on your phone.
-2. In Job Watcher: **Settings → Phone alerts → Make me a private topic**.
+2. In Job Watcher: **Settings → Runs and alerts → Make me a private topic**.
 3. In ntfy, tap **+** and subscribe to that topic. **Send a test alert** to check.
 
 New matches arrive with the company, title and a link.

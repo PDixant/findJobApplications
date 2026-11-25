@@ -6,14 +6,14 @@ import { n } from "../format";
 
 const BOARDS = ["auto", "greenhouse", "ashby", "lever", "workday", "smartrecruiters", "workable", "website", "other"];
 const BOARD_HELP: Record<string, string> = {
-  auto: "Detect the job board on the next run",
+  auto: "Find the job board on the next run",
   website: "Read the company's own careers page",
-  other: "Its own careers site; try reading the careers page",
+  other: "Its own careers site; the app tries reading the careers page",
 };
 
 type Form = Pick<Company, "board" | "slug" | "careers_url" | "domain" | "region" | "priority" | "notes"> & { enabled: boolean };
 
-/** The edit form in a company's details panel. */
+/** The edit form in a company's details sheet. */
 export function CompanyForm({ c, locked }: { c: Company; locked: boolean }) {
   const client = useQueryClient();
   const initial = (): Form => ({
@@ -33,10 +33,10 @@ export function CompanyForm({ c, locked }: { c: Company; locked: boolean }) {
       const body = Object.fromEntries(changed.map((k) => [k, form[k]]));
       const r = await send<{ queued: boolean; detail?: string }>(
         `companies?name=${encodeURIComponent(c.company)}`, "PATCH", body);
-      toast(r.queued ? r.detail ?? "Saved. Applied when the run finishes." : `Saved ${c.company}.`, "good");
+      toast(r.queued ? r.detail ?? "Saved. It takes effect when the run finishes." : `Saved ${c.company}.`, "good");
       await client.invalidateQueries({ queryKey: ["companies"] });
     } catch (e) {
-      toast(e instanceof Error ? e.message : "Not saved.", "bad");
+      toast(e instanceof Error ? e.message : "That didn't save.", "bad");
     } finally {
       setSaving(false);
     }
@@ -48,51 +48,50 @@ export function CompanyForm({ c, locked }: { c: Company; locked: boolean }) {
   const needsSlug = !["auto", "website", "other"].includes(form.board);
   return (
     <form className="company-form" onSubmit={(e) => { e.preventDefault(); save(); }}>
-      <h3>Edit</h3>
-      <label className="check">
+      <label className="switch">
         <input type="checkbox" checked={form.enabled} onChange={(e) => set({ enabled: e.target.checked })} />
         Watch this company
       </label>
-      <label>
-        <span>Board</span>
+      <label className="field-stack">
+        Board
         <select value={form.board} onChange={(e) => set({ board: e.target.value })}>
           {BOARDS.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
         {BOARD_HELP[form.board] && <small>{BOARD_HELP[form.board]}</small>}
       </label>
       {needsSlug && (
-        <label>
-          <span>Board name (slug)</span>
+        <label className="field-stack">
+          Board name (slug)
           <input value={form.slug} onChange={(e) => set({ slug: e.target.value })} placeholder="as in boards.greenhouse.io/slug" />
         </label>
       )}
-      <label>
-        <span>Careers page</span>
+      <label className="field-stack">
+        Careers page
         <input value={form.careers_url} onChange={(e) => set({ careers_url: e.target.value })} placeholder="https://" />
       </label>
       <div className="form-row">
-        <label>
-          <span>Region</span>
+        <label className="field-stack">
+          Region
           <input value={form.region} onChange={(e) => set({ region: e.target.value })} />
         </label>
-        <label className="narrow">
-          <span>Priority</span>
-          <input value={form.priority} inputMode="numeric" onChange={(e) => set({ priority: e.target.value })} />
+        <label className="field-stack">
+          Priority
+          <input value={form.priority} inputMode="numeric" className="num" onChange={(e) => set({ priority: e.target.value })} />
         </label>
       </div>
-      <label>
-        <span>Email domain</span>
+      <label className="field-stack">
+        Email domain
         <input value={form.domain} onChange={(e) => set({ domain: e.target.value })} placeholder="company.com" />
       </label>
-      <label>
-        <span>Notes</span>
+      <label className="field-stack">
+        Notes
         <textarea rows={2} value={form.notes} onChange={(e) => set({ notes: e.target.value })} />
       </label>
       <div className="form-actions">
-        <button className="button primary" type="submit" disabled={!changed.length || saving}>Save changes</button>
+        <button className="button" type="submit" disabled={!changed.length || saving}>Save changes</button>
         {changed.length > 0 && <button className="text-button" type="button" onClick={() => setForm(initial())}>Undo</button>}
       </div>
-      {locked && changed.length > 0 && <p className="hint">A run is going, so this is applied when it saves.</p>}
+      {locked && changed.length > 0 && <p className="hint">A run is going, so this takes effect when it finishes.</p>}
       {(changed.includes("board") || changed.includes("slug") || changed.includes("careers_url")) && (
         <p className="hint">A new board or careers page is checked fresh on the next run.</p>
       )}
@@ -118,7 +117,7 @@ export function AddCompanies({ disabled, onClose }: { disabled: boolean; onClose
       setName("");
       await client.invalidateQueries({ queryKey: ["companies"] });
     } catch (e) {
-      toast(e instanceof Error ? e.message : "Not added.", "bad");
+      toast(e instanceof Error ? e.message : "That company wasn't added.", "bad");
     } finally {
       setBusy(false);
     }
@@ -130,7 +129,7 @@ export function AddCompanies({ disabled, onClose }: { disabled: boolean; onClose
     try {
       setPreview(await upload<ImportPreview>(`companies/import?filename=${encodeURIComponent(file.name)}`, file));
     } catch (e) {
-      toast(e instanceof Error ? e.message : "Could not read that file.", "bad");
+      toast(e instanceof Error ? e.message : "That file couldn't be read.", "bad");
     } finally {
       setBusy(false);
       if (fileInput.current) fileInput.current.value = "";
@@ -142,31 +141,31 @@ export function AddCompanies({ disabled, onClose }: { disabled: boolean; onClose
     setBusy(true);
     try {
       const r = await send<{ added: number; updated: number }>(`companies/import/${preview.id}`, "POST");
-      toast(`Imported: ${n(r.added)} new, ${n(r.updated)} filled in.`, "good");
+      toast(`Imported. ${n(r.added)} new, ${n(r.updated)} filled in.`, "good");
       setPreview(null);
       await client.invalidateQueries({ queryKey: ["companies"] });
     } catch (e) {
-      toast(e instanceof Error ? e.message : "Not imported.", "bad");
+      toast(e instanceof Error ? e.message : "Nothing was imported.", "bad");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <section className="panel add-panel" aria-label="Add companies">
-      <div className="panel-head">
-        <h2>Add companies</h2>
+    <section className="card add-panel" aria-labelledby="add-title">
+      <header className="card-head">
+        <h2 id="add-title">Add companies</h2>
         <button className="text-button" onClick={onClose}>Close</button>
-      </div>
-      {disabled && <p className="hint">A run is going. Adding and importing work again when it finishes.</p>}
+      </header>
+      {disabled && <p className="hint" style={{ marginBottom: 16 }}>A run is going. Adding and importing work again when it finishes.</p>}
       <div className="add-row">
         <form className="add-link" onSubmit={(e) => { e.preventDefault(); add(); }}>
-          <label>
-            <span>A job posting, job board or careers page link</span>
+          <label className="field-stack">
+            A job posting, job board or careers page link
             <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://jobs.lever.co/company/..." />
           </label>
-          <label className="narrow-wide">
-            <span>Name (optional)</span>
+          <label className="field-stack narrow">
+            Name, if you like
             <input value={name} onChange={(e) => setName(e.target.value)} />
           </label>
           <button className="button primary" type="submit" disabled={!link.trim() || busy || disabled}>Add company</button>
@@ -174,24 +173,20 @@ export function AddCompanies({ disabled, onClose }: { disabled: boolean; onClose
         <div className="add-import">
           <span>Or a spreadsheet with a Company column</span>
           <input ref={fileInput} type="file" accept=".xlsx,.csv" hidden onChange={(e) => choose(e.target.files?.[0])} />
-          <button className="button" onClick={() => fileInput.current?.click()} disabled={busy || disabled}>
-            Choose .xlsx or .csv
-          </button>
+          <button className="button" onClick={() => fileInput.current?.click()} disabled={busy || disabled}>Choose .xlsx or .csv</button>
         </div>
       </div>
       {preview && (
         <div className="import-preview">
           <p>
             <strong>{preview.filename}</strong>: {n(preview.rows)} rows read. {n(preview.added.length)} new
-            {preview.added.length === 1 ? " company" : " companies"}, {n(preview.updated.length)} you already watch
+            {preview.added.length === 1 ? " company" : " companies"}, and {n(preview.updated.length)} you already watch
             would get missing details filled in. Nothing is saved until you import.
           </p>
           {preview.added.length > 0 && (
-            <ul className="plain-list preview-list">
+            <ul className="preview-list">
               {preview.added.slice(0, 60).map((r) => (
-                <li key={r.company}>
-                  <strong>{r.company}</strong> <span className="quiet">{r.region}{r.board !== "auto" ? `, ${r.board}` : ""}</span>
-                </li>
+                <li key={r.company}><strong>{r.company}</strong> <span className="quiet">{r.region}{r.board !== "auto" ? `, ${r.board}` : ""}</span></li>
               ))}
               {preview.added.length > 60 && <li className="quiet">and {n(preview.added.length - 60)} more</li>}
             </ul>
@@ -199,7 +194,7 @@ export function AddCompanies({ disabled, onClose }: { disabled: boolean; onClose
           <div className="form-actions">
             <button className="button primary" onClick={confirm}
               disabled={busy || disabled || !(preview.added.length || preview.updated.length)}>
-              Import {n(preview.added.length + preview.updated.length)}
+              Import {n(preview.added.length + preview.updated.length)} companies
             </button>
             <button className="text-button" onClick={() => setPreview(null)}>Cancel</button>
           </div>

@@ -471,9 +471,71 @@ def describe_config(cfg):
                  + (f", at most {a['monthly_limit']} Claude requests a month." if a["monthly_limit"] else ".")
                  + ("" if os.environ.get("ANTHROPIC_API_KEY") else " (No Anthropic key yet, so nothing is sent.)"))
     lines.append("Phone alerts: " + ("ON (ntfy topic saved with your keys)." if os.environ.get("NTFY_TOPIC") else
-                                     "OFF. Save an ntfy topic under Keys and accounts to get them."))
+                                     "OFF. Save an ntfy topic in Settings, under Runs and alerts, to get them."))
     lines.append(f"Tracker: {cfg['excel_file']}   Companies list: {cfg['companies_file']}")
     return "\n".join(lines)
+
+
+SEARCH_NAMES = {"serper": "Serper", "brave": "Brave Search", "serpapi": "SerpApi"}
+LOOK_BACK_WORDS = {"day": "the last day", "week": "the last week", "month": "the last month", "any": "any time"}
+
+
+def _times(count):
+    count = int(count) if float(count).is_integer() else count
+    return {1: "once", 2: "twice"}.get(count, f"{count:g} times")
+
+
+def summarize_config(cfg):
+    """The same summary as describe_config, as data the app lays out: the checks a posting must pass,
+    how new companies are found, and the extras that are on or off."""
+    checks = [{"id": "titles", "label": "Title has one of", "words": list(cfg["titles_include"])}]
+    keeps_senior = not any(t.lower() in ("senior", "sr", "sr.", "lead") for t in cfg["titles_exclude"])
+    if cfg["titles_exclude"]:
+        checks.append({"id": "skip_titles", "label": "Title doesn't have", "words": list(cfg["titles_exclude"]),
+                       "note": "Senior and Lead roles are kept." if keeps_senior else ""})
+    if cfg["require_stack_match"] and cfg["stack_keywords"]:
+        checks.append({"id": "stack", "label": "Description mentions one of", "words": list(cfg["stack_keywords"])})
+    else:
+        checks.append({"id": "stack", "label": "Tech stack", "text": "Any stack. Descriptions aren't checked for keywords."})
+    checks.append({"id": "places", "label": "Located in",
+                   "groups": [{"name": r["name"], "words": list(r["match"])} for r in cfg["regions"]],
+                   "except": list(cfg["locations_exclude"])})
+    hours = cfg["max_posted_age_hours"]
+    checks.append({"id": "age", "label": "Posted",
+                   "text": f"Within the last {hours / 24:g} days" if hours >= 48 and hours % 24 == 0
+                   else f"Within the last {hours:g} hours"})
+    if cfg.get("years_experience"):
+        mine, extra = cfg["years_experience"], cfg.get("years_over_ok") or 0
+        most = mine + extra
+        stretch = f" plus {extra:g} {'year' if extra == 1 else 'years'} of stretch" if extra else ""
+        flag = cfg.get("too_many_years", "skip") != "skip"
+        checks.append({"id": "years", "label": "Experience",
+                       "text": f"Asks for {most:g} years or fewer. You have {mine:g}{stretch}."
+                       + (" Jobs asking more are kept and marked." if flag else "")})
+
+    s, c = cfg["search"], cfg["career_sites"]
+    key_name = SEARCH_KEYS[s["provider"]]
+    searches = search_queries(cfg) if s["enabled"] else []
+    search = {"on": bool(s["enabled"]), "provider": SEARCH_NAMES.get(s["provider"], s["provider"]),
+              "key": bool(os.environ.get(key_name)), "key_name": key_name,
+              "per_day": _times(s["runs_per_day"]), "searches": len(searches),
+              "queries": len(searches) * s["pages_per_query"], "monthly_limit": s["monthly_query_limit"],
+              "look_back": LOOK_BACK_WORDS.get(s["look_back"], s["look_back"]),
+              "watch_new": s["new_companies"] == "watch"}
+
+    a = cfg.get("ai", DEFAULTS["ai"])
+    claude_key = bool(os.environ.get("ANTHROPIC_API_KEY"))
+    extras = [
+        {"id": "careers", "label": "Careers websites", "on": bool(c["enabled"]),
+         "text": f"Up to {c['max_new_pages_per_site']} new job pages per site a run" if c["enabled"] else "Off"},
+        {"id": "claude", "label": "Claude fit scores", "on": bool(a["score_new_matches"] and claude_key),
+         "text": ("Off" if not a["score_new_matches"] else "On, but no Anthropic key yet" if not claude_key
+                  else f"On, up to {a['monthly_limit']:,} requests a month" if a["monthly_limit"] else "On")},
+        {"id": "alerts", "label": "Phone alerts", "on": bool(os.environ.get("NTFY_TOPIC")),
+         "text": "On" if os.environ.get("NTFY_TOPIC") else "Off. Make a topic under Runs and alerts to turn them on"},
+    ]
+    return {"checks": checks, "search": search, "extras": extras,
+            "files": {"tracker": cfg["excel_file"], "companies": cfg["companies_file"]}}
 
 
 

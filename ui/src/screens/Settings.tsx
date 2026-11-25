@@ -1,20 +1,21 @@
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  api, send, type Changes, type KeysData, type KeyStatus, type RegionValue, type ScheduleStatus, type SettingField,
-  type SettingsData,
+  api, send, type Changes, type KeysData, type KeyStatus, type PlainCheck, type PlainSummary, type RegionValue,
+  type ScheduleStatus, type SettingField, type SettingsData,
 } from "../api";
 import { useRunActions } from "../components/RunControls";
-import { ErrorNote } from "../components/bits";
+import { Confirm, ErrorNote, Icon, Skeleton, Tabs } from "../components/bits";
 import { toast } from "../live";
-import { hex } from "../format";
+import { hex, n } from "../format";
+import { go, useRoute } from "../router";
 import { ClaudeHelp, Connections, PhoneAlerts } from "./SettingsExtras";
 import { UpdatesPanel } from "../components/Update";
 
 const LABELS: Record<string, string> = {
   titles: "Job titles", skip_titles: "Skip titles with", must_mention: "Stack keywords", max_age_hours: "Posted within (hours)",
   region: "Regions", skip: "Skip places", enabled: "On", provider: "Search service", runs_per_day: "Searches per day",
-  look_back: "Look back", sites: "Job sites", places: "Places", skip_words: "Leave out words", pages_per_query: "Pages per site",
+  look_back: "Look back", sites: "Job sites", places: "Places", skip_words: "Leave out words", pages_per_query: "Pages per search",
   monthly_query_limit: "Monthly search limit", new_companies: "New companies", career_page_lookups_per_run: "Careers page lookups per run",
   new_pages_per_site_per_run: "New pages per site per run", desktop_notifications: "Desktop pop-ups",
   since_last_check_by_default: "Always list since last check", check_all_companies_every_run: "Read every company every run",
@@ -28,15 +29,28 @@ const LABELS: Record<string, string> = {
 };
 const SWATCHES = ["C6EFCE", "DDEBF7", "D9F2F2", "FCE4D6", "E4DFEC", "FFF2CC", "F8CBAD", "EDEDED"];
 
+type TabId = "jobs" | "search" | "runs" | "claude" | "keys" | "updates";
+const TABS: { id: TabId; label: string; sections: string[] }[] = [
+  { id: "jobs", label: "Which jobs", sections: ["jobs", "places"] },
+  { id: "search", label: "Finding companies", sections: ["search", "career_sites"] },
+  { id: "runs", label: "Runs and alerts", sections: ["schedule", "tracker", "alerts"] },
+  { id: "claude", label: "Claude and email", sections: ["ai", "outreach"] },
+  { id: "keys", label: "Keys", sections: [] },
+  { id: "updates", label: "Updates", sections: [] },
+];
+
 const id = (section: string, key: string) => `${section}.${key}`;
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+type SearchPreview = { searches: { site: string | null; query: string; mine: boolean }[]; pages_per_query: number };
 
 export function Settings() {
   const client = useQueryClient();
+  const route = useRoute();
+  const tabParam = route.params.get("tab") ?? route.params.get("section");
+  const tab: TabId = TABS.some((t) => t.id === tabParam) ? (tabParam as TabId) : "jobs";
   const settings = useQuery({ queryKey: ["settings"], queryFn: () => api<SettingsData>("settings") });
   const [draft, setDraft] = useState<Record<string, unknown>>({});
-  const [explain, setExplain] = useState<string | null>(null);
-  const [searches, setSearches] = useState<SearchPreview | null>(null);
+  const [preview, setPreview] = useState<{ summary: PlainSummary } & SearchPreview | null>(null);
   const saved = useQuery({ queryKey: ["search-queries", settings.data], queryFn: () => api<SearchPreview>("search/queries") });
   const [problem, setProblem] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -59,18 +73,18 @@ export function Settings() {
     return out;
   }, [draft, original]);
   const dirty = Object.keys(changes).length > 0;
+  const changedIn = (t: (typeof TABS)[number]) => t.sections.reduce((sum, s) => sum + Object.keys(changes[s] ?? {}).length, 0);
 
-  // The plain-English summary follows your edits before you save them.
+  // The plain-words summary follows your edits before you save them.
   useEffect(() => {
     if (!dirty) {
-      setExplain(null);
-      setSearches(null);
+      setPreview(null);
       setProblem(null);
       return;
     }
     const t = window.setTimeout(() => {
-      send<{ explain: string } & SearchPreview>("settings/preview", "POST", { changes })
-        .then((r) => { setExplain(r.explain); setSearches(r); setProblem(null); })
+      send<{ summary: PlainSummary } & SearchPreview>("settings/preview", "POST", { changes })
+        .then((r) => { setPreview(r); setProblem(null); })
         .catch((e) => setProblem(e instanceof Error ? e.message : String(e)));
     }, 400);
     return () => window.clearTimeout(t);
@@ -80,8 +94,8 @@ export function Settings() {
   // The search's own title list only matters when it isn't using your job filter's titles.
   const hidden = (s: SettingsData["sections"][number], f: SettingField) => {
     if (s.id !== "search" || f.key !== "titles") return false;
-    const same = s.fields.find((x) => x.key === "same_titles_as_jobs");
-    return Boolean(same && value("search", same));
+    const sameTitles = s.fields.find((x) => x.key === "same_titles_as_jobs");
+    return Boolean(sameTitles && value("search", sameTitles));
   };
   const set = (section: string, key: string, v: unknown) => {
     setJustSaved(false);
@@ -99,29 +113,44 @@ export function Settings() {
       client.invalidateQueries({ queryKey: ["summary"] });
     } catch (e) {
       setProblem(e instanceof Error ? e.message : String(e));
-      toast("Settings not saved. See the note at the bottom.", "bad");
+      toast("Your settings weren't saved. The reason is in In plain words.", "bad");
     } finally {
       setSaving(false);
     }
   }
 
+  const current = TABS.find((t) => t.id === tab)!;
+  const sections = settings.data?.sections.filter((s) => current.sections.includes(s.id)) ?? [];
+  const showSearches = () => {
+    go("settings", { tab: "search" });
+    window.setTimeout(() => document.getElementById("search-list")?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+  };
+
   return (
-    <div className="screen settings">
-      <header className="screen-head">
+    <>
+      <header className="page-head with-tabs">
         <h1>Settings</h1>
-        <p className="lede">Saved into my_settings.toml, which is yours alone: updates to Job Watcher never change it. Runs pick up changes on their next start.</p>
+        <p className="lede">Saved in my_settings.toml, which is yours alone: updates to Job Watcher never change it. Runs use your changes from their next start.</p>
+        <Tabs label="Settings" active={tab} onPick={(t) => go("settings", { tab: t })}
+          items={TABS.map((t) => ({ id: t.id, label: t.label, count: changedIn(t) ? `${changedIn(t)} changed` : undefined }))} />
       </header>
+      <hr className="character" style={{ marginBottom: 32 }} />
       <ErrorNote error={settings.error} />
       {justSaved && (
-        <div className="saved-note">
-          <span>Saved. Your matches update on the next run, or now without making any requests:</span>
-          <button className="button" onClick={() => { start("refilter"); setJustSaved(false); }}>Re-filter saved postings</button>
+        <div className="notice info" role="status">
+          <Icon name="check" size={20} />
+          <div className="saved-note">
+            <span>Saved. Your matches update on the next run, or right now without making any requests.</span>
+            <button className="button small" onClick={() => { start("refilter"); setJustSaved(false); }}>Re-filter saved postings</button>
+          </div>
         </div>
       )}
       <div className="settings-layout">
         <div className="settings-forms">
-          {settings.data?.sections.map((s) => (
-            <section key={s.id} className="panel settings-section" aria-labelledby={`sec-${s.id}`}>
+          {!settings.data && current.sections.length > 0 && <Skeleton height={400} style={{ borderRadius: 12 }} />}
+          {tab === "claude" && <ClaudeHelp />}
+          {sections.map((s) => (
+            <section key={s.id} className="card settings-section" aria-labelledby={`sec-${s.id}`}>
               <h2 id={`sec-${s.id}`}>{s.title}</h2>
               {s.fields.filter((f) => !hidden(s, f)).map((f) => (
                 <Field key={f.key} field={f} value={value(s.id, f)} changed={Boolean(changes[s.id] && f.key in changes[s.id])}
@@ -129,7 +158,7 @@ export function Settings() {
               ))}
               {s.id === "alerts" && <PhoneAlerts />}
               {s.id === "search" && (
-                <SearchList data={searches ?? saved.data} unsaved={dirty}
+                <SearchList data={preview ?? saved.data} unsaved={dirty}
                   onEdit={(q) => {
                     const mine = (value("search", s.fields.find((f) => f.key === "my_queries")!) as string[]) ?? [];
                     if (!mine.includes(q)) set("search", "my_queries", [...mine, q]);
@@ -137,67 +166,179 @@ export function Settings() {
               )}
             </section>
           ))}
-          <ClaudeHelp />
-          <Connections />
-          <UpdatesPanel />
-          <Background />
-          <Keys />
+          {tab === "runs" && <Background />}
+          {tab === "claude" && <Connections />}
+          {tab === "keys" && <Keys />}
+          {tab === "updates" && <UpdatesPanel />}
         </div>
-        <aside className="panel explain">
-          <h2>In plain words</h2>
-          {dirty && <p className="hint">{problem ? "This change can't be saved yet:" : "With your unsaved changes:"}</p>}
-          {problem ? <p className="error-note">{problem}</p>
-            : <pre className="explain-text">{explain ?? settings.data?.explain ?? ""}</pre>}
-        </aside>
+        <PlainWords summary={preview?.summary ?? settings.data?.summary} saved={settings.data?.summary} dirty={dirty}
+          problem={problem} onSearches={showSearches} />
       </div>
       {dirty && (
-        <div className="save-bar">
-          <span>{Object.values(changes).reduce((t, s) => t + Object.keys(s).length, 0)} unsaved changes</span>
+        <div className="save-bar" role="region" aria-label="Unsaved changes">
+          <span>{n(Object.values(changes).reduce((t, s) => t + Object.keys(s).length, 0))} unsaved {Object.values(changes).reduce((t, s) => t + Object.keys(s).length, 0) === 1 ? "change" : "changes"}</span>
           <button className="text-button" onClick={() => { setDraft({}); setProblem(null); }}>Discard</button>
           <button className="button primary" onClick={save} disabled={saving || Boolean(problem)}>Save changes</button>
         </div>
       )}
-    </div>
+    </>
   );
 }
+
+// ------------------------------------------------------------------ in plain words
+
+const SHOWN = 6;
+
+/** Words, the first few, with the rest one click away. */
+function Words({ words, empty = "None" }: { words: string[]; empty?: string }) {
+  const [all, setAll] = useState(false);
+  if (!words.length) return <span className="quiet">{empty}</span>;
+  const shown = all ? words : words.slice(0, SHOWN);
+  return (
+    <>
+      {shown.join(", ")}
+      {words.length > SHOWN && (
+        <button className="text-button more" onClick={() => setAll(!all)}>
+          {all ? "Show fewer" : `and ${n(words.length - SHOWN)} more`}
+        </button>
+      )}
+    </>
+  );
+}
+
+function CheckValue({ c }: { c: PlainCheck }) {
+  const [places, setPlaces] = useState(false);
+  if (c.groups) {
+    return (
+      <>
+        <p className="plain-value">
+          {c.groups.map((g) => g.name).join(", ") || <span className="quiet">No regions, so nothing matches</span>}
+          {c.groups.length > 0 && (
+            <button className="text-button more" onClick={() => setPlaces(!places)}>{places ? "Hide places" : "Show places"}</button>
+          )}
+        </p>
+        {places && c.groups.map((g) => (
+          <p key={g.name} className="plain-group"><b>{g.name}:</b> <span className="secondary">{g.words.join(", ")}</span></p>
+        ))}
+        {c.except && c.except.length > 0 && <p className="plain-note">Not if it's only in <Words words={c.except} /></p>}
+      </>
+    );
+  }
+  return (
+    <>
+      <p className="plain-value">{c.words ? <Words words={c.words} /> : c.text}</p>
+      {c.note && <p className="plain-note">{c.note}</p>}
+    </>
+  );
+}
+
+function OnOff({ on, children, bad }: { on: boolean; children: ReactNode; bad?: boolean }) {
+  return (
+    <span className={`plain-state ${bad ? "bad" : on ? "on" : "off"}`}>
+      <Icon name={bad ? "alert" : on ? "check" : "dash"} />{children}
+    </span>
+  );
+}
+
+/** What your settings do, in short sentences: the checks a job must pass, how new companies are
+ *  found, and what else is on. With unsaved changes it shows the result of them, and marks what moved. */
+function PlainWords({ summary, saved, dirty, problem, onSearches }: {
+  summary?: PlainSummary; saved?: PlainSummary; dirty: boolean; problem: string | null; onSearches: () => void;
+}) {
+  if (!summary) return <aside className="card plain"><Skeleton height={320} /></aside>;
+  const moved = (a: unknown, b: unknown) => dirty && !same(a, b);
+  const was = (cid: string) => saved?.checks.find((c) => c.id === cid);
+  const s = summary.search;
+  return (
+    <aside className="card plain" aria-labelledby="plain-title">
+      <h2 id="plain-title" className="t-title-m">In plain words</h2>
+      {problem ? (
+        <p className="error-note" role="alert"><Icon name="alert" />{problem} Fix this and the summary comes back.</p>
+      ) : (
+        <p className="plain-lead">
+          {dirty ? "With your unsaved changes, a" : "A"} job goes into your tracker when it passes all {summary.checks.length} of these checks.
+        </p>
+      )}
+      <ul className="plain-checks" aria-label="Checks a job must pass">
+        {summary.checks.map((c) => {
+          const changed = moved(c, was(c.id));
+          return (
+            <li key={c.id} className={`plain-check ${changed ? "is-changed" : ""}`}>
+              <p className="plain-label"><span>{c.label}</span>{changed && <span className="changed">Changed</span>}</p>
+              <CheckValue c={c} />
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className={`plain-block plain-check ${moved(s, saved?.search) ? "is-changed" : ""}`} style={{ paddingBottom: 0 }}>
+        <h3>Finding new companies</h3>
+        {s.on ? (
+          <>
+            <p className="plain-value"><OnOff on>On, {s.per_day} a day through {s.provider}</OnOff></p>
+            {!s.key && <p className="plain-value" style={{ marginTop: 4 }}><OnOff on={false} bad>No {s.provider} key yet. Add it under Keys.</OnOff></p>}
+            <p className="plain-note">
+              {s.searches ? `${n(s.searches)} ${s.searches === 1 ? "search" : "searches"} a run, up to ${n(s.queries)} queries. ` : "Nothing to search yet. Pick a job site or add searches of your own. "}
+              At most {n(s.monthly_limit)} a month, each looking back over {s.look_back}.{" "}
+              New companies are {s.watch_new ? "watched right away" : "added turned off, for you to review"}.
+            </p>
+            {s.searches > 0 && <button className="text-button" style={{ marginTop: 8 }} onClick={onSearches}>See every search</button>}
+          </>
+        ) : (
+          <p className="plain-value"><OnOff on={false}>Off. Turn it on under Finding companies.</OnOff></p>
+        )}
+      </div>
+
+      <div className="plain-block">
+        <h3>Also</h3>
+        <dl className="plain-extras">
+          {summary.extras.map((x) => (
+            <div key={x.id}><dt>{x.label}</dt><dd><OnOff on={x.on}>{x.text}</OnOff></dd></div>
+          ))}
+        </dl>
+      </div>
+      <p className="plain-files">Your tracker is <code>{summary.files.tracker}</code> and your company list is <code>{summary.files.companies}</code>.</p>
+    </aside>
+  );
+}
+
+// ------------------------------------------------------------------ fields
 
 function Field({ field, value, changed, onChange }: {
   field: SettingField; value: unknown; changed: boolean; onChange: (v: unknown) => void;
 }) {
   const label = LABELS[field.key] ?? field.key;
   const [kind, options] = field.kind.split(":");
+  const inputId = `f-${field.key}`;
   let control;
   if (kind === "list") control = <Chips value={(value as string[]) ?? []} onChange={onChange} label={label} />;
   else if (kind === "lines") control = <Lines value={(value as string[]) ?? []} onChange={onChange} label={label} />;
   else if (kind === "number")
-    control = <input type="number" min={0} className="num-input" value={String(value ?? "")}
+    control = <input id={inputId} type="number" min={0} value={String(value ?? "")}
       onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))} />;
   else if (kind === "bool")
-    control = <label className="switch"><input type="checkbox" checked={Boolean(value)} onChange={(e) => onChange(e.target.checked)} />
-      <span>{value ? "Yes" : "No"}</span></label>;
+    control = <label className="switch"><input id={inputId} type="checkbox" checked={Boolean(value)} onChange={(e) => onChange(e.target.checked)} />
+      {value ? "On" : "Off"}</label>;
   else if (kind === "choice")
-    control = <select value={String(value)} onChange={(e) => onChange(e.target.value)}>
+    control = <select id={inputId} value={String(value)} onChange={(e) => onChange(e.target.value)}>
       {options.split(",").map((o) => <option key={o} value={o}>{o}</option>)}</select>;
   else if (kind === "choices") {
     const chosen = (value as string[]) ?? [];
-    control = <div className="choice-group">{options.split(",").map((o) => (
+    control = <div className="choice-group" role="group" aria-label={label}>{options.split(",").map((o) => (
       <label key={o} className="check"><input type="checkbox" checked={chosen.includes(o)}
         onChange={(e) => onChange(e.target.checked ? [...chosen, o] : chosen.filter((x) => x !== o))} />{o}</label>))}</div>;
   } else if (kind === "regions") control = <Regions value={(value as RegionValue[]) ?? []} onChange={onChange} />;
-  else control = <input value={String(value ?? "")} onChange={(e) => onChange(e.target.value)} />;
+  else control = <input id={inputId} value={String(value ?? "")} onChange={(e) => onChange(e.target.value)} />;
   return (
     <div className={`field ${changed ? "is-changed" : ""} ${kind === "regions" || kind === "lines" ? "wide" : ""}`}>
       <div className="field-label">
-        <span>{label}</span>
+        <span><label htmlFor={inputId}>{label}</label></span>
         <small>{field.help}</small>
       </div>
       <div className="field-control">{control}</div>
     </div>
   );
 }
-
-/** A list of words: type and press Enter (or a comma) to add; click a word's x to remove it. */
-type SearchPreview = { searches: { site: string | null; query: string; mine: boolean }[]; pages_per_query: number };
 
 /** One item per line, for long values such as search queries. Keeps your typing as is and saves the
  *  non-empty lines. */
@@ -223,20 +364,20 @@ function SearchList({ data, unsaved, onEdit }: {
   data: SearchPreview | undefined; unsaved: boolean; onEdit: (query: string) => void;
 }) {
   if (!data) return null;
-  const n = data.searches.length;
+  const count = data.searches.length;
   return (
-    <div className="search-list">
+    <div className="search-list" id="search-list">
       <h3>{unsaved ? "Searches with your unsaved changes" : "Searches each run sends"}</h3>
       <p className="hint">
-        {n
-          ? `${n} ${n === 1 ? "search" : "searches"}, each reading up to ${data.pages_per_query} result ${data.pages_per_query === 1 ? "page" : "pages"}: up to ${n * data.pages_per_query} queries per run.`
+        {count
+          ? `${count} ${count === 1 ? "search" : "searches"}, each reading up to ${data.pages_per_query} result ${data.pages_per_query === 1 ? "page" : "pages"}: up to ${count * data.pages_per_query} queries a run.`
           : "Nothing to search: pick at least one job site, or add searches of your own."}
       </p>
       <ol>
         {data.searches.map((q) => (
           <li key={q.query}>
             <code>{q.query}</code>
-            {q.mine ? <span className="quiet">Yours</span> : (
+            {q.mine ? <span>Yours</span> : (
               <button type="button" className="text-button" onClick={() => onEdit(q.query)}
                 title="Copies it into Your own searches, where you can change it. Then turn off Built searches if you only want yours.">
                 Edit as my own
@@ -249,6 +390,7 @@ function SearchList({ data, unsaved, onEdit }: {
   );
 }
 
+/** A list of words: type and press Enter (or a comma) to add; a word's x removes it. */
 export function Chips({ value, onChange, label }: { value: string[]; onChange: (v: string[]) => void; label: string }) {
   const [text, setText] = useState("");
   function add(raw: string) {
@@ -265,15 +407,15 @@ export function Chips({ value, onChange, label }: { value: string[]; onChange: (
     }
   }
   return (
-    <div className="chips-input">
+    <div className="chips-input" onClick={(e) => (e.currentTarget.querySelector("input") as HTMLInputElement | null)?.focus()}>
       {value.map((w) => (
         <span key={w} className="word">
           {w}
-          <button type="button" aria-label={`Remove ${w}`} onClick={() => onChange(value.filter((x) => x !== w))}>×</button>
+          <button type="button" aria-label={`Remove ${w}`} onClick={() => onChange(value.filter((x) => x !== w))}><Icon name="close" size={14} /></button>
         </span>
       ))}
       <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={key} onBlur={() => text && add(text)}
-        placeholder={value.length ? "Add" : "Type and press Enter"} aria-label={`Add to ${label}`} />
+        placeholder={value.length ? "Add another" : "Type, then press Enter"} aria-label={`Add to ${label}`} />
     </div>
   );
 }
@@ -288,11 +430,12 @@ export function Regions({ value, onChange }: { value: RegionValue[]; onChange: (
   return (
     <div className="regions">
       {value.map((r, i) => (
-        <div key={i} className="region-card" style={{ borderLeftColor: hex(r.color) ?? "var(--line-strong)" }}>
+        <div key={i} className="region-card">
           <div className="region-top">
             <input className="region-name" value={r.name} onChange={(e) => update(i, { name: e.target.value })}
               aria-label="Region name" placeholder="Region name" />
-            <div className="swatches" role="group" aria-label={`Colour for ${r.name}`}>
+            <div className="swatches" role="group" aria-label={`Colour for ${r.name} in your tracker`}>
+              <span className="eyebrow">In your tracker</span>
               {SWATCHES.map((c) => (
                 <button key={c} type="button" className={`sw ${r.color === c ? "is-on" : ""}`} style={{ background: hex(c) }}
                   aria-label={`Colour ${c}`} aria-pressed={r.color === c} onClick={() => update(i, { color: c })} />
@@ -307,10 +450,11 @@ export function Regions({ value, onChange }: { value: RegionValue[]; onChange: (
           <Chips value={r.match} onChange={(match) => update(i, { match })} label={`places for ${r.name}`} />
         </div>
       ))}
-      <button type="button" className="button" onClick={() => onChange([...value, { name: "", color: "", match: [] }])}>
+      <button type="button" className="button small" style={{ alignSelf: "flex-start" }}
+        onClick={() => onChange([...value, { name: "", color: "", match: [] }])}>
         Add a region
       </button>
-      <p className="hint">Short all-caps codes such as BC, ON and CA must match exactly. The first region that matches wins.</p>
+      <p className="hint">Short codes such as BC, ON and CA must match exactly. The first region that matches wins. Removing a region takes effect when you save.</p>
     </div>
   );
 }
@@ -329,7 +473,7 @@ function Keys() {
   const searchKey = { serper: "SERPER_API_KEY", brave: "BRAVE_API_KEY", serpapi: "SERPAPI_API_KEY" }[data?.search_provider ?? "serper"];
   const shown = data?.keys.filter((k) => !k.name.endsWith("_API_KEY") || ["HUNTER_API_KEY", "ANTHROPIC_API_KEY", searchKey].includes(k.name) || k.set);
   return (
-    <section className="panel settings-section" aria-labelledby="sec-keys">
+    <section className="card settings-section" aria-labelledby="sec-keys">
       <h2 id="sec-keys">Keys and accounts</h2>
       <p className="hint">
         {data?.store
@@ -355,7 +499,7 @@ export function KeyRow({ k }: { k: KeyStatus }) {
     try {
       await fn();
     } catch (e) {
-      toast(e instanceof Error ? e.message : "That did not work.", "bad");
+      toast(e instanceof Error ? e.message : "That didn't go through. Try again.", "bad");
     } finally {
       setBusy(false);
     }
@@ -366,6 +510,7 @@ export function KeyRow({ k }: { k: KeyStatus }) {
     setResult(null);
     await client.invalidateQueries({ queryKey: ["keys"] });
     client.invalidateQueries({ queryKey: ["summary"] });
+    client.invalidateQueries({ queryKey: ["settings"] });
     toast(`${k.label} saved.`, "good");
   });
   const test = () => act(async () => setResult(await send<{ ok: boolean; message: string }>(`keys/${k.name}/test`, "POST")));
@@ -373,26 +518,34 @@ export function KeyRow({ k }: { k: KeyStatus }) {
     await send(`keys/${k.name}`, "DELETE");
     setResult(null);
     await client.invalidateQueries({ queryKey: ["keys"] });
+    client.invalidateQueries({ queryKey: ["settings"] });
+    toast(`${k.label} removed.`, "info");
   });
 
   return (
     <div className="key-row">
       <div className="field-label">
         <span>{k.label}</span>
-        <small>{k.set ? `${SOURCE_TEXT[k.source ?? ""] ?? "Set"}: ${k.preview}` : "Not set"}</small>
+        <small className={k.set ? "key-state on" : "key-state"}>
+          <Icon name={k.set ? "check" : "dash"} size={14} />
+          {k.set ? `${SOURCE_TEXT[k.source ?? ""] ?? "Set"}: ${k.preview}` : "Not set"}
+        </small>
       </div>
-      <form className="key-controls" onSubmit={(e) => { e.preventDefault(); save(); }}>
-        <input type={secret ? "password" : "email"} value={value} onChange={(e) => setValue(e.target.value)}
-          placeholder={k.set ? "Paste a new value to replace it" : "Paste it here"} autoComplete="off" aria-label={k.label} />
-        <button className="button" type="submit" disabled={!value.trim() || busy}>Save</button>
-        {k.set && k.name !== "GMAIL_ADDRESS" && (
-          <button className="button" type="button" onClick={test} disabled={busy}>Test</button>
-        )}
+      <div className="field-control" style={{ width: "100%" }}>
+        <form className="key-controls" style={{ width: "100%" }} onSubmit={(e) => { e.preventDefault(); save(); }}>
+          <input type={secret ? "password" : "email"} value={value} onChange={(e) => setValue(e.target.value)}
+            placeholder={k.set ? "Paste a new value to replace it" : "Paste it here"} autoComplete="off" aria-label={k.label} />
+          <button className="button" type="submit" disabled={!value.trim() || busy}>Save</button>
+          {k.set && k.name !== "GMAIL_ADDRESS" && <button className="button" type="button" onClick={test} disabled={busy}>Test</button>}
+        </form>
         {k.set && k.source !== "environment" && (
-          <button className="text-button danger" type="button" onClick={remove} disabled={busy}>Remove</button>
+          <Confirm label="Remove" disabled={busy} yes="Remove it" onYes={remove}
+            question={`Remove your ${k.label} from this computer? You'd have to paste it again to use it.`} />
         )}
-      </form>
-      {result && <p className={result.ok ? "key-result ok" : "key-result bad"}>{result.message}</p>}
+      </div>
+      {result && (
+        <p className={result.ok ? "key-result ok" : "key-result bad"}><Icon name={result.ok ? "check" : "alert"} />{result.message}</p>
+      )}
     </div>
   );
 }
@@ -410,14 +563,14 @@ function Background() {
       await fn();
       toast(done, "good");
     } catch (e) {
-      toast(e instanceof Error ? e.message : "That did not work.", "bad");
+      toast(e instanceof Error ? e.message : "That didn't go through. Try again.", "bad");
     }
     client.invalidateQueries({ queryKey: ["schedule"] });
     client.invalidateQueries({ queryKey: ["old-tasks"] });
   }
   if (!s) return null;
   return (
-    <section className="panel settings-section" aria-labelledby="sec-background">
+    <section className="card settings-section" aria-labelledby="sec-background">
       <h2 id="sec-background">Running in the background</h2>
       <p className="hint">
         {s.tray
@@ -431,7 +584,7 @@ function Background() {
           <div className="field-control">
             <label className="switch"><input type="checkbox" checked={s.startup}
               onChange={(e) => act(() => send("startup", "POST", { on: e.target.checked }), e.target.checked ? "Job Watcher starts when you sign in." : "Job Watcher no longer starts on its own.")} />
-              <span>{s.startup ? "Yes" : "No"}</span></label>
+              {s.startup ? "On" : "Off"}</label>
           </div>
         </div>
       )}
@@ -439,17 +592,18 @@ function Background() {
         <div className="field-label"><span>Pause automatic runs</span><small>Until you turn this off again</small></div>
         <div className="field-control">
           <label className="switch"><input type="checkbox" checked={s.paused}
-            onChange={(e) => act(() => send("schedule/pause", "POST", { paused: e.target.checked }), e.target.checked ? "Automatic runs paused." : "Automatic runs back on.")} />
-            <span>{s.paused ? "Paused" : "No"}</span></label>
+            onChange={(e) => act(() => send("schedule/pause", "POST", { paused: e.target.checked }), e.target.checked ? "Automatic runs paused." : "Automatic runs are back on.")} />
+            {s.paused ? "Paused" : "Off"}</label>
         </div>
       </div>
       {live.length > 0 && (
         <div className="old-tasks">
-          <p><strong>Your old Windows scheduled task still runs Job Watcher.</strong> Now that the app runs on its own schedule, turn it off so runs don't double up. You can turn it back on in Task Scheduler.</p>
+          <p><strong>Your old Windows scheduled task still runs Job Watcher.</strong> The app runs on its own schedule now,
+            so turn the old task off and runs won't double up. You can turn it back on in Task Scheduler.</p>
           {live.map((t) => (
             <div key={t.path + t.name} className="old-task">
               <span>{t.name} <span className="quiet">({t.state})</span></span>
-              <button className="button" onClick={() => act(() => send("system/old-tasks/disable", "POST", { name: t.name, path: t.path }), `Turned off ${t.name}.`)}>Turn it off</button>
+              <button className="button small" onClick={() => act(() => send("system/old-tasks/disable", "POST", { name: t.name, path: t.path }), `Turned off ${t.name}.`)}>Turn it off</button>
             </div>
           ))}
         </div>

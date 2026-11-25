@@ -1,25 +1,50 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { api, type Job, type Meta, type ScheduleStatus } from "../api";
-import { BoardMap } from "../components/BoardMap";
-import { Chip, ErrorNote, External, Meter } from "../components/bits";
-import { phaseText } from "../components/RunControls";
-import { ago, minutes, n, plural, when } from "../format";
+import { api, type Job, type ScheduleStatus } from "../api";
+import { CompanyStatus } from "../components/BoardMap";
+import { Empty, ErrorNote, Icon, Meter, Skeleton } from "../components/bits";
+import { ago, n, plural, when } from "../format";
 import { useLive } from "../live";
-import { PREVIOUS_VISIT, useCompanies, useJobs, useMeta, useSummary } from "../queries";
+import { PREVIOUS_VISIT, useCompanies, useJobs, useSummary } from "../queries";
 import { go } from "../router";
 import { FitBadge } from "../components/Fit";
+import { useRunActions } from "../components/RunControls";
 import { usePipeline } from "./Pipeline";
+
+/** A number that counts to its new value in 360 ms, in tabular figures so nothing jitters. */
+function useCountTo(value: number | undefined) {
+  const [shown, setShown] = useState(value);
+  const from = useRef(value);
+  useEffect(() => {
+    if (value == null) return;
+    const start = from.current;
+    from.current = value;
+    if (start == null || start === value || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setShown(value);
+      return;
+    }
+    const t0 = performance.now();
+    let frame = 0;
+    const step = (t: number) => {
+      const k = Math.min(1, (t - t0) / 360);
+      const eased = 1 - Math.pow(1 - k, 3);
+      setShown(Math.round(start + (value - start) * eased));
+      if (k < 1) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [value]);
+  return shown;
+}
 
 export function Dashboard() {
   const summary = useSummary();
   const jobs = useJobs();
   const companies = useCompanies();
-  const meta = useMeta();
   const live = useLive();
-  const run = live.run;
-  const running = run?.status === "running";
-  const busyElsewhere = Boolean(summary.data?.busy_elsewhere);
+  const schedule = useQuery({ queryKey: ["schedule", live.version], queryFn: () => api<ScheduleStatus>("schedule") });
+  const s = summary.data;
+  const sch = schedule.data;
 
   const since = PREVIOUS_VISIT ?? new Date(Date.now() - 24 * 3600 * 1000).toISOString();
   const { fresh, latest } = useMemo(() => {
@@ -27,192 +52,142 @@ export function Dashboard() {
     const byFound = [...open].sort((a, b) => (b.found ?? "").localeCompare(a.found ?? ""));
     return { fresh: byFound.filter((j) => (j.found ?? "") > since), latest: byFound.slice(0, 8) };
   }, [jobs.data, since]);
-
-  const schedule = useQuery({ queryKey: ["schedule", live.version], queryFn: () => api<ScheduleStatus>("schedule") });
-  const s = summary.data;
-  const sch = schedule.data;
-  const nextLine = sch?.enabled && !sch.paused && sch.next ? ` Next automatic run ${when(sch.next)}.`
-    : sch?.paused ? " Automatic runs are paused." : "";
-  const lastRunLine = s?.last_run
-    ? `Last run started ${when(s.last_run)}. ${plural(s.jobs.open, "open match", "open matches")} in your tracker.${nextLine}`
-    : "No runs yet. Press Run now to read every company's job board.";
-
-  let headline: string;
-  if (running) headline = phaseText(run);
-  else if (busyElsewhere) headline = "A run is going in a terminal or the scheduled task";
-  else if (fresh.length)
-    headline = `${plural(fresh.length, "new match", "new matches")} ${PREVIOUS_VISIT ? "since you last looked" : "in the last day"}`;
-  else headline = PREVIOUS_VISIT ? "Nothing new since you last looked" : "No new matches in the last day";
+  const openCount = useCountTo(s?.jobs.open);
+  const sinceWords = PREVIOUS_VISIT ? `since you last looked, ${when(PREVIOUS_VISIT)}` : "in the last day";
+  const next = sch?.enabled && !sch.paused && sch.next ? `Next automatic run ${when(sch.next)}`
+    : sch?.paused ? "Automatic runs are paused" : sch && !sch.enabled ? "Automatic runs are off" : "";
 
   return (
-    <div className="screen dashboard">
-      <header className="dash-head">
-        <h1 className="headline">{headline}</h1>
-        {running ? <RunDetails /> : <p className="lede">{lastRunLine}</p>}
-        <ErrorNote error={summary.error} />
-      </header>
+    <div className="dashboard">
+      <section className="hero" aria-label="Your matches">
+        <div className="hero-figure">
+          <span className="eyebrow">Open matches</span>
+          {s ? <span className="t-figure">{n(openCount ?? s.jobs.open)}</span> : <Skeleton width={180} height={64} />}
+          <p className="hero-change">
+            {!jobs.data ? <Skeleton width={320} height={24} />
+              : fresh.length ? <><span className="up">▲ +{n(fresh.length)}</span> new {sinceWords}</>
+              : `No new matches ${sinceWords}.`}
+          </p>
+        </div>
+        {next && <div className="hero-meta"><span>{next}</span></div>}
+      </section>
+      <hr className="character" />
+      <ErrorNote error={summary.error} />
 
       {companies.data && (
-        <BoardMap
-          companies={companies.data}
-          live={live.boards}
-          reading={running && run.phase === "boards"}
+        <CompanyStatus companies={companies.data}
           onPickResult={(r) => go("companies", { result: r })}
-          onPickCompany={(c) => go("companies", { c })}
-        />
+          onPickCompany={(c) => go("companies", { c })} />
       )}
+      {!companies.data && <Skeleton height={180} style={{ borderRadius: 12 }} />}
 
-      <div className="dash-columns">
-        <section className="panel" aria-labelledby="matches-title">
-          <div className="panel-head">
-            <h2 id="matches-title">
-              {!fresh.length ? "Latest matches" : PREVIOUS_VISIT ? "New since you last looked" : "New in the last day"}
-            </h2>
-            <button className="text-button" onClick={() => go("jobs")}>
-              All matches
-            </button>
-          </div>
-          <MatchList jobs={fresh.length ? fresh.slice(0, 12) : latest} meta={meta.data} />
-          {fresh.length > 12 && (
-            <button className="text-button" onClick={() => go("jobs")}>
-              {plural(fresh.length - 12, "more new match", "more new matches")} in Jobs
-            </button>
+      <div className="dash-grid">
+        <section className="card" aria-labelledby="matches-title">
+          <header className="card-head">
+            <h2 id="matches-title">{fresh.length ? (PREVIOUS_VISIT ? "New since you last looked" : "New in the last day") : "Latest matches"}</h2>
+            <button className="text-button" onClick={() => go("jobs")}>All matches</button>
+          </header>
+          <MatchList jobs={fresh.length ? fresh.slice(0, 10) : latest} loading={!jobs.data} />
+          {fresh.length > 10 && (
+            <div className="card-foot">
+              <button className="text-button" onClick={() => go("jobs")}>
+                {plural(fresh.length - 10, "more new match", "more new matches")} in Jobs
+              </button>
+            </div>
           )}
         </section>
 
         <div className="side-stack">
-        <ToDo jobs={jobs.data ?? []} />
-        <section className="panel side" aria-labelledby="month-title">
-          <h2 id="month-title">This month</h2>
-          {s && (
-            <>
-              <Meter
-                label={`Web searches (${s.usage.search.provider})`}
-                used={s.usage.search.used}
-                limit={s.usage.search.limit}
-                note={s.usage.search.key_set ? undefined : "No search key set, so new-company search is off."}
-              />
-              <Meter
-                label="Hunter credits"
-                used={s.usage.hunter.used}
-                limit={s.usage.hunter.limit}
-                note={s.usage.hunter.key_set ? undefined : "No Hunter key set."}
-              />
-              <dl className="facts">
-                <div>
-                  <dt>Postings saved</dt>
-                  <dd className="num">{n(s.postings.open)} open</dd>
-                </div>
-                <div>
-                  <dt>Companies watched</dt>
-                  <dd className="num">{n(s.companies.enabled)}</dd>
-                </div>
-                <div>
-                  <dt>Matches found in the last day</dt>
-                  <dd className="num">{n(s.jobs.new_24h)}</dd>
-                </div>
-                {s.schedule.runs_per_day ? (
-                  <div>
-                    <dt>Web searches for new companies</dt>
-                    <dd>{s.schedule.runs_per_day === 1 ? "Once a day" : `${s.schedule.runs_per_day} a day`}</dd>
-                  </div>
-                ) : null}
-              </dl>
-            </>
-          )}
-        </section>
+          <NextUp jobs={jobs.data ?? []} />
+          <section className="card" aria-labelledby="month-title">
+            <header className="card-head"><h2 id="month-title">This month</h2></header>
+            {s ? (
+              <>
+                <Meter label={`Web searches (${s.usage.search.provider})`} used={s.usage.search.used} limit={s.usage.search.limit}
+                  note={s.usage.search.key_set ? undefined : "No search key, so finding new companies is off."} />
+                <Meter label="Hunter credits" used={s.usage.hunter.used} limit={s.usage.hunter.limit}
+                  note={s.usage.hunter.key_set ? undefined : "No Hunter key yet."} />
+                <dl className="facts tight" style={{ marginTop: 24 }}>
+                  <div><dt>Postings saved</dt><dd>{n(s.postings.open)} open</dd></div>
+                  <div><dt>Companies watched</dt><dd>{n(s.companies.enabled)}</dd></div>
+                  <div><dt>Matches found, last 24 h</dt><dd>{n(s.jobs.new_24h)}</dd></div>
+                  {s.schedule.runs_per_day ? (
+                    <div><dt>Web searches</dt><dd>{s.schedule.runs_per_day === 1 ? "Once a day" : `${s.schedule.runs_per_day} a day`}</dd></div>
+                  ) : null}
+                </dl>
+              </>
+            ) : <Skeleton height={160} />}
+          </section>
         </div>
       </div>
-
     </div>
   );
 }
 
-/** What to do next: follow-ups that are due, and strong fits you haven't applied to. */
-function ToDo({ jobs }: { jobs: Job[] }) {
+/** What to do next: follow-ups that are due, and strong fits you haven't acted on. */
+function NextUp({ jobs }: { jobs: Job[] }) {
   const pipeline = usePipeline();
   const best = jobs.filter((j) => j.open && j.fit?.verdict === "APPLY" && (j.status || "New") === "New")
     .sort((a, b) => (b.fit?.score ?? 0) - (a.fit?.score ?? 0)).slice(0, 4);
   const due = pipeline.data?.follow_ups ?? [];
   if (!best.length && !due.length) return null;
   return (
-    <section className="panel side todo" aria-labelledby="todo-title">
-      <h2 id="todo-title">Next up</h2>
-      {due.length > 0 && (
-        <button className="todo-line" onClick={() => go("pipeline")}>
-          {plural(due.length, "follow-up")} due
-        </button>
-      )}
-      {best.map((j) => (
-        <div key={j.key} className="todo-job">
-          <External href={j.url}>{j.title}</External>
-          <span className="quiet">{j.company}</span>
-          <FitBadge fit={j.fit} />
-        </div>
-      ))}
-      {best.length > 0 && <p className="hint">Claude rates these Apply and you haven't acted on them yet.</p>}
+    <section className="card" aria-labelledby="todo-title">
+      <header className="card-head"><h2 id="todo-title">Next up</h2></header>
+      <ul className="rows">
+        {due.length > 0 && (
+          <li>
+            <button className="row" onClick={() => go("pipeline")}>
+              <span className="row-main"><span className="row-title">{plural(due.length, "follow-up")} due</span>
+                <span className="row-sub">Applications and emails waiting on you</span></span>
+              <Icon name="right" />
+            </button>
+          </li>
+        )}
+        {best.map((j) => (
+          <li key={j.key}>
+            <button className="row" onClick={() => go("jobs", { job: j.key })}>
+              <span className="row-main"><span className="row-title">{j.title}</span><span className="row-sub">{j.company}</span></span>
+              <span className="row-end"><span className="num secondary">{j.fit?.score}</span></span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      {best.length > 0 && <p className="hint" style={{ marginTop: 16 }}>Claude rates these Apply, and you haven't acted on them yet.</p>}
     </section>
   );
 }
 
-function useTick(ms: number) {
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    const t = window.setInterval(() => setTick((x) => x + 1), ms);
-    return () => window.clearInterval(t);
-  }, [ms]);
-}
-
-function RunDetails() {
-  const { run } = useLive();
-  useTick(1000);
-  if (!run) return null;
-  const share = run.total ? run.done / run.total : 0;
-  return (
-    <div className="run-details">
-      <div className="progress" aria-hidden="true">
-        <div style={{ width: `${run.phase === "boards" ? Math.max(1, share * 100) : 0}%` }} />
-      </div>
-      <p className="lede">
-        {run.label}, started {minutes(run.started)} ago.
-        {run.last_company && run.phase === "boards" ? ` Just read ${run.last_company}.` : ""}
-        {run.failed_boards ? ` ${plural(run.failed_boards, "board")} not read so far.` : ""}
-        {run.rate_limited.length ? ` Paused by ${[...new Set(run.rate_limited)].slice(0, 3).join(", ")}.` : ""}
-      </p>
-      {run.new.length > 0 && (
-        <ul className="run-new">
-          {run.new.map((line) => (
-            <li key={line}>{line}</li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-function MatchList({ jobs, meta }: { jobs: Job[]; meta?: Meta }) {
-  if (!jobs.length) {
-    return <p className="quiet">No open matches yet. They appear here after a run finds them.</p>;
+function MatchList({ jobs, loading }: { jobs: Job[]; loading: boolean }) {
+  const { start, busy } = useRunActions();
+  if (loading) {
+    return <div style={{ display: "grid", gap: 16 }}>{[0, 1, 2, 3].map((i) => <Skeleton key={i} height={40} />)}</div>;
   }
-  const regionColor = new Map(meta?.regions.map((r) => [r.name, r.color]) ?? []);
+  if (!jobs.length) {
+    return (
+      <Empty small title="No open matches yet"
+        action={<button className="button primary" onClick={() => start("full")} disabled={busy}>Run now</button>}>
+        They appear here after a run finds postings that fit your settings.
+      </Empty>
+    );
+  }
   return (
-    <ul className="match-list">
-      {jobs.map((j) => (
-        <li key={j.key}>
-          <div className="match-main">
-            <External href={j.url}>{j.title}</External>
-            <span className="match-company">
-              {j.company}
-              {j.tier && <span className={`tier tier-${j.tier}`}>{j.tier}</span>}
+    <ul className="rows reveal">
+      {jobs.map((j, i) => (
+        <li key={j.key} style={{ ["--i" as string]: i }}>
+          <button className="row" onClick={() => go("jobs", { job: j.key })}>
+            <span className="row-main">
+              <span className="row-title">{j.title}</span>
+              <span className="row-sub">{[j.company, j.region, j.level === "Senior/Lead" ? "Senior/Lead" : ""].filter(Boolean).join(" · ")}</span>
             </span>
-          </div>
-          <div className="match-meta">
-            <Chip color={regionColor.get(j.region)}>{j.region}</Chip>
-            {j.level === "Senior/Lead" && <Chip color={meta?.colors.level["Senior/Lead"]}>Senior/Lead</Chip>}
-            <span className="quiet" title={j.found ? `Found ${when(j.found)}` : undefined}>
-              {j.posted ? `posted ${ago(j.posted)}` : `found ${ago(j.found)}`}
+            <span className="row-end">
+              {j.fit ? <FitBadge fit={j.fit} /> : null}
+              <span className="row-sub" title={j.found ? `Found ${when(j.found)}` : undefined}>
+                {j.posted ? `posted ${ago(j.posted)}` : `found ${ago(j.found)}`}
+              </span>
             </span>
-          </div>
+            <span className="row-chevron"><Icon name="right" /></span>
+          </button>
         </li>
       ))}
     </ul>

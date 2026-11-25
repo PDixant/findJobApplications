@@ -586,7 +586,7 @@ def create_app(token, dev=False, schedule=False):
     def fit_unscored():
         cfg = config_or_fail()
         if not os.environ.get("ANTHROPIC_API_KEY"):
-            raise HTTPException(400, "Add your Anthropic API key in Settings, Keys and accounts.")
+            raise HTTPException(400, "Add your Anthropic API key in Settings, under Keys.")
         keys = [k for k, j in files.jobs(cfg).items() if j.get("open") and not j.get("fit")]
         left = max(0, int(cfg["ai"]["monthly_limit"]) - ai.used_this_month(cfg)) if int(cfg["ai"]["monthly_limit"]) else len(keys)
         keys = keys[:left]
@@ -667,7 +667,7 @@ def create_app(token, dev=False, schedule=False):
     def alerts_test():
         cfg = config_or_fail()
         if not os.environ.get("NTFY_TOPIC", "").strip():
-            raise HTTPException(400, "Save your ntfy topic first (Settings, Keys and accounts).")
+            raise HTTPException(400, "Make your ntfy topic first, in Settings under Runs and alerts.")
         if not alerts.send(cfg, "Job Watcher test", "Phone alerts work. New matches will show up here."):
             raise HTTPException(400, "ntfy didn't accept the alert. Check the topic and server.")
         return {"sent": True}
@@ -848,7 +848,7 @@ def create_app(token, dev=False, schedule=False):
     @app.get("/api/settings")
     def get_settings():
         cfg = config_or_fail()
-        return {**settings_module.current(cfg), "explain": describe_config(cfg)}
+        return {**settings_module.current(cfg), "explain": describe_config(cfg), "summary": summarize_config(cfg)}
 
     @app.post("/api/settings/preview")
     def preview_settings(body: dict = Body(...)):
@@ -858,7 +858,7 @@ def create_app(token, dev=False, schedule=False):
             _, cfg = settings_module.apply_changes(text, body.get("changes") or {})
         except ConfigError as exc:
             raise HTTPException(400, str(exc)) from None
-        return {"explain": describe_config(cfg), "searches": search_queries(cfg),
+        return {"explain": describe_config(cfg), "summary": summarize_config(cfg), "searches": search_queries(cfg),
                 "pages_per_query": cfg["search"]["pages_per_query"]}
 
     @app.get("/api/search/queries")
@@ -880,7 +880,7 @@ def create_app(token, dev=False, schedule=False):
             except (RuntimeError, OSError):
                 pass
         hub.publish("settings_changed", {})
-        return {**settings_module.current(cfg), "explain": describe_config(cfg)}
+        return {**settings_module.current(cfg), "explain": describe_config(cfg), "summary": summarize_config(cfg)}
 
     @app.get("/api/keys")
     def get_keys():

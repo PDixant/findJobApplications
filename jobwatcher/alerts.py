@@ -1,7 +1,7 @@
 """Phone alerts for new matches through ntfy (ntfy.sh, free, no account).
 
 Install the ntfy app on your phone, subscribe to a topic name only you know, and save the same name
-under Settings, Keys and accounts (NTFY_TOPIC). Anyone who knows the topic name can read it, so it is
+under Settings, Keys (NTFY_TOPIC). Anyone who knows the topic name can read it, so it is
 kept with your keys, never in config.toml, and the app suggests a long random one. Alerts carry the
 company, title and link of new matches, nothing else.
 """

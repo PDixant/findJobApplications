@@ -130,3 +130,7 @@ def test_years_of_experience():
     rules = Rules({**cfg, "years_experience": 5, "years_over_ok": 1})
     assert not rules.too_many_years(6) and rules.too_many_years(7) and not rules.too_many_years(None)
     assert "at most 6 years" in jw.describe_config({**cfg, "years_experience": 5, "years_over_ok": 1})
+    years = next(c for c in jw.summarize_config({**cfg, "years_experience": 5, "years_over_ok": 1})["checks"]
+                 if c["id"] == "years")
+    assert years["text"] == "Asks for 6 years or fewer. You have 5 plus 1 year of stretch."
+    assert "years" not in [c["id"] for c in jw.summarize_config(cfg)["checks"]]  # 0 = not checked

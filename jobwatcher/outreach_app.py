@@ -156,7 +156,7 @@ def find_contacts(cfg, company):
     o = _out()
     key_value = os.environ.get("HUNTER_API_KEY", "").strip()
     if not key_value:
-        raise OutreachProblem("Add your Hunter key in Settings, Keys and accounts, to find contacts.")
+        raise OutreachProblem("Add your Hunter key in Settings, under Keys, to find contacts.")
     now = dt.datetime.now(dt.timezone.utc)
     jobs = [j for j in load_jobs(cfg).values() if j["company"] == company]
     row = _rows(cfg).get(company, {"company": company})
@@ -207,7 +207,7 @@ def write_drafts(cfg, company, emails, follow_up=False):
     o = _out()
     api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     if not api_key:
-        raise OutreachProblem("Add your Anthropic API key in Settings, Keys and accounts, to write drafts in the app.")
+        raise OutreachProblem("Add your Anthropic API key in Settings, under Keys, to write drafts in the app.")
     try:
         about = o.load_about_me(cfg)
     except o.OutreachError as exc:
@@ -337,7 +337,7 @@ def _call_claude(api_key, payload):
     except requests.RequestException as exc:
         raise OutreachProblem(f"Could not reach Claude ({exc.__class__.__name__}). Check your connection.") from None
     if r.status_code == 401:
-        raise OutreachProblem("Anthropic rejected the API key. Check it in Settings, Keys and accounts.")
+        raise OutreachProblem("Anthropic rejected the API key. Check it in Settings, under Keys.")
     if r.status_code in (429, 529):
         raise OutreachProblem("Claude is busy right now. Try again in a minute.")
     if r.status_code >= 400:
@@ -444,7 +444,7 @@ def gmail_draft(cfg, draft_id):
     address = os.environ.get("GMAIL_ADDRESS", "").strip()
     password = os.environ.get("GMAIL_APP_PASSWORD", "").replace(" ", "").strip()
     if not (address and password):
-        raise OutreachProblem("Add your Gmail address and app password in Settings, Keys and accounts.")
+        raise OutreachProblem("Add your Gmail address and app password in Settings, under Keys.")
     server = cfg["outreach"]["imap_server"]
     try:
         imap = imaplib.IMAP4_SSL(server, timeout=30)

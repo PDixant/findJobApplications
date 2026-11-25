@@ -273,6 +273,11 @@ def test_settings_round_trip(client):
         assert next(f for f in jobs["fields"] if f["key"] == "max_age_hours")["value"] == 24
         preview = client.post("/api/settings/preview", json={"changes": {"jobs": {"max_age_hours": 48}}})
         assert "48" in preview.json()["explain"]
+        summary = preview.json()["summary"]
+        assert next(c for c in summary["checks"] if c["id"] == "age")["text"] == "Within the last 2 days"
+        assert next(c for c in got["summary"]["checks"] if c["id"] == "age")["text"] == "Within the last 24 hours"
+        assert {c["id"] for c in summary["checks"]} >= {"titles", "stack", "places", "age"}
+        assert {"on", "provider", "key", "searches", "queries"} <= set(summary["search"])
         assert (HOME / "my_settings.toml").read_text(encoding="utf-8") == original  # preview saves nothing
         saved = client.put("/api/settings", json={"changes": {"jobs": {"max_age_hours": 48, "skip_titles": ["Staff"]},
                                                               "search": {"enabled": False}}})

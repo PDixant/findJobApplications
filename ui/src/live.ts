@@ -35,10 +35,12 @@ export function useLive(): LiveState {
   );
 }
 
+/** A one-line note at the bottom of the window. It leaves after 4 s (6 s when it offers an action),
+ *  except a problem, which stays until you close it. */
 export function toast(text: string, tone: Toast["tone"] = "info", action?: Toast["action"]) {
   const id = ++toastId;
-  set({ toasts: [...state.toasts, { id, text, tone, action }] });
-  window.setTimeout(() => set({ toasts: state.toasts.filter((t) => t.id !== id) }), 7000);
+  set({ toasts: [...state.toasts, { id, text, tone, action }].slice(-3) });
+  if (tone !== "bad") window.setTimeout(() => set({ toasts: state.toasts.filter((t) => t.id !== id) }), action ? 6000 : 4000);
 }
 
 export function dismissToast(id: number) {
@@ -101,7 +103,7 @@ function handle(m: Message) {
       } else {
         setRun(started);
         if (started.source === "schedule") {
-          toast("Your scheduled run started: reading your job boards. Progress is at the top of the window.");
+          toast("Your scheduled run started. Its progress is at the bottom of the side bar.");
         }
       }
       break;

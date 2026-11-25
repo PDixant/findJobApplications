@@ -1,8 +1,7 @@
 import { useMemo, useState, type DragEvent } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, send, type Job, type Pipeline as PipelineData } from "../api";
-import { ErrorNote, External } from "../components/bits";
+import { ErrorNote, External, Skeleton, useTip } from "../components/bits";
 import { FitBadge } from "../components/Fit";
 import { day, n, plural } from "../format";
 import { toast, useLive } from "../live";
@@ -14,8 +13,6 @@ const HELP: Record<string, string> = {
   New: "Open matches you haven't acted on. Best fit first.",
   Applied: "Waiting to hear back.",
   Interviewing: "In conversation.",
-  Offer: "",
-  Rejected: "",
   Skipped: "Not for you.",
 };
 
@@ -64,15 +61,16 @@ export function Pipeline() {
 
   const p = stats.data;
   return (
-    <div className="screen pipeline">
-      <header className="screen-head">
+    <>
+      <header className="page-head">
         <h1>Pipeline</h1>
         <p className="lede">Where each application stands. Drag a card to another column, or pick from its menu.</p>
       </header>
+      <hr className="character" style={{ marginBottom: 48 }} />
       <ErrorNote error={jobs.error ?? stats.error} />
-      {p && <Stats p={p} />}
+      {p ? <Stats p={p} /> : <Skeleton height={96} style={{ marginBottom: 48 }} />}
       {p && p.follow_ups.length > 0 && <FollowUps p={p} />}
-      <div className="board" role="list">
+      <div className="board" role="list" aria-label="Applications by status">
         {statuses.map((status) => {
           const list = columns[status] ?? [];
           const limit = LIMIT[status] ?? Infinity;
@@ -86,27 +84,27 @@ export function Pipeline() {
                 <h2 id={`col-${status}`}>{status}</h2>
                 <span className="num">{n(list.length)}</span>
               </header>
-              {HELP[status] && <p className="col-help">{HELP[status]}</p>}
+              <p className="col-help">{HELP[status] ?? " "}</p>
               <ul className="cards">
                 {list.slice(0, limit).map((j) => (
-                  <li key={j.key} className={`card ${dragging === j.key ? "is-dragging" : ""}`} draggable
+                  <li key={j.key} className={`pcard ${dragging === j.key ? "is-dragging" : ""}`} draggable
                     onDragStart={(e) => { e.dataTransfer.setData("text/plain", j.key); setDragging(j.key); }}
                     onDragEnd={() => { setDragging(null); setOver(null); }}>
                     <External href={j.url}>{j.title}</External>
-                    <span className="card-company">{j.company}</span>
-                    <div className="card-foot">
+                    <span className="pcard-company">{j.company}</span>
+                    <div className="pcard-foot">
                       {j.fit && <FitBadge fit={j.fit} />}
-                      <span className="quiet">{cardAge(j)}</span>
+                      <span>{cardAge(j)}</span>
                     </div>
-                    <select className="card-move" value={j.status || "New"} aria-label={`Move ${j.title}`}
+                    <select className="inline-select" value={j.status || "New"} aria-label={`Move ${j.title}`}
                       onChange={(e) => move(j.key, e.target.value)}>
-                      {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+                      {statuses.map((s) => <option key={s} value={s}>{s === (j.status || "New") ? `In ${s}` : `Move to ${s}`}</option>)}
                     </select>
                   </li>
                 ))}
               </ul>
               {list.length > limit && (
-                <button className="text-button" onClick={() => go("jobs")}>
+                <button className="text-button" style={{ marginTop: 12, marginLeft: 4 }} onClick={() => go("jobs")}>
                   {plural(list.length - limit, "more")} in Jobs
                 </button>
               )}
@@ -114,7 +112,7 @@ export function Pipeline() {
           );
         })}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -124,35 +122,40 @@ function cardAge(j: Job) {
   return d == null ? "" : d === 0 ? "applied today" : `applied ${plural(d, "day")} ago`;
 }
 
+/** Low and wide: four numbers in the serif, then applications per week in the screen's paint. */
 function Stats({ p }: { p: PipelineData }) {
+  const tip = useTip();
   const max = Math.max(1, ...p.applied_weeks.map((w) => w.applied));
   const week = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" });
   return (
-    <section className="panel stats" aria-label="Your numbers">
-      <div className="stat"><span className="stat-num num">{n(p.applied_total)}</span><span>applied</span></div>
+    <section className="stats" aria-label="Your numbers">
+      <div className="stat"><span className="eyebrow">Applied</span><span className="t-display-m">{n(p.applied_total)}</span><small>in total</small></div>
       <div className="stat">
-        <span className="stat-num num">{p.response_rate == null ? "None yet" : `${p.response_rate}%`}</span>
-        <span>heard back ({n(p.heard_back)})</span>
+        <span className="eyebrow">Heard back</span>
+        <span className="t-display-m">{p.response_rate == null ? "None" : `${p.response_rate}%`}</span>
+        <small>{plural(p.heard_back, "reply", "replies")} so far</small>
       </div>
-      <div className="stat"><span className="stat-num num">{n(p.by_status.Interviewing ?? 0)}</span><span>interviewing</span></div>
-      <div className="stat"><span className="stat-num num">{n(p.fit.APPLY)}</span><span>open matches Claude says apply to</span></div>
+      <div className="stat"><span className="eyebrow">Interviewing</span><span className="t-display-m">{n(p.by_status.Interviewing ?? 0)}</span><small>right now</small></div>
+      <div className="stat"><span className="eyebrow">Rated apply</span><span className="t-display-m">{n(p.fit.APPLY)}</span><small>open matches</small></div>
       <figure className="weeks">
-        <figcaption>Applications per week</figcaption>
-        <div className="week-bars" aria-hidden="true">
+        <figcaption className="eyebrow">Applications per week</figcaption>
+        <div className="week-bars" onMouseLeave={tip.hide}>
           {p.applied_weeks.map((w) => (
-            <div key={w.week} className="week" title={`Week of ${week(w.week)}: ${plural(w.applied, "application")}`}>
+            <div key={w.week} className="week"
+              onMouseMove={(e) => tip.show(e, <><strong>{plural(w.applied, "application")}</strong>Week of {week(w.week)}</>)}>
               {w.applied > 0 && <div className="week-bar" style={{ height: `${(w.applied / max) * 100}%` }} />}
             </div>
           ))}
         </div>
         <div className="week-axis" aria-hidden="true">
           <span>{week(p.applied_weeks[0].week)}</span>
-          <span>This week</span>
+          <span>This week, {n(p.applied_weeks[p.applied_weeks.length - 1].applied)}</span>
         </div>
         <table className="sr-only">
           <caption>Applications per week</caption>
           <tbody>{p.applied_weeks.map((w) => <tr key={w.week}><th>{week(w.week)}</th><td>{w.applied}</td></tr>)}</tbody>
         </table>
+        {tip.node}
       </figure>
     </section>
   );
@@ -162,22 +165,24 @@ function FollowUps({ p }: { p: PipelineData }) {
   const client = useQueryClient();
   const done = (key: string) => send(`jobs/followed-up?key=${encodeURIComponent(key)}`, "POST")
     .then(() => client.invalidateQueries({ queryKey: ["pipeline"] }))
-    .catch((e) => toast(e instanceof Error ? e.message : "Not saved.", "bad"));
+    .catch((e) => toast(e instanceof Error ? e.message : "That didn't save.", "bad"));
   return (
-    <section className="panel follow-ups" aria-labelledby="follow-title">
-      <h2 id="follow-title">Time to follow up</h2>
-      <ul>
+    <section className="card follow-ups" aria-labelledby="follow-title">
+      <header className="card-head"><h2 id="follow-title">Time to follow up</h2></header>
+      <ul className="rows">
         {p.follow_ups.slice(0, 8).map((f) => (
-          <li key={f.key + f.kind}>
-            <strong>{f.company}</strong> <span className="quiet">{f.title}</span>
-            <span className="follow-why">
-              {f.kind === "application"
-                ? `Applied ${plural(f.days, "day")} ago with no news. A short note to the recruiter helps.`
-                : `Emailed ${plural(f.days, "day")} ago with no reply. Outreach has a follow-up draft ready.`}
+          <li key={f.key + f.kind} className="row">
+            <span className="row-main">
+              <span className="row-title">{f.company} <span className="quiet" style={{ fontWeight: 400 }}>{f.title}</span></span>
+              <span className="row-sub" style={{ whiteSpace: "normal" }}>
+                {f.kind === "application"
+                  ? `Applied ${plural(f.days, "day")} ago with no news. A short note to the recruiter helps.`
+                  : `Emailed ${plural(f.days, "day")} ago with no reply. Outreach has a follow-up draft ready.`}
+              </span>
             </span>
             {f.kind === "email"
-              ? <button className="text-button" onClick={() => go("outreach")}>Open Outreach</button>
-              : <button className="text-button" onClick={() => done(f.key)}>I followed up</button>}
+              ? <button className="button small" onClick={() => go("outreach")}>Open Outreach</button>
+              : <button className="button small" onClick={() => done(f.key)}>I followed up</button>}
           </li>
         ))}
       </ul>

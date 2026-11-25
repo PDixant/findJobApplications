@@ -226,7 +226,7 @@ export type Posting = {
 
 export type PostingPage = { total: number; page: number; size: number; rows: Posting[] };
 
-// What each company result means, in plain words, with its colour on the board map.
+// What each company result means, in plain words, with its colour in the companies chart.
 export const RESULTS: Record<string, { label: string; tone: string; explain: string }> = {
   OK: { label: "Read", tone: "ok", explain: "Its job board was read this run." },
   RETRY: {
@@ -247,7 +247,8 @@ export const RESULTS: Record<string, { label: string; tone: string; explain: str
   "": { label: "Not checked yet", tone: "off", explain: "Not read yet. It will be on the next run." },
 };
 
-export const RESULT_ORDER = ["OK", "RETRY", "NO JOBS READ", "NOT FOUND", "ERROR", "PENDING", "MANUAL", "OFF", ""];
+// Chart order too: neighbours in this order stay apart for colour-blind readers (checked).
+export const RESULT_ORDER = ["OK", "RETRY", "NO JOBS READ", "MANUAL", "NOT FOUND", "ERROR", "PENDING", "OFF", ""];
 
 export function resultInfo(result: string) {
   return RESULTS[result] ?? { label: result, tone: "off", explain: "" };
@@ -261,7 +262,18 @@ export type FieldKind = string; // list, number, bool, text, regions, choice:a,b
 export type RegionValue = { name: string; color: string; match: string[] };
 export type SettingField = { key: string; kind: FieldKind; help: string; value: unknown };
 export type SettingsSection = { id: string; title: string; fields: SettingField[] };
-export type SettingsData = { sections: SettingsSection[]; explain: string };
+export type PlainCheck = {
+  id: string; label: string; words?: string[]; text?: string; note?: string;
+  groups?: { name: string; words: string[] }[]; except?: string[];
+};
+export type PlainSummary = {
+  checks: PlainCheck[];
+  search: { on: boolean; provider: string; key: boolean; key_name: string; per_day: string; searches: number; queries: number;
+            monthly_limit: number; look_back: string; watch_new: boolean };
+  extras: { id: string; label: string; on: boolean; text: string }[];
+  files: { tracker: string; companies: string };
+};
+export type SettingsData = { sections: SettingsSection[]; explain: string; summary: PlainSummary };
 export type Changes = Record<string, Record<string, unknown>>;
 
 export type KeyStatus = { name: string; label: string; set: boolean; source: string | null; preview: string };

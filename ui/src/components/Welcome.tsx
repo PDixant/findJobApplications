@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, send, type KeysData, type RegionValue, type SettingsData } from "../api";
 import { Chips, KeyRow, Regions } from "../screens/Settings";
 import { useRunActions } from "./RunControls";
+import { Mesh } from "./bits";
 import { n } from "../format";
 import { toast } from "../live";
 
@@ -52,7 +53,7 @@ export function Welcome({ companies, onDone }: { companies: number; onDone: () =
       await start("full");
       toast("Your first run has started. It reads every company once, so it takes a while.", "good");
     } catch (e) {
-      toast(e instanceof Error ? e.message : "Could not save.", "bad");
+      toast(e instanceof Error ? e.message : "Your choices weren't saved. Try again.", "bad");
     } finally {
       setSaving(false);
     }
@@ -62,57 +63,65 @@ export function Welcome({ companies, onDone }: { companies: number; onDone: () =
     <>
       <h2>Find fresh jobs before everyone else</h2>
       <p>Job Watcher reads the job boards of {n(companies)} companies straight from the source, several times a day,
-        and keeps the postings that fit you. A few choices make it yours; you can change any of them later in Settings.</p>
+        and keeps the postings that fit you. A few choices make it yours. You can change any of them later in Settings.</p>
     </>,
     <>
-      <h2>Which jobs?</h2>
-      <label className="wizard-field"><span>A job title must contain one of these</span>
-        <Chips value={draft.titles} onChange={(titles) => set({ titles })} label="job titles" /></label>
-      <label className="wizard-field"><span>Skip titles with</span>
-        <Chips value={draft.skip_titles} onChange={(skip_titles) => set({ skip_titles })} label="skip titles" /></label>
+      <h2 className="small">Which jobs?</h2>
+      <p>A job title has to contain one of your titles, and none of the words you skip.</p>
+      <div className="field-stack">Job titles
+        <Chips value={draft.titles} onChange={(titles) => set({ titles })} label="job titles" /></div>
+      <div className="field-stack">Skip titles with
+        <Chips value={draft.skip_titles} onChange={(skip_titles) => set({ skip_titles })} label="skip titles" /></div>
     </>,
     <>
-      <h2>Where?</h2>
-      <p className="hint">A job must be in one of these regions. Each region lists the places that count.</p>
-      <Regions value={draft.region} onChange={(region) => set({ region })} />
+      <h2 className="small">Where?</h2>
+      <p>A job has to be in one of these regions. Each region lists the places that count.</p>
+      <div className="field-stack"><Regions value={draft.region} onChange={(region) => set({ region })} /></div>
     </>,
     <>
-      <h2>Your skills</h2>
-      <label className="wizard-field"><span>The description must mention one of these. Leave it empty to accept any.</span>
-        <Chips value={draft.must_mention} onChange={(must_mention) => set({ must_mention })} label="skills" /></label>
+      <h2 className="small">Your skills</h2>
+      <p>The description has to mention one of these. Leave it empty to accept any stack.</p>
+      <div className="field-stack">Skills
+        <Chips value={draft.must_mention} onChange={(must_mention) => set({ must_mention })} label="skills" /></div>
     </>,
     <>
-      <h2>Keys (optional)</h2>
-      <p className="hint">Each adds something; skip any of them. Serper finds companies you don't watch yet (2,500 free
+      <h2 className="small">Keys, if you have them</h2>
+      <p>Each one adds something, and you can skip any of them. Serper finds companies you don't watch yet (2,500 free
         searches), Hunter finds recruiters (50 free a month), and Anthropic writes recruiter emails.</p>
-      {keys.data?.keys.filter((k) => ["SERPER_API_KEY", "HUNTER_API_KEY", "ANTHROPIC_API_KEY"].includes(k.name))
-        .map((k) => <KeyRow key={k.name} k={k} />)}
+      <div>
+        {keys.data?.keys.filter((k) => ["SERPER_API_KEY", "HUNTER_API_KEY", "ANTHROPIC_API_KEY"].includes(k.name))
+          .map((k) => <KeyRow key={k.name} k={k} />)}
+      </div>
     </>,
     <>
-      <h2>When should it check?</h2>
-      <label className="wizard-field"><span>Run at these times each day (24-hour)</span>
-        <Chips value={draft.times} onChange={(times) => set({ times })} label="run times" /></label>
-      <label className="check"><input type="checkbox" checked={draft.startup} onChange={(e) => set({ startup: e.target.checked })} />
-        Start Job Watcher when I sign in, so it checks even when I haven't opened it</label>
+      <h2 className="small">When should it check?</h2>
+      <p>Job Watcher runs at these times each day while it's open. Use 24-hour times, such as 08:00 or 17:30.</p>
+      <div className="field-stack">Run at
+        <Chips value={draft.times} onChange={(times) => set({ times })} label="run times" /></div>
+      <label className="switch">
+        <input type="checkbox" checked={draft.startup} onChange={(e) => set({ startup: e.target.checked })} />
+        Start Job Watcher when I sign in, so it checks even when I haven't opened it
+      </label>
     </>,
   ];
 
   return (
-    <div className="wizard-backdrop" role="dialog" aria-modal="true" aria-label="Set up Job Watcher">
-      <div className="wizard">
-        <ol className="wizard-steps" aria-label="Steps">
-          {STEPS.map((s, i) => <li key={s} className={i === step ? "is-on" : i < step ? "is-done" : ""}>{s}</li>)}
+    <div className="welcome" role="dialog" aria-modal="true" aria-label="Set up Job Watcher">
+      <div className="welcome-band"><Mesh /></div>
+      <div className="welcome-inner">
+        <ol className="welcome-steps" aria-label="Steps" style={{ listStyle: "none", padding: 0 }}>
+          {STEPS.map((s, i) => (
+            <li key={s} className={`welcome-step ${i === step ? "is-on" : i < step ? "is-done" : ""}`} aria-current={i === step ? "step" : undefined}>{s}</li>
+          ))}
         </ol>
-        <div className="wizard-body">{page[step]}</div>
-        <div className="wizard-actions">
-          {step > 0 && <button className="text-button" onClick={() => setStep(step - 1)}>Back</button>}
-          <button className="text-button skip" onClick={async () => { await send("setup/done", "POST"); onDone(); }}>
-            Skip setup
-          </button>
+        <div className="welcome-body enter" key={step}>{page[step]}</div>
+        <div className="welcome-actions">
+          <button className="text-button skip" onClick={async () => { await send("setup/done", "POST"); onDone(); }}>Skip setup</button>
+          {step > 0 && <button className="button" onClick={() => setStep(step - 1)}>Back</button>}
           {step < STEPS.length - 1 ? (
             <button className="button primary" onClick={() => setStep(step + 1)}>{step === 0 ? "Get started" : "Next"}</button>
           ) : (
-            <button className="button primary" onClick={finish} disabled={saving || !draft.titles.length || !draft.region.length}>
+            <button className="button paint" onClick={finish} disabled={saving || !draft.titles.length || !draft.region.length}>
               Save and run the first check
             </button>
           )}

@@ -44,7 +44,7 @@ git clone https://github.com/PDixant/findJobApplications.git
 **3. Open Job Watcher** from your Desktop or Start menu. A few quick questions (the jobs you want, where, your skills), and it starts looking.
 
 > [!TIP]
-> Add your keys under **Settings → Keys and accounts** to switch on the extras. All of them are optional:
+> Add your keys under **Settings → Keys** to switch on the extras. All of them are optional:
 >
 > | Key | Turns on | Cost |
 > |---|---|---|
@@ -58,12 +58,12 @@ git clone https://github.com/PDixant/findJobApplications.git
 |---|---|
 | **Open it** | Click **Job Watcher** on your Desktop or Start menu, or type `jobwatcher` in any terminal. |
 | **Check for jobs now** | Press **Run now**. While the window is open, it also checks by itself a few times a day. |
-| **Change what it looks for** | Open **Settings**. A side panel explains your settings in plain words as you edit. |
+| **Change what it looks for** | Open **Settings**. The **In plain words** card sums up what your settings do and marks what your unsaved changes affect. |
 | **Close it** | Close the window. Nothing keeps running in the background. |
 
 ## Staying up to date
 
-When there's a new version on GitHub, a banner appears at the top of the app showing what changed. Press **Update now**: Job Watcher downloads it and reopens on the new version a few seconds later.
+When there's a new version on GitHub, **New version ready** appears at the top right of the app. Open it to see what changed, then press **Update now**: Job Watcher downloads it and reopens on the new version a few seconds later.
 
 > [!IMPORTANT]
 > Updates never touch your settings, company list, jobs or keys. Those live in your own files (`my_settings.toml`, `my_companies.csv` and your data), which stay on your computer and are never shared.

@@ -53,7 +53,7 @@ class AIProblem(Exception):
 def _key():
     key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     if not key:
-        raise AIProblem("Add your Anthropic API key in Settings, Keys and accounts.")
+        raise AIProblem("Add your Anthropic API key in Settings, under Keys.")
     return key
 
 
@@ -65,7 +65,7 @@ def tool_call(payload, timeout=180):
     except requests.RequestException as exc:
         raise AIProblem(f"Could not reach Claude ({exc.__class__.__name__}). Check your connection.") from None
     if r.status_code == 401:
-        raise AIProblem("Anthropic rejected the API key. Check it in Settings, Keys and accounts.")
+        raise AIProblem("Anthropic rejected the API key. Check it in Settings, under Keys.")
     if r.status_code in (429, 529):
         raise AIProblem("Claude is busy right now. Try again in a minute.")
     if r.status_code >= 400:
