@@ -55,3 +55,7 @@ my_settings.toml
 my_companies.csv
 config.toml.old
 companies.csv.old
+
+# Left by the Update button: which commit a downloaded folder has, and files mid-swap
+.jobwatcher-version
+*.updating

@@ -195,6 +195,10 @@ def open_app(argv):
                         handlers=handlers)
     logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
     guard_logs()
+    if os.environ.pop("JOBWATCHER_AFTER_UPDATE", None):
+        time.sleep(1.5)  # let the copy that updated finish closing
+    from .updates import install_packages_if_needed
+    install_packages_if_needed()
 
     if not (args.new or args.dev):
         open_one = running_instance()
@@ -253,7 +257,32 @@ def open_app(argv):
                 marker.unlink()
         except (OSError, ValueError):
             pass
+        if getattr(app.state, "restart_after_close", False):
+            relaunch()
     return None
+
+
+def relaunch():
+    """Open Job Watcher again after an update, the way the Desktop shortcut does, so the new
+    version is what runs."""
+    from .base import BASE, log
+    scripts = Path(sys.executable).parent
+    app_py = Path(__file__).resolve().parent.parent / "app.py"
+    env = {**os.environ, "JOBWATCHER_AFTER_UPDATE": "1"}
+    try:
+        if sys.platform == "win32":
+            console = scripts / "jobwatcher.exe"
+            python = scripts / "python.exe"
+            cmd = [str(console)] if console.exists() else [str(python if python.exists() else sys.executable), str(app_py)]
+            subprocess.Popen(cmd, cwd=str(BASE), env={**env, "JOBWATCHER_RELAUNCHED": "1"},
+                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=errors_file(redirect=False),
+                             creationflags=CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP)
+        else:
+            subprocess.Popen([sys.executable, str(app_py)], cwd=str(BASE), env=env, stdin=subprocess.DEVNULL,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    except OSError as exc:
+        log.warning("Updated, but couldn't open Job Watcher again (%s). Open it from the Desktop or Start menu.",
+                    exc.__class__.__name__)
 
 
 def server_config(uvicorn, app, port):
@@ -312,6 +341,13 @@ def open_window(url, app, runs, base, start_hidden=False):
             pass
 
     app.state.focus = bring_forward
+
+    def close_for_restart():
+        if tray:
+            tray.quitting = True
+        window.destroy()
+
+    app.state.close_for_restart = close_for_restart
 
     def on_closing():
         if tray and not tray.quitting and keep_in_tray():

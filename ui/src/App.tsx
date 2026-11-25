@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { changeCount, UpdatingNote, useApplyUpdate, useUpdate } from "./components/Update";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api, TOKEN, type UpdateInfo } from "./api";
+import { api, TOKEN } from "./api";
 import { External } from "./components/bits";
 import { Welcome } from "./components/Welcome";
 import { RunBanner } from "./components/RunBanner";
@@ -27,7 +28,8 @@ export function App() {
   const outreach = useOutreach();
   const pipeline = usePipeline();
   const setup = useQuery({ queryKey: ["setup"], queryFn: () => api<{ needed: boolean; companies: number }>("setup") });
-  const update = useQuery({ queryKey: ["update"], queryFn: () => api<UpdateInfo>("update"), staleTime: Infinity });
+  const update = useUpdate();
+  const applyUpdate = useApplyUpdate();
   const [dismissed, setDismissed] = useState(() => {
     try { return localStorage.getItem("jw.updateDismissed") ?? ""; } catch { return ""; }
   });
@@ -107,16 +109,29 @@ export function App() {
         {/* The Dashboard shows the run in full itself */}
         {route.screen !== "dashboard" && <RunBanner busyElsewhere={busyElsewhere} />}
         {u?.newer && u.latest !== dismissed && (
-          <p className="banner update">
-            Job Watcher {u.latest} is out (you have {u.current}).{" "}
-            {u.url && <External href={u.url}>{u.installed ? "Download the installer" : "See what's new"}</External>}
-            {!u.installed && " Then update your folder (git pull) and run Install Job Watcher again."}{" "}
-            <button className="text-button" onClick={() => {
-              setDismissed(u.latest ?? "");
-              try { localStorage.setItem("jw.updateDismissed", u.latest ?? ""); } catch { /* storage unavailable */ }
-            }}>Not now</button>
-          </p>
+          <div className="banner update" role="status">
+            <span>
+              <strong>A new version of Job Watcher is ready</strong> ({changeCount(u)})
+              {u.changes[0]?.message ? <span className="quiet">. Latest: {u.changes[0].message}</span> : null}
+            </span>
+            <span className="banner-actions">
+              {u.can_update ? (
+                <button className="button primary" onClick={applyUpdate.run} disabled={applyUpdate.state !== "idle"}>
+                  {applyUpdate.state === "working" ? "Updating..." : "Update now"}
+                </button>
+              ) : u.url ? <External href={u.url}>Download the new version</External> : null}
+              <button className="text-button" onClick={() => {
+                go("settings");
+                window.setTimeout(() => document.getElementById("sec-updates")?.scrollIntoView({ behavior: "smooth" }), 250);
+              }}>What's new</button>
+              <button className="text-button" onClick={() => {
+                setDismissed(u.latest ?? "");
+                try { localStorage.setItem("jw.updateDismissed", u.latest ?? ""); } catch { /* storage unavailable */ }
+              }}>Not now</button>
+            </span>
+          </div>
         )}
+        <UpdatingNote state={applyUpdate.state} />
         {meta.data?.settings_problem && (
           <p className="banner">
             Your settings file (my_settings.toml) has a problem: {meta.data.settings_problem}{" "}

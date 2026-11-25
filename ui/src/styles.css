@@ -602,3 +602,13 @@ textarea { resize: vertical; width: 100%; }
 .search-list li { font-size: 13px; }
 .search-list code { font-family: var(--mono); font-size: 12.5px; word-break: break-word; background: var(--bg); padding: 2px 6px; border-radius: 4px; }
 .search-list li .text-button, .search-list li .quiet { margin-left: 8px; font-size: 12px; }
+
+/* Updates */
+.banner.update { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.banner.update .quiet { font-weight: 400; }
+.banner-actions { display: flex; align-items: center; gap: 12px; }
+.banner-actions .button { padding: 5px 14px; }
+.update-changes { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14px; }
+.updating-note { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgb(15 23 42 / 0.45); }
+.updating-note .panel { max-width: 440px; padding: 22px 26px; }
+.updating-note h2 { margin: 0 0 6px; }

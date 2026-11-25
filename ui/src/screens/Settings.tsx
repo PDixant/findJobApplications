@@ -9,6 +9,7 @@ import { ErrorNote } from "../components/bits";
 import { toast } from "../live";
 import { hex } from "../format";
 import { ClaudeHelp, Connections, PhoneAlerts } from "./SettingsExtras";
+import { UpdatesPanel } from "../components/Update";
 
 const LABELS: Record<string, string> = {
   titles: "Job titles", skip_titles: "Skip titles with", must_mention: "Stack keywords", max_age_hours: "Posted within (hours)",
@@ -138,6 +139,7 @@ export function Settings() {
           ))}
           <ClaudeHelp />
           <Connections />
+          <UpdatesPanel />
           <Background />
           <Keys />
         </div>

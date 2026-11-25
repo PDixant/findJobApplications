@@ -477,8 +477,15 @@ def test_schedule_setup_and_updates(client, monkeypatch, tmp_path):
         def json(self):
             return {"tag_name": "v9.0.0", "html_url": "https://github.com/x/releases/v9.0.0"}
     monkeypatch.setattr(updates.requests, "get", lambda *a, **k: Reply())
+    monkeypatch.setattr(updates, "kind", lambda: "installed")
     u = client.get("/api/update", params={"force": True}).json()
     assert u["newer"] is True and u["latest"] == "v9.0.0" and u["current"] == jw.__version__
+    assert u["installed"] and not u["can_update"]
+    r = client.post("/api/update/apply")
+    assert r.status_code == 400 and "installer" in r.json()["detail"]
+    monkeypatch.setattr(updates, "apply", lambda: {"from": "abc1234", "to": "def5678", "files": 3, "packages": False})
+    assert client.post("/api/update/apply").json() == {"from": "abc1234", "to": "def5678", "files": 3,
+                                                       "packages": False, "restart": False}
 
     if jw.sys.platform.startswith("linux"):
         monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))

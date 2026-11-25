@@ -332,4 +332,10 @@ export type ScheduleStatus = {
   startup_supported: boolean; startup: boolean; tray: boolean; keep_in_tray: boolean;
 };
 
-export type UpdateInfo = { current: string; latest: string | null; url: string | null; newer: boolean; installed: boolean };
+export type UpdateChange = { sha: string; date: string | null; message: string };
+export type UpdateInfo = {
+  current: string; kind: "git" | "download" | "installed"; commit: string | null; date: string | null;
+  latest: string | null; url: string | null; newer: boolean; behind: number | null; changes: UpdateChange[];
+  can_update: boolean; problem: string | null; installed: boolean; checked: string;
+};
+export type UpdateResult = { from: string | null; to: string; files: number; packages: boolean; restart: boolean };

@@ -1112,6 +1112,22 @@ def create_app(token, dev=False, schedule=False):
     def update(force: bool = False):
         return updates.check(__version__, force=force)
 
+    @app.post("/api/update/apply")
+    def update_apply():
+        """Install the newer version, then close and open the app again so it runs."""
+        if runs.active():
+            raise HTTPException(409, "A run is going. Update when it finishes.")
+        try:
+            result = updates.apply()
+        except updates.UpdateProblem as exc:
+            raise HTTPException(400, str(exc)) from None
+        close = getattr(app.state, "close_for_restart", None)
+        if close:
+            app.state.restart_after_close = True
+            threading.Timer(1.5, close).start()  # after this answer reaches the window
+        hub.publish("updated", {"to": result["to"]})
+        return {**result, "restart": bool(close)}
+
     @app.api_route("/api/{rest:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
     def unknown(rest: str):
         raise HTTPException(404, f"No such endpoint: /api/{rest}")

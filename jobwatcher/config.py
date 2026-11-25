@@ -257,8 +257,10 @@ def _git(home, *args):
     git = find_git()
     if not git:
         return None
+    env = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
     try:
-        return subprocess.run([git, "-C", str(home), *args], capture_output=True, text=True, timeout=30)
+        return subprocess.run([git, "-C", str(home), *args], capture_output=True, text=True, timeout=30, env=env,
+                              creationflags=0x08000000 if sys.platform == "win32" else 0)  # no console window
     except (OSError, subprocess.SubprocessError):
         return None
 
