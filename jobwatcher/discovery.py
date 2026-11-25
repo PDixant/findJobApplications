@@ -187,8 +187,12 @@ def run_search(cfg, state, rows, now, look_back=None):
         return False
     look_back = look_back or s["look_back"]
     found, queries, failed = {}, 0, None
-    for site in s["sites"]:
-        query = build_query(SEARCH_SITES[site.lower()], s["titles"], s["places"], s["skip_words"])
+    searches = search_queries(cfg)
+    if not searches:
+        log.info("Web search skipped: no searches to run (pick a job site under [search], or add my_queries).")
+        return False
+    for search in searches:
+        query = search["query"]
         for page in range(1, int(s["pages_per_query"]) + 1):
             if queries >= left or failed:
                 break

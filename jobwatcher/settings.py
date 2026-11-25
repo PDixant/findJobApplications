@@ -23,10 +23,16 @@ FIELDS = {
         ("runs_per_day", "number", "Searches per day"),
         ("look_back", "choice:day,week,month", "How far back each search looks"),
         ("sites", "choices:ashby,greenhouse,lever,workable,smartrecruiters,workday", "Job sites to search"),
-        ("titles", "list", "The posting's title must contain one of these. Keep it short"),
+        ("same_titles_as_jobs", "bool", "Search for the same job titles as your job filter (Which jobs, above). "
+                                        "Long lists are split over several searches, so none gets cut off"),
+        ("titles", "list", "Titles to search for when the switch above is off"),
         ("places", "list", "The posting must mention one of these places"),
         ("skip_words", "list", "Leave out postings that contain any of these words"),
-        ("pages_per_query", "number", "Result pages to read per site per search"),
+        ("built_queries", "bool", "Run one search per job site built from the sites, titles, places and skip words above"),
+        ("my_queries", "lines", "Your own searches, one per line, sent exactly as written (Google search syntax). "
+                                "Keep site: in each so results link to job boards; other links are ignored"),
+        ("pages_per_query", "number", "Result pages (10 results each) to read per search. 3 to 5 is plenty: "
+                                      "most searches run out of fresh results before page 5"),
         ("monthly_query_limit", "number", "Never use more searches than this in a month"),
         ("new_companies", "choice:watch,review", "watch = start watching new companies right away; review = add them turned off"),
         ("career_page_lookups_per_run", "number", "Careers pages to look up per run with Find careers pages"),
@@ -93,6 +99,16 @@ def current(cfg):
 
 
 def _clean(kind, value, where):
+    if kind == "lines":
+        if isinstance(value, str):
+            value = value.splitlines()
+        if not isinstance(value, list):
+            raise ConfigError(f"{where} should be a list, one per line")
+        out = [" ".join(str(v).split()) for v in value if str(v).strip()]
+        long = [q for q in out if len(q) > 2000]
+        if long:
+            raise ConfigError(f"{where}: a search is {len(long[0])} characters long; search services stop near 2,000")
+        return out
     if kind in ("list",) or kind.startswith("choices:"):
         if isinstance(value, str):
             value = [v for v in (x.strip() for x in value.split(",")) if v]

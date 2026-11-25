@@ -120,7 +120,8 @@ enabled = true
 provider = "serpapi"
 
 # How many times a day to search.
-# Each search uses up to (number of sites) x (pages_per_query) queries.
+# Each search uses up to (number of searches) x (pages_per_query) queries:
+# one built search per site below, plus your own my_queries.
 runs_per_day = 2
 
 # How far back each search looks: "day", "week" or "month".
@@ -129,8 +130,11 @@ look_back = "day"
 # Job sites to search. Any of: ashby, greenhouse, lever, workable, smartrecruiters, workday
 sites = ["ashby", "greenhouse", "lever", "workable", "smartrecruiters", "workday"]
 
-# The posting's title must contain one of these.
-# Keep this list short: search engines cut off long queries.
+# true: search for the same titles as [jobs] titles above. A long list is split
+# over several searches per site, so no search passes Google's 32-word limit.
+same_titles_as_jobs = true
+
+# The titles to search for when same_titles_as_jobs = false.
 titles = ["Software Engineer", "Software Developer", "Web Developer"]
 
 # The posting must mention at least one of these places.
@@ -139,7 +143,21 @@ places = ["Toronto", "Vancouver", "Ottawa", "Canada"]
 # Leave out postings that contain any of these words.
 skip_words = ["India"]
 
-# Result pages to read per site per search (10 results a page).
+# Run one search per job site built from the sites, titles, places and skip
+# words above. Set to false to run only your own searches (below).
+built_queries = true
+
+# Your own searches, sent exactly as written (Google search syntax). Keep a
+# site: part so the results link to job boards; other links are ignored. Each
+# one uses up to pages_per_query queries per search. For example:
+#   my_queries = [
+#     'site:jobs.ashbyhq.com intitle:"Frontend" ("Vancouver" OR "Remote")',
+#     'site:boards.greenhouse.io "React" "Canada"',
+#   ]
+my_queries = []
+
+# Result pages to read per search (10 results a page). 3 to 5 is plenty: most
+# searches run out of fresh results before page 5.
 pages_per_query = 30
 
 # Never use more queries than this in one calendar month.

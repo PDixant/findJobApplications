@@ -46,6 +46,7 @@ DEFAULTS = {
         "skip_words": ["India"],
         "pages_per_query": 3, "monthly_query_limit": 1000, "new_companies": "watch",
         "country": "", "career_page_lookups_per_run": 50,
+        "same_titles_as_jobs": True, "built_queries": True, "my_queries": [],
     },
     # 4. Companies' own careers websites
     "career_sites": {"enabled": True, "max_new_pages_per_site": 15},
@@ -329,16 +330,18 @@ def describe_config(cfg):
     key_name = SEARCH_KEYS[s["provider"]]
     has_key = bool(os.environ.get(key_name))
     if s["enabled"]:
-        per_run = len(s["sites"]) * s["pages_per_query"]
+        searches = search_queries(cfg)
+        per_run = len(searches) * s["pages_per_query"]
         lines.append(f"New-company search: ON, {s['runs_per_day']:g} times a day through {s['provider']} "
                      f"({key_name} {'found' if has_key else 'MISSING'}).")
         if not has_key:
             lines.append(f"  Put this line in {ENV_PATH}:  {key_name}=your-key")
         lines.append(f"  Up to {per_run} queries per search, at most {s['monthly_query_limit']} a month. "
                      f"Looks back one {s['look_back']}.")
-        for site in s["sites"]:
-            lines.append("  " + build_query(SEARCH_SITES[site.lower()], s["titles"], s["places"],
-                                            s["skip_words"]))
+        for q in searches:
+            lines.append("  " + q["query"] + ("   (yours)" if q["mine"] else ""))
+        if not searches:
+            lines.append("  No searches to run: pick at least one job site, or add searches of your own.")
         lines.append("  New companies are " + ("watched right away." if s["new_companies"] == "watch"
                                                else "added with enabled = no for you to review."))
     else:
@@ -377,6 +380,55 @@ NOT_CAREER_SITES = ("linkedin.", "indeed.", "glassdoor.", "ziprecruiter.", "wiki
 
 class SearchError(Exception):
     """The search service refused or failed; the message says why."""
+
+
+MAX_QUERY_WORDS = 32  # Google (and Serper, which uses it) ignores words past the 32nd
+
+
+def query_words(query):
+    """Words as a search engine counts them, erring high: operators and OR count too."""
+    return len(re.sub(r'["()]', " ", query).split())
+
+
+def search_titles(cfg):
+    """The titles web searches look for: your job filter's titles, unless you turned that off."""
+    s = cfg["search"]
+    return list(cfg.get("titles_include") or []) if s.get("same_titles_as_jobs", True) else list(s["titles"])
+
+
+def built_searches(host, titles, places, skip_words):
+    """One search per site, or more when there are too many titles for one: titles are split
+    across searches so none passes the search engine's word limit."""
+    titles = [t for t in titles if str(t).strip()]
+    groups, group = [], []
+    for t in titles:
+        if group and query_words(build_query(host, group + [t], places, skip_words)) > MAX_QUERY_WORDS:
+            groups.append(group)
+            group = []
+        group.append(t)
+    groups.append(group)
+    return [build_query(host, g, places, skip_words) for g in groups]
+
+
+def search_queries(cfg):
+    """Every search a web search sends, in order: the ones built from your sites, titles, places
+    and skip words (unless built_queries is off), then your own, exactly as written."""
+    s = cfg["search"]
+    out = []
+    if s.get("built_queries", True):
+        titles = search_titles(cfg)
+        for site in s["sites"]:
+            host = SEARCH_SITES.get(str(site).lower())
+            if host:
+                out += [{"site": str(site).lower(), "query": q, "mine": False}
+                        for q in built_searches(host, titles, s["places"], s["skip_words"])]
+    seen = {q["query"] for q in out}
+    for q in s.get("my_queries") or []:
+        q = " ".join(str(q).split())
+        if q and q not in seen:
+            seen.add(q)
+            out.append({"site": None, "query": q, "mine": True})
+    return out
 
 
 def build_query(host, titles, places, skip_words):

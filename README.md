@@ -294,7 +294,9 @@ Every result link names the company's board, so new companies are added and read
 1. Sign up at [serper.dev](https://serper.dev) (2,500 free queries when you sign up, no card).
 2. Paste the key under **Settings, Keys and accounts** (or `SERPER_API_KEY=` in `.env`).
 
-Brave and SerpApi work too (`provider` under `[search]`). Twice a day uses about 500 queries a month at most, and `monthly_query_limit` is a hard stop. `--search --look-back week` once is a good way to fill your list the first time.
+Brave and SerpApi work too (`provider` under `[search]`). `monthly_query_limit` is a hard stop. `--search --look-back week` once is a good way to fill your list the first time.
+
+**Which searches run.** By default each job site gets searches built from the same job titles as your job filter, your search places and your skip words. A long title list is split over a few searches per site, because Google ignores words past the 32nd. **Settings, Find new companies** lists every search exactly as it will be sent, and updates as you edit. Add your own under **Your own searches**, one per line in Google's search syntax (keep a `site:` part, since only links to job boards are used). **Edit as my own** copies a built search there so you can change it; turn off **Built searches** to run only yours. Each search reads up to `pages_per_query` result pages, so the number of queries per run is searches x pages.
 
 </details>
 

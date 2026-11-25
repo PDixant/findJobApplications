@@ -491,3 +491,36 @@ def test_installer_retries_pip_without_the_cache(monkeypatch, tmp_path):
     else:
         raise AssertionError("an ordinary pip failure should still fail")
     assert len(calls) == 1  # no retry for problems the cache can't cause
+
+
+def test_your_own_searches():
+    from jobwatcher.config import MAX_QUERY_WORDS, query_words, search_queries
+    from jobwatcher import settings
+    base = jw.load_config()
+    s = {**base["search"], "sites": ["ashby", "lever"], "same_titles_as_jobs": False, "titles": ["Frontend"],
+         "places": ["Vancouver"], "skip_words": [],
+         "my_queries": ['site:jobs.ashbyhq.com   "React"  Canada', "", 'site:jobs.ashbyhq.com "React" Canada']}
+    cfg = {**base, "search": s}
+    got = search_queries(cfg)
+    assert [q["mine"] for q in got] == [False, False, True]  # built ones first, yours once, spaces tidied
+    assert got[0]["query"] == 'site:jobs.ashbyhq.com (intitle:"Frontend") ("Vancouver")'
+    assert got[2]["query"] == 'site:jobs.ashbyhq.com "React" Canada'
+    assert [q["mine"] for q in search_queries({**cfg, "search": {**s, "built_queries": False}})] == [True]
+    assert search_queries({**cfg, "search": {**s, "built_queries": False, "my_queries": []}}) == []
+    assert settings._clean("lines", "site:a.com one\n\n  site:b.com  two ", "x") == ["site:a.com one", "site:b.com two"]
+    with pytest.raises(jw.ConfigError):
+        settings._clean("lines", ["site:a.com " + "x" * 2100], "Your own searches")
+    assert "(yours)" in jw.describe_config(cfg)
+
+    # Same titles as the job filter: every title is searched, split so no search passes 32 words
+    titles = ["Software Engineer", "Software Developer", "Web Developer", "Frontend", "Front End", "Front-End",
+              "Full Stack", "Full-Stack", "Fullstack", "UI Engineer", "Product Engineer", "React", "JavaScript"]
+    s2 = {**base["search"], "sites": ["ashby", "greenhouse", "lever"], "same_titles_as_jobs": True,
+          "places": ["Toronto", "Vancouver", "Ottawa", "Canada"], "skip_words": ["India"], "my_queries": []}
+    built = search_queries({**base, "titles_include": titles, "search": s2})
+    per_site = [q for q in built if q["site"] == "ashby"]
+    assert len(per_site) >= 2 and len(built) == 3 * len(per_site)
+    assert all(query_words(q["query"]) <= MAX_QUERY_WORDS for q in built)
+    searched = " ".join(q["query"] for q in per_site)
+    assert all(f'intitle:"{t}"' in searched for t in titles)
+    assert all("-India" in q["query"] and '"Canada"' in q["query"] for q in built)

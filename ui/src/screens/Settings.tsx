@@ -22,7 +22,7 @@ const LABELS: Record<string, string> = {
   verify_emails: "Verify addresses", monthly_hunter_credit_limit: "Monthly Hunter limit", follow_up_after_days: "Follow up after (days)",
   model: "Claude model", times: "Run at", keep_in_tray: "Keep running after closing", score_new_matches: "Score new matches", monthly_limit: "Monthly Claude limit",
   resume_tex: "Base resume (.tex)", resume_rules: "Resume rules file", ntfy_topic: "ntfy topic", ntfy_server: "ntfy server",
-  tailored_resumes_folder: "Tailored resumes folder",
+  tailored_resumes_folder: "Tailored resumes folder", built_queries: "Built searches", my_queries: "Your own searches", same_titles_as_jobs: "Same titles as Which jobs",
 };
 const SWATCHES = ["C6EFCE", "DDEBF7", "D9F2F2", "FCE4D6", "E4DFEC", "FFF2CC", "F8CBAD", "EDEDED"];
 
@@ -34,6 +34,8 @@ export function Settings() {
   const settings = useQuery({ queryKey: ["settings"], queryFn: () => api<SettingsData>("settings") });
   const [draft, setDraft] = useState<Record<string, unknown>>({});
   const [explain, setExplain] = useState<string | null>(null);
+  const [searches, setSearches] = useState<SearchPreview | null>(null);
+  const saved = useQuery({ queryKey: ["search-queries", settings.data], queryFn: () => api<SearchPreview>("search/queries") });
   const [problem, setProblem] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
@@ -60,18 +62,25 @@ export function Settings() {
   useEffect(() => {
     if (!dirty) {
       setExplain(null);
+      setSearches(null);
       setProblem(null);
       return;
     }
     const t = window.setTimeout(() => {
-      send<{ explain: string }>("settings/preview", "POST", { changes })
-        .then((r) => { setExplain(r.explain); setProblem(null); })
+      send<{ explain: string } & SearchPreview>("settings/preview", "POST", { changes })
+        .then((r) => { setExplain(r.explain); setSearches(r); setProblem(null); })
         .catch((e) => setProblem(e instanceof Error ? e.message : String(e)));
     }, 400);
     return () => window.clearTimeout(t);
   }, [changes, dirty]);
 
   const value = (section: string, f: SettingField) => (id(section, f.key) in draft ? draft[id(section, f.key)] : f.value);
+  // The search's own title list only matters when it isn't using your job filter's titles.
+  const hidden = (s: SettingsData["sections"][number], f: SettingField) => {
+    if (s.id !== "search" || f.key !== "titles") return false;
+    const same = s.fields.find((x) => x.key === "same_titles_as_jobs");
+    return Boolean(same && value("search", same));
+  };
   const set = (section: string, key: string, v: unknown) => {
     setJustSaved(false);
     setDraft((d) => ({ ...d, [id(section, key)]: v }));
@@ -112,11 +121,18 @@ export function Settings() {
           {settings.data?.sections.map((s) => (
             <section key={s.id} className="panel settings-section" aria-labelledby={`sec-${s.id}`}>
               <h2 id={`sec-${s.id}`}>{s.title}</h2>
-              {s.fields.map((f) => (
+              {s.fields.filter((f) => !hidden(s, f)).map((f) => (
                 <Field key={f.key} field={f} value={value(s.id, f)} changed={Boolean(changes[s.id] && f.key in changes[s.id])}
                   onChange={(v) => set(s.id, f.key, v)} />
               ))}
               {s.id === "alerts" && <PhoneAlerts />}
+              {s.id === "search" && (
+                <SearchList data={searches ?? saved.data} unsaved={dirty}
+                  onEdit={(q) => {
+                    const mine = (value("search", s.fields.find((f) => f.key === "my_queries")!) as string[]) ?? [];
+                    if (!mine.includes(q)) set("search", "my_queries", [...mine, q]);
+                  }} />
+              )}
             </section>
           ))}
           <ClaudeHelp />
@@ -149,6 +165,7 @@ function Field({ field, value, changed, onChange }: {
   const [kind, options] = field.kind.split(":");
   let control;
   if (kind === "list") control = <Chips value={(value as string[]) ?? []} onChange={onChange} label={label} />;
+  else if (kind === "lines") control = <Lines value={(value as string[]) ?? []} onChange={onChange} label={label} />;
   else if (kind === "number")
     control = <input type="number" min={0} className="num-input" value={String(value ?? "")}
       onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))} />;
@@ -166,7 +183,7 @@ function Field({ field, value, changed, onChange }: {
   } else if (kind === "regions") control = <Regions value={(value as RegionValue[]) ?? []} onChange={onChange} />;
   else control = <input value={String(value ?? "")} onChange={(e) => onChange(e.target.value)} />;
   return (
-    <div className={`field ${changed ? "is-changed" : ""} ${kind === "regions" ? "wide" : ""}`}>
+    <div className={`field ${changed ? "is-changed" : ""} ${kind === "regions" || kind === "lines" ? "wide" : ""}`}>
       <div className="field-label">
         <span>{label}</span>
         <small>{field.help}</small>
@@ -177,6 +194,58 @@ function Field({ field, value, changed, onChange }: {
 }
 
 /** A list of words: type and press Enter (or a comma) to add; click a word's x to remove it. */
+type SearchPreview = { searches: { site: string | null; query: string; mine: boolean }[]; pages_per_query: number };
+
+/** One item per line, for long values such as search queries. Keeps your typing as is and saves the
+ *  non-empty lines. */
+function Lines({ value, onChange, label }: { value: string[]; onChange: (v: string[]) => void; label: string }) {
+  const [text, setText] = useState(value.join("\n"));
+  useEffect(() => {
+    setText((t) => (same(t.split("\n").map((x) => x.trim()).filter(Boolean), value) ? t : value.join("\n")));
+  }, [value]);
+  return (
+    <textarea className="lines-input" value={text} aria-label={label} spellCheck={false}
+      rows={Math.min(8, Math.max(3, text.split("\n").length + 1))}
+      placeholder={'site:jobs.ashbyhq.com intitle:"Frontend" ("Vancouver" OR "Remote")'}
+      onChange={(e) => {
+        setText(e.target.value);
+        onChange(e.target.value.split("\n").map((x) => x.trim()).filter(Boolean));
+      }} />
+  );
+}
+
+/** Exactly what each web search sends, as you edit. A built search can be copied into your own
+ *  list to change it. */
+function SearchList({ data, unsaved, onEdit }: {
+  data: SearchPreview | undefined; unsaved: boolean; onEdit: (query: string) => void;
+}) {
+  if (!data) return null;
+  const n = data.searches.length;
+  return (
+    <div className="search-list">
+      <h3>{unsaved ? "Searches with your unsaved changes" : "Searches each run sends"}</h3>
+      <p className="hint">
+        {n
+          ? `${n} ${n === 1 ? "search" : "searches"}, each reading up to ${data.pages_per_query} result ${data.pages_per_query === 1 ? "page" : "pages"}: up to ${n * data.pages_per_query} queries per run.`
+          : "Nothing to search: pick at least one job site, or add searches of your own."}
+      </p>
+      <ol>
+        {data.searches.map((q) => (
+          <li key={q.query}>
+            <code>{q.query}</code>
+            {q.mine ? <span className="quiet">Yours</span> : (
+              <button type="button" className="text-button" onClick={() => onEdit(q.query)}
+                title="Copies it into Your own searches, where you can change it. Then turn off Built searches if you only want yours.">
+                Edit as my own
+              </button>
+            )}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 export function Chips({ value, onChange, label }: { value: string[]; onChange: (v: string[]) => void; label: string }) {
   const [text, setText] = useState("");
   function add(raw: string) {
