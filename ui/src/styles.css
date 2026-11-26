@@ -1153,9 +1153,8 @@ code { font-family: var(--font-mono); font-size: 0.85em; }
 .search-pager { margin-top: var(--s4); }
 
 /* Feedback: report a problem or suggest a feature, finished on GitHub */
-.feedback-button { font-size: 14px; color: var(--text-secondary); }
 .modal.feedback { width: min(640px, 100%); }
-.modal.feedback .segmented { margin-bottom: var(--s6); }
+.modal.feedback .feedback-lede { margin-bottom: var(--s6); }
 .feedback-fields { display: grid; gap: var(--s5); }
 .feedback-fields > label:not(.check) { display: grid; gap: var(--s2); font: 500 14px/20px var(--font-sans); color: var(--text); }
 .feedback-fields input:not([type="checkbox"]), .feedback-fields textarea { width: 100%; font: 400 15px/22px var(--font-sans); }

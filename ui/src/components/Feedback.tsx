@@ -65,22 +65,23 @@ async function copy(text: string) {
   }
 }
 
-/** The Feedback button in the top bar, and its dialog. */
-export function FeedbackButton() {
-  const [open, setOpen] = useState(false);
+/** Help, in the side menu: two separate items, each opening its own form. */
+export function FeedbackNav() {
+  const [open, setOpen] = useState<Kind | null>(null);
   return (
     <>
-      <button type="button" className="text-button feedback-button" onClick={() => setOpen(true)}>Feedback</button>
-      {open && createPortal(<FeedbackDialog onClose={() => setOpen(false)} />, document.body)}
+      <p className="nav-label eyebrow">Help</p>
+      <button type="button" className="nav-item" onClick={() => setOpen("problem")}><span>Report a problem</span></button>
+      <button type="button" className="nav-item" onClick={() => setOpen("idea")}><span>Suggest a feature</span></button>
+      {open && createPortal(<FeedbackDialog kind={open} onClose={() => setOpen(null)} />, document.body)}
     </>
   );
 }
 
-function FeedbackDialog({ onClose }: { onClose: () => void }) {
+function FeedbackDialog({ kind, onClose }: { kind: Kind; onClose: () => void }) {
   const query = useQuery({ queryKey: ["feedback"], queryFn: () => api<Info>("feedback"), staleTime: 0, retry: false });
   // without the app details (the app couldn't read them) a report still works, just without them
   const info = { ...query, data: query.data ?? (query.isError ? { repo: "PDixant/findJobApplications", details: "", log: "" } : undefined) };
-  const [kind, setKind] = useState<Kind>("problem");
   const [p, setP] = useState<ProblemFields>({ title: "", what: "", steps: "", expected: "", withDetails: true, withLog: true });
   const [i, setI] = useState<IdeaFields>({ title: "", idea: "", why: "" });
   const first = useRef<HTMLInputElement>(null);
@@ -103,10 +104,11 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
     <div className="scrim" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal feedback" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
         <h2 id="feedback-title">{kind === "problem" ? "Report a problem" : "Suggest a feature"}</h2>
-        <div className="segmented" role="group" aria-label="What kind of feedback">
-          <button type="button" aria-pressed={kind === "problem"} onClick={() => setKind("problem")}>Something's wrong</button>
-          <button type="button" aria-pressed={kind === "idea"} onClick={() => setKind("idea")}>I have an idea</button>
-        </div>
+        <p className="feedback-lede">
+          {kind === "problem"
+            ? "Tell Dixant what went wrong. It becomes an issue on Pathfinder's GitHub, where you can follow the fix."
+            : "Tell Dixant what would make Pathfinder better. Others can upvote it, and the most wanted get built first."}
+        </p>
 
         {kind === "problem" ? (
           <div className="feedback-fields">
@@ -142,9 +144,9 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
               </details>
             )}
             <p className="hint feedback-next">
-              <Icon name="info" size={16} /> Next, GitHub opens in your browser with this filled in. Add screenshots or files there:
+              <Icon name="info" size={16} /><span>Next, GitHub opens in your browser with this filled in. Add screenshots or files there:
               drag them into any box, or paste a screenshot with Ctrl+V (Windows+Shift+S takes one). Then press Submit.
-              You need a free GitHub account.
+              You need a free GitHub account.</span>
             </p>
           </div>
         ) : (
@@ -160,9 +162,9 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
               <textarea rows={3} value={i.why} onChange={(e) => setI({ ...i, why: e.target.value })} />
             </label>
             <p className="hint feedback-next">
-              <Icon name="info" size={16} /> Ideas go to Pathfinder's Ideas board on GitHub, where anyone can upvote them. The most
+              <Icon name="info" size={16} /><span>Ideas go to Pathfinder's Ideas board on GitHub, where anyone can upvote them. The most
               wanted rise to the top. Before posting, <External href={`https://github.com/${repo}/discussions/categories/ideas?discussions_q=is%3Aopen+category%3AIdeas+sort%3Atop`}>
-              see what others have asked for</External>: if yours is there, an upvote counts too.
+              see what others have asked for</External>: if yours is there, an upvote counts too.</span>
             </p>
           </div>
         )}
