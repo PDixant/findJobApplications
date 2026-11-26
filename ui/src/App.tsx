@@ -6,6 +6,7 @@ import { APP_NAME, AUTHOR, REPO_URL } from "./brand";
 import { Welcome } from "./components/Welcome";
 import { RunControls } from "./components/RunControls";
 import { UpdateBeforeRun, UpdateNotice } from "./components/Update";
+import { FeedbackButton } from "./components/Feedback";
 import { applyPaint, applyTheme, currentPaint, onPaintChange, type PaintChoice, type ThemeChoice } from "./theme";
 import { n } from "./format";
 import { connect, dismissToast, setRun, useLive } from "./live";
@@ -126,7 +127,7 @@ export function App() {
       <main className={`content ${WIDE.has(route.screen) ? "is-wide" : ""}`} ref={content} onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 48)}>
         <header className={`topbar ${scrolled ? "is-scrolled" : ""}`}>
           <span className="topbar-title" aria-hidden={!scrolled}>{TITLES[route.screen]}</span>
-          <div className="topbar-end"><UpdateNotice /></div>
+          <div className="topbar-end"><FeedbackButton /><UpdateNotice /></div>
         </header>
         <div className="page">
           {meta.data?.settings_problem && (

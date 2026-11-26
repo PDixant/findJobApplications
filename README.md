@@ -152,6 +152,8 @@ Pathfinder can't use that version. **Install Pathfinder** skips it and sets up P
 
 </details>
 
+**Found a bug, or have an idea?** Press **Feedback** at the top of the app. A problem becomes a [GitHub issue](https://github.com/PDixant/findJobApplications/issues), already filled in with your app's version and recent log (you see exactly what's included, with keys and your user name taken out), and you add screenshots on GitHub before submitting. An idea goes to the [Ideas board](https://github.com/PDixant/findJobApplications/discussions/categories/ideas), where everyone can upvote it, so the most wanted get built first. Both need a free GitHub account; **Copy instead** works without one.
+
 ## Learn more
 
 The **[full guide](docs/GUIDE.md)** covers everything in detail:

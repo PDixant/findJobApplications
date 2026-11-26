@@ -556,7 +556,9 @@ button.row:focus-visible { border-radius: var(--r-s); }
 @keyframes reveal { from { opacity: 0; transform: translateY(8px); } }
 
 /* tables: crisp, on the paper itself */
-.table-wrap { min-width: 0; overflow-x: auto; }
+/* No overflow here on wide screens: a scrolling box would trap the sticky column names inside it, 64 px
+   down over the first row. Narrow screens scroll the table sideways instead (see 760 px below). */
+.table-wrap { min-width: 0; }
 table.data { width: 100%; border-collapse: collapse; table-layout: fixed; font: 400 14px/20px var(--font-sans); letter-spacing: 0.005em; }
 .data th {
   position: sticky; top: var(--bar); z-index: 2; height: 40px; padding: 0 var(--s4); background: var(--canvas); text-align: left;
@@ -1072,6 +1074,8 @@ code { font-family: var(--font-mono); font-size: 0.85em; }
 }
 @media (max-width: 760px) {
   :root { --margin: 20px; --bar: 56px; }
+  .table-wrap { overflow-x: auto; }
+  .data th { position: static; } /* inside the sideways scroller the names can't stick, so they sit still */
   .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
   .sidenav { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--s4); padding: var(--s3) var(--s5); }
   .brand { height: 40px; }
@@ -1147,3 +1151,23 @@ code { font-family: var(--font-mono); font-size: 0.85em; }
 .copy-field .icon { flex: none; }
 
 .search-pager { margin-top: var(--s4); }
+
+/* Feedback: report a problem or suggest a feature, finished on GitHub */
+.feedback-button { font-size: 14px; color: var(--text-secondary); }
+.modal.feedback { width: min(640px, 100%); }
+.modal.feedback .segmented { margin-bottom: var(--s6); }
+.feedback-fields { display: grid; gap: var(--s5); }
+.feedback-fields > label:not(.check) { display: grid; gap: var(--s2); font: 500 14px/20px var(--font-sans); color: var(--text); }
+.feedback-fields input:not([type="checkbox"]), .feedback-fields textarea { width: 100%; font: 400 15px/22px var(--font-sans); }
+.feedback-fields textarea { resize: vertical; min-height: 64px; padding: var(--s3) var(--s4); }
+.feedback-fields .optional { font-weight: 400; color: var(--text-tertiary); margin-left: var(--s2); }
+.feedback-fields .check + .check { margin-top: calc(-1 * var(--s3)); }
+.feedback-preview summary { cursor: pointer; font: 400 14px/20px var(--font-sans); color: var(--text-secondary); }
+.feedback-preview pre { margin: var(--s3) 0; padding: var(--s4); max-height: 220px; overflow: auto; border-radius: var(--r-s); background: var(--surface-sunken); font: 400 12px/18px var(--font-mono); white-space: pre-wrap; word-break: break-word; color: var(--text-secondary); }
+.feedback-next { display: flex; gap: var(--s3); align-items: flex-start; }
+.feedback-next .icon { flex: none; margin-top: 2px; }
+.feedback-foot { margin-top: var(--s7); }
+@media (max-width: 520px) {
+  .modal.feedback { padding: var(--s5); }
+  .feedback-foot > * { flex: 1 1 100%; text-align: center; justify-content: center; }
+}

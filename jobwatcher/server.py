@@ -29,7 +29,7 @@ from .discovery import add_company, import_companies
 from .runner import run_once, refresh_scores
 from .scheduler import Scheduler
 from .filters import Rules
-from . import ai, alerts, outreach_app, referrals, signals, system, updates
+from . import ai, alerts, feedback, outreach_app, referrals, signals, system, updates
 from . import __version__
 from . import keys as keystore
 from . import settings as settings_module
@@ -1207,6 +1207,12 @@ def create_app(token, dev=False, schedule=False):
             threading.Timer(1.5, close).start()  # after this answer reaches the window
         hub.publish("updated", {"to": result["to"]})
         return {**result, "restart": bool(close)}
+
+    @app.get("/api/feedback")
+    def feedback_details():
+        """What a problem report can include: app details and the end of the log, keys taken out.
+        Nothing is sent from here; the app fills in GitHub's form and you submit it yourself."""
+        return feedback.feedback_info()
 
     @app.get("/api/appearance")
     def appearance():

@@ -654,3 +654,28 @@ def test_signals_fit_tailor_and_pipeline(client, monkeypatch):
     r = client.post("/api/alerts/test")
     assert r.status_code == 400 and "topic" in r.json()["detail"]
     assert client.get("/api/alerts/topic").json()["topic"].startswith("jobwatcher-")
+
+
+def test_feedback_details_leave_out_keys_and_your_name(client, monkeypatch):
+    """A problem report can include app details and the end of the log. Pathfinder posts nothing
+    itself; it only shows what GitHub's form would get, with keys and your home folder taken out."""
+    from pathlib import Path
+    from jobwatcher import base, feedback
+    log = Path(base.LOG_PATH)
+    before = log.read_text(encoding="utf-8") if log.exists() else None
+    monkeypatch.setenv("SERPER_API_KEY", "serper-secret-123456")
+    home = str(Path.home())
+    try:
+        log.write_text("older line\n" + f"Opened {home}/Pathfinder\nsearch key serper-secret-123456 failed\n"
+                       "https://x.test/?api_key=abcdef123\n", encoding="utf-8")
+        got = client.get("/api/feedback").json()
+        assert len(feedback.recent_log(lines=1).splitlines()) == 1
+    finally:
+        if before is None:
+            log.unlink(missing_ok=True)
+        else:
+            log.write_text(before, encoding="utf-8")
+    assert got["repo"] == "PDixant/findJobApplications"
+    assert got["details"].startswith("Pathfinder ") and "System:" in got["details"]
+    assert "serper-secret-123456" not in got["log"] and "abcdef123" not in got["log"]
+    assert home not in got["log"] and "~/Pathfinder" in got["log"]
