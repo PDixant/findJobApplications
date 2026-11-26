@@ -694,6 +694,7 @@ def test_edits_to_the_shared_files_move_into_yours(tmp_path):
     """Someone types their settings straight into config.toml (the shared file) instead of Settings.
     Pathfinder reads my_settings.toml, and an update puts config.toml back, so those edits used to
     vanish. Now they move into my_settings.toml (and my_companies.csv) first, and a copy is kept."""
+    pytest.importorskip("tomlkit")  # the app's packages; the first CI step runs without them
     import subprocess
     from jobwatcher.config import config_from_text, keep_shared_file_edits, make_my_copies
     home = tmp_path / "clone"
