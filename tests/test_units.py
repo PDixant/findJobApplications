@@ -562,6 +562,12 @@ def test_your_own_searches():
     assert got[2]["query"] == 'site:jobs.ashbyhq.com "React" Canada'
     assert [q["mine"] for q in search_queries({**cfg, "search": {**s, "built_queries": False}})] == [True]
     assert search_queries({**cfg, "search": {**s, "built_queries": False, "my_queries": []}}) == []
+    # a built search you removed doesn't run, but Settings still lists it so you can bring it back
+    lever = got[1]["query"]
+    skipping = {**cfg, "search": {**s, "skipped_queries": [lever.replace(" ", "  ")]}}
+    assert lever not in [q["query"] for q in search_queries(skipping)]
+    listed = search_queries(skipping, include_removed=True)
+    assert [q["removed"] for q in listed] == [False, True, False] and listed[1]["query"] == lever
     assert settings._clean("lines", "site:a.com one\n\n  site:b.com  two ", "x") == ["site:a.com one", "site:b.com two"]
     with pytest.raises(jw.ConfigError):
         settings._clean("lines", ["site:a.com " + "x" * 2100], "Your own searches")

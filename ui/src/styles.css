@@ -933,7 +933,27 @@ table.data { width: 100%; border-collapse: collapse; table-layout: fixed; font: 
 .search-list ol { margin: var(--s4) 0 0; padding: 0; list-style: none; display: grid; gap: var(--s3); counter-reset: q; }
 .search-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s4); align-items: start; padding: var(--s4); border-radius: var(--r-s); background: var(--surface-sunken); }
 .search-list code { font: 400 12px/18px var(--font-mono); color: var(--text-secondary); overflow-wrap: anywhere; }
-.search-list li > span { font: 400 13px/16px var(--font-sans); color: var(--text-tertiary); padding-top: 1px; }
+.search-actions { display: flex; align-items: baseline; gap: var(--s4); padding-top: 1px; white-space: nowrap; }
+.search-yours { font: 400 13px/16px var(--font-sans); color: var(--text-tertiary); }
+.search-list > .hint:last-child { margin-top: var(--s4); }
+.removed-searches { margin-top: var(--s5); }
+.removed-searches summary, .query-help summary { cursor: pointer; font: 500 14px/20px var(--font-sans); color: var(--text-secondary); width: fit-content; }
+.removed-searches summary:hover, .query-help summary:hover { color: var(--text); }
+.removed-searches .hint { margin-top: var(--s2); }
+.removed-searches li code { color: var(--text-tertiary); }
+.removed-searches > .text-button { margin-top: var(--s3); }
+.query-help { margin: calc(-1 * var(--s2)) 0 var(--s5); padding: var(--s4) var(--s5); border-radius: var(--r-s); background: var(--surface-sunken); }
+.query-help[open] summary { margin-bottom: var(--s3); }
+.query-help p, .query-help li { font: 400 14px/21px var(--font-sans); color: var(--text-secondary); max-width: 68ch; }
+.query-help p + p, .query-help table + p, .query-help pre + p { margin-top: var(--s4); }
+.query-help code { font: 400 12px/18px var(--font-mono); color: var(--text); }
+.query-help pre { margin: var(--s2) 0 0; padding: var(--s3) var(--s4); border-radius: var(--r-s); background: var(--surface); overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.query-help-table { width: 100%; margin-top: var(--s4); border-collapse: collapse; font: 400 14px/20px var(--font-sans); }
+.query-help-table th { text-align: left; font: 500 13px/16px var(--font-sans); color: var(--text-tertiary); padding: 0 var(--s4) var(--s2) 0; border-bottom: 1px solid var(--line-hair); }
+.query-help-table td { padding: var(--s2) var(--s4) var(--s2) 0; border-bottom: 1px solid var(--line-hair); color: var(--text-secondary); vertical-align: top; }
+.query-help-table td:first-child { white-space: nowrap; }
+.query-help-sites, .query-help-tips { margin: var(--s2) 0 0; padding-left: var(--s5); }
+.query-help-tips { margin-top: var(--s4); }
 
 .plain { position: sticky; top: calc(var(--bar) + var(--s5)); max-height: calc(100vh - var(--bar) - var(--s7)); overflow: auto; }
 .plain-lead { font: 400 14px/20px var(--font-sans); color: var(--text-secondary); margin-top: var(--s2); }
@@ -1096,3 +1116,10 @@ code { font-family: var(--font-mono); font-size: 0.85em; }
 .change-list { margin-top: var(--s3); padding-left: 0; display: grid; gap: var(--s2); max-height: 240px; overflow: auto; }
 .change-list li { display: flex; justify-content: space-between; gap: var(--s5); font: 400 15px/22px var(--font-sans); color: var(--text); }
 .change-list li > span:first-child { min-width: 0; }
+
+/* Settings: every field's whole value can be copied, as one CSV line for lists */
+.field-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s2) var(--s4); }
+.copy-field { display: inline-flex; align-items: center; gap: var(--s2); font-size: 13px; color: var(--text-tertiary); }
+.copy-field:hover:not(:disabled) { color: var(--text); }
+.copy-field:disabled { color: var(--text-disabled); cursor: default; }
+.copy-field .icon { flex: none; }

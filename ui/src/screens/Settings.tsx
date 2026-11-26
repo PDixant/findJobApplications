@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   api, send, type Changes, type KeysData, type KeyStatus, type PlainCheck, type PlainSummary, type RegionValue,
@@ -43,7 +43,8 @@ const TABS: { id: TabId; label: string; sections: string[] }[] = [
 
 const id = (section: string, key: string) => `${section}.${key}`;
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
-type SearchPreview = { searches: { site: string | null; query: string; mine: boolean }[]; pages_per_query: number };
+type SearchPreview = { searches: { site: string | null; query: string; mine: boolean; removed?: boolean }[]; pages_per_query: number };
+const tidy = (q: string) => q.split(/\s+/).filter(Boolean).join(" ");
 
 export function Settings() {
   const client = useQueryClient();
@@ -95,9 +96,14 @@ export function Settings() {
   const value = (section: string, f: SettingField) => (id(section, f.key) in draft ? draft[id(section, f.key)] : f.value);
   // The search's own title list only matters when it isn't using your job filter's titles.
   const hidden = (s: SettingsData["sections"][number], f: SettingField) => {
+    if (s.id === "search" && f.key === "skipped_queries") return true;  // managed from the search list below
     if (s.id !== "search" || f.key !== "titles") return false;
     const sameTitles = s.fields.find((x) => x.key === "same_titles_as_jobs");
     return Boolean(sameTitles && value("search", sameTitles));
+  };
+  const listValue = (section: SettingsData["sections"][number], key: string) => {
+    const field = section.fields.find((f) => f.key === key);
+    return field ? ((value(section.id, field) as string[]) ?? []) : [];
   };
   const set = (section: string, key: string, v: unknown) => {
     setJustSaved(false);
@@ -155,16 +161,31 @@ export function Settings() {
             <section key={s.id} className="card settings-section" aria-labelledby={`sec-${s.id}`}>
               <h2 id={`sec-${s.id}`}>{s.title}</h2>
               {s.fields.filter((f) => !hidden(s, f)).map((f) => (
-                <Field key={f.key} field={f} value={value(s.id, f)} changed={Boolean(changes[s.id] && f.key in changes[s.id])}
-                  onChange={(v) => set(s.id, f.key, v)} />
+                <Fragment key={f.key}>
+                  <Field field={f} value={value(s.id, f)} changed={Boolean(changes[s.id] && f.key in changes[s.id])}
+                    onChange={(v) => set(s.id, f.key, v)} />
+                  {s.id === "search" && f.key === "my_queries" && <QueryHelp />}
+                </Fragment>
               ))}
               {s.id === "alerts" && <PhoneAlerts />}
               {s.id === "search" && (
                 <SearchList data={preview ?? saved.data} unsaved={dirty}
-                  onEdit={(q) => {
-                    const mine = (value("search", s.fields.find((f) => f.key === "my_queries")!) as string[]) ?? [];
-                    if (!mine.includes(q)) set("search", "my_queries", [...mine, q]);
-                  }} />
+                  onEdit={(q, mine) => {
+                    if (!mine) {
+                      // copy it into your own searches, and take the built one out so it doesn't run twice
+                      const own = listValue(s, "my_queries");
+                      if (!own.map(tidy).includes(q)) set("search", "my_queries", [...own, q]);
+                      const skipped = listValue(s, "skipped_queries");
+                      if (!skipped.map(tidy).includes(q)) set("search", "skipped_queries", [...skipped, q]);
+                    }
+                    editYourSearch(q);
+                  }}
+                  onRemove={(q, mine) => {
+                    if (mine) set("search", "my_queries", listValue(s, "my_queries").filter((x) => tidy(x) !== q));
+                    else set("search", "skipped_queries", [...listValue(s, "skipped_queries"), q]);
+                  }}
+                  onRestore={(q) => set("search", "skipped_queries",
+                    q === null ? [] : listValue(s, "skipped_queries").filter((x) => tidy(x) !== q))} />
               )}
             </section>
           ))}
@@ -315,7 +336,7 @@ function Field({ field, value, changed, onChange }: {
   const inputId = `f-${field.key}`;
   let control;
   if (kind === "list") control = <Chips value={(value as string[]) ?? []} onChange={onChange} label={label} />;
-  else if (kind === "lines") control = <Lines value={(value as string[]) ?? []} onChange={onChange} label={label} />;
+  else if (kind === "lines") control = <Lines id={inputId} value={(value as string[]) ?? []} onChange={onChange} label={label} />;
   else if (kind === "number")
     control = <input id={inputId} type="number" min={0} value={String(value ?? "")}
       onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))} />;
@@ -335,7 +356,10 @@ function Field({ field, value, changed, onChange }: {
   return (
     <div className={`field ${changed ? "is-changed" : ""} ${kind === "regions" || kind === "lines" ? "wide" : ""}`}>
       <div className="field-label">
-        <span><label htmlFor={inputId}>{label}</label></span>
+        <span className="field-name">
+          <label htmlFor={inputId}>{label}</label>
+          {kind !== "bool" && <CopyField kind={kind} value={value} label={label} />}
+        </span>
         <small>{field.help}</small>
       </div>
       <div className="field-control">{control}</div>
@@ -343,15 +367,68 @@ function Field({ field, value, changed, onChange }: {
   );
 }
 
+/** A setting's whole value as one CSV line: items split by commas, and an item with a comma, quote or
+ *  line break in it wrapped in quotes (its quotes doubled), so it pastes cleanly into a spreadsheet. */
+export function asCsv(items: unknown[]) {
+  return items.map((item) => {
+    const text = String(item ?? "");
+    return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  }).join(", ");
+}
+
+function fieldText(kind: string, value: unknown): string {
+  if (kind === "regions") return asCsv(((value as RegionValue[]) ?? []).map((r) => r.name));
+  if (Array.isArray(value)) return asCsv(value);
+  return value === null || value === undefined ? "" : String(value);
+}
+
+async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    // older webviews: copy through a hidden text box
+    const box = document.createElement("textarea");
+    box.value = text;
+    box.setAttribute("readonly", "");
+    box.style.position = "fixed";
+    box.style.opacity = "0";
+    document.body.appendChild(box);
+    box.select();
+    const ok = document.execCommand("copy");
+    box.remove();
+    if (!ok) throw new Error("copy failed");
+  }
+}
+
+/** Copy: the field's whole value to the clipboard, as CSV. */
+function CopyField({ kind, value, label }: { kind: string; value: unknown; label: string }) {
+  const text = fieldText(kind, value);
+  const count = Array.isArray(value) ? value.length : 0;
+  async function copy() {
+    try {
+      await copyText(text);
+      toast(Array.isArray(value) ? `Copied ${label} (${count}) as CSV.` : `Copied ${label}.`, "good");
+    } catch {
+      toast("Couldn't reach the clipboard. Select the text and press Ctrl+C instead.", "bad");
+    }
+  }
+  return (
+    <button type="button" className="text-button copy-field" onClick={copy} disabled={!text}
+      aria-label={`Copy ${label}`} title={Array.isArray(value) ? "Copy all of it as one comma-separated (CSV) line" : "Copy"}>
+      <Icon name="copy" size={14} /> Copy
+    </button>
+  );
+}
+
 /** One item per line, for long values such as search queries. Keeps your typing as is and saves the
  *  non-empty lines. */
-function Lines({ value, onChange, label }: { value: string[]; onChange: (v: string[]) => void; label: string }) {
+function Lines({ id, value, onChange, label }: { id?: string; value: string[]; onChange: (v: string[]) => void; label: string }) {
   const [text, setText] = useState(value.join("\n"));
   useEffect(() => {
     setText((t) => (same(t.split("\n").map((x) => x.trim()).filter(Boolean), value) ? t : value.join("\n")));
   }, [value]);
   return (
-    <textarea className="lines-input" value={text} aria-label={label} spellCheck={false}
+    <textarea id={id} className="lines-input" value={text} aria-label={label} spellCheck={false}
       rows={Math.min(8, Math.max(3, text.split("\n").length + 1))}
       placeholder={'site:jobs.ashbyhq.com intitle:"Frontend" ("Vancouver" OR "Remote")'}
       onChange={(e) => {
@@ -361,35 +438,120 @@ function Lines({ value, onChange, label }: { value: string[]; onChange: (v: stri
   );
 }
 
-/** Exactly what each web search sends, as you edit. A built search can be copied into your own
- *  list to change it. */
-function SearchList({ data, unsaved, onEdit }: {
-  data: SearchPreview | undefined; unsaved: boolean; onEdit: (query: string) => void;
+/** Bring Your own searches into view, focused, with this search selected so you can change it. */
+function editYourSearch(query: string) {
+  window.setTimeout(() => {
+    const box = document.getElementById("f-my_queries") as HTMLTextAreaElement | null;
+    if (!box) return;
+    box.scrollIntoView({ behavior: "smooth", block: "center" });
+    box.focus({ preventScroll: true });
+    const lines = box.value.split("\n");
+    let at = 0;
+    for (const line of lines) {
+      if (tidy(line) === query) {
+        box.setSelectionRange(at, at + line.length);
+        return;
+      }
+      at += line.length + 1;
+    }
+    box.setSelectionRange(box.value.length, box.value.length);
+  }, 60);  // after the copy lands in the box
+}
+
+/** Exactly what each web search sends, as you edit. Any search can be edited or removed; a built one
+ *  you edit becomes yours, and a removed built one waits under Removed searches until you bring it back. */
+function SearchList({ data, unsaved, onEdit, onRemove, onRestore }: {
+  data: SearchPreview | undefined; unsaved: boolean;
+  onEdit: (query: string, mine: boolean) => void;
+  onRemove: (query: string, mine: boolean) => void;
+  onRestore: (query: string | null) => void;
 }) {
   if (!data) return null;
-  const count = data.searches.length;
+  const running = data.searches.filter((q) => !q.removed);
+  const removed = data.searches.filter((q) => q.removed);
+  const count = running.length;
   return (
     <div className="search-list" id="search-list">
       <h3>{unsaved ? "Searches with your unsaved changes" : "Searches each run sends"}</h3>
       <p className="hint">
         {count
           ? `${count} ${count === 1 ? "search" : "searches"}, each reading up to ${data.pages_per_query} result ${data.pages_per_query === 1 ? "page" : "pages"}: up to ${count * data.pages_per_query} queries a run.`
-          : "Nothing to search: pick at least one job site, or add searches of your own."}
+          : "Nothing to search: pick at least one job site, bring back a removed search, or add searches of your own."}
       </p>
       <ol>
-        {data.searches.map((q) => (
+        {running.map((q) => (
           <li key={q.query}>
             <code>{q.query}</code>
-            {q.mine ? <span>Yours</span> : (
-              <button type="button" className="text-button" onClick={() => onEdit(q.query)}
-                title="Copies it into Your own searches, where you can change it. Then turn off Built searches if you only want yours.">
-                Edit as my own
+            <span className="search-actions">
+              {q.mine && <span className="search-yours">Yours</span>}
+              <button type="button" className="text-button" onClick={() => onEdit(q.query, q.mine)}
+                title={q.mine ? "Change it in Your own searches" : "Copies it into Your own searches to change, and takes the built one out so it doesn't run twice"}>
+                Edit
               </button>
-            )}
+              <button type="button" className="text-button" onClick={() => onRemove(q.query, q.mine)}
+                aria-label={`Remove search: ${q.query}`}>
+                Remove
+              </button>
+            </span>
           </li>
         ))}
       </ol>
+      {removed.length > 0 && (
+        <details className="removed-searches">
+          <summary>Removed searches ({removed.length})</summary>
+          <p className="hint">These don't run. They stay off while their wording matches; change your titles, places or sites and the new searches built from them run.</p>
+          <ol>
+            {removed.map((q) => (
+              <li key={q.query}>
+                <code>{q.query}</code>
+                <span className="search-actions">
+                  <button type="button" className="text-button" onClick={() => onRestore(q.query)}>Bring back</button>
+                </span>
+              </li>
+            ))}
+          </ol>
+          {removed.length > 1 && <button type="button" className="text-button" onClick={() => onRestore(null)}>Bring all back</button>}
+        </details>
+      )}
+      <p className="hint">Removing or editing a search takes effect when you save.</p>
     </div>
+  );
+}
+
+const HELP_SITES: [string, string][] = [
+  ["Ashby", "jobs.ashbyhq.com"], ["Greenhouse", "greenhouse.io"], ["Lever", "jobs.lever.co"],
+  ["Workable", "apply.workable.com"], ["SmartRecruiters", "jobs.smartrecruiters.com"], ["Workday", "myworkdayjobs.com"],
+];
+
+/** A short guide to writing your own search, under the box you type them in. */
+function QueryHelp() {
+  return (
+    <details className="query-help">
+      <summary>How to write a search</summary>
+      <p>Each line is one web search, sent exactly as you type it. Pathfinder keeps only the results that link to a job board, then starts watching each company it finds.</p>
+      <table className="query-help-table">
+        <thead><tr><th scope="col">Write</th><th scope="col">What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>site:jobs.lever.co</code></td><td>Only results from that job board. Start every search with one.</td></tr>
+          <tr><td><code>"Full Stack"</code></td><td>These exact words, together.</td></tr>
+          <tr><td><code>intitle:"Frontend"</code></td><td>The words must be in the page title, which is usually the job title.</td></tr>
+          <tr><td><code>"Toronto" OR "Remote"</code></td><td>Either one. OR must be in capitals.</td></tr>
+          <tr><td><code>( … )</code></td><td>Groups OR choices, so they don't mix with the rest.</td></tr>
+          <tr><td><code>-India</code></td><td>Leave out results with this word. Put a phrase in quotes: <code>-"Senior Staff"</code>.</td></tr>
+        </tbody>
+      </table>
+      <p>Put together:</p>
+      <pre><code>{'site:jobs.ashbyhq.com (intitle:"Frontend" OR intitle:"React") ("Vancouver" OR "Remote") -Senior'}</code></pre>
+      <p>Job boards you can use with <code>site:</code></p>
+      <ul className="query-help-sites">
+        {HELP_SITES.map(([name, host]) => <li key={host}>{name}: <code>{host}</code></li>)}
+      </ul>
+      <ul className="query-help-tips">
+        <li>Keep a search under 32 words. Longer ones get cut off by the search service.</li>
+        <li>Each search uses up to one query per result page it reads (Result pages, below), so every search you add counts toward your monthly limit.</li>
+        <li>The easiest start: press Edit on a built search below and change it.</li>
+      </ul>
+    </details>
   );
 }
 

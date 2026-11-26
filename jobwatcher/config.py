@@ -49,7 +49,7 @@ DEFAULTS = {
         "skip_words": ["India"],
         "pages_per_query": 3, "monthly_query_limit": 1000, "new_companies": "watch",
         "country": "", "career_page_lookups_per_run": 50,
-        "same_titles_as_jobs": True, "built_queries": True, "my_queries": [],
+        "same_titles_as_jobs": True, "built_queries": True, "my_queries": [], "skipped_queries": [],
     },
     # 4. Companies' own careers websites
     "career_sites": {"enabled": True, "max_new_pages_per_site": 15},
@@ -589,24 +589,30 @@ def built_searches(host, titles, places, skip_words):
     return [build_query(host, g, places, skip_words) for g in groups]
 
 
-def search_queries(cfg):
+def search_queries(cfg, include_removed=False):
     """Every search a web search sends, in order: the ones built from your sites, titles, places
-    and skip words (unless built_queries is off), then your own, exactly as written."""
+    and skip words (unless built_queries is off), then your own, exactly as written. A built search
+    you removed (skipped_queries) is left out; with include_removed it is listed with removed=True, so
+    Settings can offer it back. A removed search stays off while its wording matches exactly: change
+    your titles, places or sites and the new searches built from them run."""
     s = cfg["search"]
+    skipped = {" ".join(str(q).split()) for q in s.get("skipped_queries") or []}
     out = []
     if s.get("built_queries", True):
         titles = search_titles(cfg)
         for site in s["sites"]:
             host = SEARCH_SITES.get(str(site).lower())
             if host:
-                out += [{"site": str(site).lower(), "query": q, "mine": False}
-                        for q in built_searches(host, titles, s["places"], s["skip_words"])]
+                for q in built_searches(host, titles, s["places"], s["skip_words"]):
+                    removed = q in skipped
+                    if include_removed or not removed:
+                        out.append({"site": str(site).lower(), "query": q, "mine": False, "removed": removed})
     seen = {q["query"] for q in out}
     for q in s.get("my_queries") or []:
         q = " ".join(str(q).split())
         if q and q not in seen:
             seen.add(q)
-            out.append({"site": None, "query": q, "mine": True})
+            out.append({"site": None, "query": q, "mine": True, "removed": False})
     return out
 
 

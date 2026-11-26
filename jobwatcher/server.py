@@ -930,13 +930,13 @@ def create_app(token, dev=False, schedule=False):
             _, cfg = settings_module.apply_changes(text, body.get("changes") or {})
         except ConfigError as exc:
             raise HTTPException(400, str(exc)) from None
-        return {"explain": describe_config(cfg), "summary": summarize_config(cfg), "searches": search_queries(cfg),
+        return {"explain": describe_config(cfg), "summary": summarize_config(cfg), "searches": search_queries(cfg, include_removed=True),
                 "pages_per_query": cfg["search"]["pages_per_query"]}
 
     @app.get("/api/search/queries")
     def search_list():
         cfg = config_or_fail()
-        return {"searches": search_queries(cfg), "pages_per_query": cfg["search"]["pages_per_query"]}
+        return {"searches": search_queries(cfg, include_removed=True), "pages_per_query": cfg["search"]["pages_per_query"]}
 
     @app.put("/api/settings")
     def put_settings(body: dict = Body(...)):

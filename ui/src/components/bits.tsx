@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, 
 // Kanso icons: 24 px grid, 1.5 px stroke, butt caps, mitred joins. They support labels, never replace them
 // (except close, search and the link arrow).
 const PATHS: Record<string, ReactNode> = {
+  copy: <><rect x="8.25" y="8.25" width="11.5" height="11.5" rx="2" /><path d="M15.75 8.25V4.25H4.25V15.75H8.25" /></>,
   close: <path d="M6 6l12 12M18 6 6 18" />,
   search: <><circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5 20 20" /></>,
   down: <path d="M6 9l6 6 6-6" />,

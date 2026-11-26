@@ -164,6 +164,11 @@ skip_words = ["India"]
 # words above. Set to false to run only your own searches (below).
 built_queries = true
 
+# Built searches you've removed (Settings, Finding companies: Remove on a search).
+# Each stays off while its wording matches exactly; change your titles, places or
+# sites and the new searches built from them run.
+skipped_queries = []
+
 # Your own searches, sent exactly as written (Google search syntax). Keep a
 # site: part so the results link to job boards; other links are ignored. Each
 # one uses up to pages_per_query queries per search. For example:

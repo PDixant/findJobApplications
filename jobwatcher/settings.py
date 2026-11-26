@@ -35,6 +35,8 @@ FIELDS = {
         ("places", "list", "The posting must mention one of these places"),
         ("skip_words", "list", "Leave out postings that contain any of these words"),
         ("built_queries", "bool", "Run one search per job site built from the sites, titles, places and skip words above"),
+        ("skipped_queries", "lines", "Built searches you removed, one per line. Each stays off while its wording matches; "
+                                     "change your titles, places or sites and the new searches built from them run"),
         ("my_queries", "lines", "Your own searches, one per line, sent exactly as written (Google search syntax). "
                                 "Keep site: in each so results link to job boards; other links are ignored"),
         ("pages_per_query", "number", "Result pages (10 results each) to read per search. 3 to 5 is plenty: "
