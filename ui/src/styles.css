@@ -53,7 +53,9 @@
   /* space: 4 px base, 8 px rhythm */
   --s1: 2px; --s2: 4px; --s3: 8px; --s4: 12px; --s5: 16px; --s6: 24px;
   --s7: 32px; --s8: 48px; --s9: 64px; --s10: 96px; --s11: 128px;
-  --margin: 64px;
+  --margin: clamp(20px, 4vw, 96px); /* page margins grow and shrink with the window */
+  --content-max: 1200px; /* Kanso content-max: pages sit centred at this width, the rest is even space either side */
+  --content-wide: 1440px; /* Jobs, Pipeline and Companies: tables and boards need the room */
   --bar: 64px;
 
   /* shape */
@@ -335,17 +337,19 @@ input[type="checkbox"]:focus-visible { outline: 2px solid var(--light); outline-
 .segmented button:focus-visible { border-radius: var(--r-pill); }
 
 /* tabs: text, with the active line beneath that slides between them */
-.tabs { position: relative; display: flex; gap: var(--s7); }
+.tabs { position: relative; display: flex; gap: var(--s7); overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
 .tab {
   position: relative; height: 40px; padding: 0; border: 0; background: none; cursor: pointer;
   font: 400 16px/24px var(--font-sans); color: var(--text-tertiary); transition: color var(--quick) var(--glide);
 }
+.tabs > * { flex: none; white-space: nowrap; } /* on narrow screens the tabs scroll sideways rather than wrap */
 .tab:hover { color: var(--text); }
 .tab.is-active { color: var(--text); font-weight: 500; }
 .tab .num { margin-left: var(--s3); font-weight: 400; color: var(--text-tertiary); }
 .tab-light {
   position: absolute; left: 0; bottom: 0; width: 20px; height: 2px; border-radius: 1px; background: var(--light);
-  transition: transform var(--base) var(--glide);
+  transition: transform var(--base) var(--glide), width var(--base) var(--glide);
 }
 
 /* badges: the only caps in Kanso; one per row at most */
@@ -464,10 +468,11 @@ input[type="checkbox"]:focus-visible { outline: 2px solid var(--light); outline-
 .run-more .popover { bottom: calc(100% + 8px); left: -8px; width: 280px; }
 .offline-note { display: flex; gap: var(--s3); align-items: center; font: 400 13px/16px var(--font-sans); color: var(--negative); }
 
-.content { position: relative; height: 100%; overflow: auto; scroll-behavior: smooth; }
+.content { --page-max: var(--content-max); position: relative; height: 100%; overflow: auto; scroll-behavior: smooth; }
+.content.is-wide { --page-max: var(--content-wide); }
 .topbar {
   position: sticky; top: 0; z-index: 8; display: flex; align-items: center; justify-content: space-between; gap: var(--s5);
-  height: var(--bar); padding: 0 var(--margin); background: var(--canvas);
+  height: var(--bar); padding: 0 max(var(--margin), calc((100% - var(--page-max)) / 2)); background: var(--canvas);
   transition: box-shadow var(--quick) var(--glide);
 }
 .topbar.is-scrolled { box-shadow: 0 1px 0 var(--line-hair); }
@@ -486,8 +491,9 @@ input[type="checkbox"]:focus-visible { outline: 2px solid var(--light); outline-
 .update-list li { padding-left: var(--s5); position: relative; }
 .update-list li::before { content: ""; position: absolute; left: 0; top: 9px; width: 8px; height: 1px; background: var(--line-strong); }
 
-/* the page: a long bonnet (128 px from the top of the window), content up to 1200 px */
-.page { max-width: calc(1200px + 2 * var(--margin)); padding: calc(var(--s11) - var(--bar)) var(--margin) var(--s10); }
+/* the page: a long bonnet (128 px from the top of the window), centred, content up to 1200 px
+   (1440 px on the table and board screens), with the margins growing evenly on both sides */
+.page { width: 100%; max-width: calc(var(--page-max) + 2 * var(--margin)); margin: 0 auto; padding: calc(var(--s11) - var(--bar)) var(--margin) var(--s10); }
 .page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--s5) var(--s7); padding-bottom: var(--s6); }
 .page-head h1 { font: 400 32px/38px var(--font-display); letter-spacing: -0.005em; }
 .page-head .lede { flex: 0 0 100%; max-width: none; padding-right: max(0px, calc(100% - 68ch)); margin-top: calc(-1 * var(--s3)); color: var(--text-secondary); }
@@ -550,7 +556,7 @@ button.row:focus-visible { border-radius: var(--r-s); }
 @keyframes reveal { from { opacity: 0; transform: translateY(8px); } }
 
 /* tables: crisp, on the paper itself */
-.table-wrap { min-width: 0; }
+.table-wrap { min-width: 0; overflow-x: auto; }
 table.data { width: 100%; border-collapse: collapse; table-layout: fixed; font: 400 14px/20px var(--font-sans); letter-spacing: 0.005em; }
 .data th {
   position: sticky; top: var(--bar); z-index: 2; height: 40px; padding: 0 var(--s4); background: var(--canvas); text-align: left;
@@ -1049,7 +1055,6 @@ code { font-family: var(--font-mono); font-size: 0.85em; }
   .data .col-pay, .data .col-score, .data .col-where { display: none; }
 }
 @media (max-width: 1180px) {
-  :root { --margin: 40px; }
   .dash-grid, .settings-layout { grid-template-columns: minmax(0, 1fr); }
   .plain { position: static; max-height: none; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1079,6 +1084,23 @@ code { font-family: var(--font-mono); font-size: 0.85em; }
   .sheet { inset: 0; width: auto; border-radius: 0; }
   .toolbar .search-input { flex-basis: 100%; }
   .welcome-body h2 { font-size: 40px; line-height: 44px; }
+  .tabs { gap: var(--s5); }
+  .board { grid-template-columns: repeat(6, minmax(220px, 80vw)); scroll-snap-type: x mandatory; }
+  .board-col { scroll-snap-align: start; }
+  .modal { padding: var(--s6); }
+  .sheet-head, .sheet-body, .sheet-foot { padding-left: var(--s5); padding-right: var(--s5); }
+}
+/* phones */
+@media (max-width: 520px) {
+  .page-head h1 { font-size: 28px; line-height: 34px; }
+  .stats { grid-template-columns: minmax(0, 1fr); }
+  .card { padding: var(--s5); }
+  .search-list li { grid-template-columns: minmax(0, 1fr); }
+  .search-actions { justify-content: flex-start; }
+  .theme-choice { grid-template-columns: 20px minmax(0, 1fr); }
+  .theme-choice .theme-swatch, .theme-choice .theme-preview { display: none; }
+  .save-bar { flex-wrap: wrap; }
+  .toolbar > * { flex: 1 1 100%; }
 }
 
 /* motion off: every movement becomes a 120 ms fade, the sweep stops, progress shows still */
@@ -1123,3 +1145,5 @@ code { font-family: var(--font-mono); font-size: 0.85em; }
 .copy-field:hover:not(:disabled) { color: var(--text); }
 .copy-field:disabled { color: var(--text-disabled); cursor: default; }
 .copy-field .icon { flex: none; }
+
+.search-pager { margin-top: var(--s4); }

@@ -557,34 +557,43 @@ def test_your_own_searches():
          "my_queries": ['site:jobs.ashbyhq.com   "React"  Canada', "", 'site:jobs.ashbyhq.com "React" Canada']}
     cfg = {**base, "search": s}
     got = search_queries(cfg)
-    assert [q["mine"] for q in got] == [False, False, True]  # built ones first, yours once, spaces tidied
-    assert got[0]["query"] == 'site:jobs.ashbyhq.com (intitle:"Frontend") ("Vancouver")'
-    assert got[2]["query"] == 'site:jobs.ashbyhq.com "React" Canada'
+    assert [q["mine"] for q in got] == [False, True]  # built first (both sites in one), yours once, spaces tidied
+    assert got[0]["query"] == '(site:jobs.ashbyhq.com OR site:jobs.lever.co) (intitle:"Frontend") ("Vancouver")'
+    assert got[0]["site"] == "ashby,lever"
+    assert got[1]["query"] == 'site:jobs.ashbyhq.com "React" Canada'
     assert [q["mine"] for q in search_queries({**cfg, "search": {**s, "built_queries": False}})] == [True]
     assert search_queries({**cfg, "search": {**s, "built_queries": False, "my_queries": []}}) == []
     # a built search you removed doesn't run, but Settings still lists it so you can bring it back
-    lever = got[1]["query"]
-    skipping = {**cfg, "search": {**s, "skipped_queries": [lever.replace(" ", "  ")]}}
-    assert lever not in [q["query"] for q in search_queries(skipping)]
+    built = got[0]["query"]
+    skipping = {**cfg, "search": {**s, "skipped_queries": [built.replace(" ", "  ")]}}
+    assert built not in [q["query"] for q in search_queries(skipping)]
     listed = search_queries(skipping, include_removed=True)
-    assert [q["removed"] for q in listed] == [False, True, False] and listed[1]["query"] == lever
+    assert [q["removed"] for q in listed] == [True, False] and listed[0]["query"] == built
     assert settings._clean("lines", "site:a.com one\n\n  site:b.com  two ", "x") == ["site:a.com one", "site:b.com two"]
     with pytest.raises(jw.ConfigError):
         settings._clean("lines", ["site:a.com " + "x" * 2100], "Your own searches")
     assert "(yours)" in jw.describe_config(cfg)
 
-    # Same titles as the job filter: every title is searched, split so no search passes 32 words
+    # Same titles as the job filter: every distinct title and every site is searched, in as few
+    # searches as fit 32 words each; titles a search already covers are left out
     titles = ["Software Engineer", "Software Developer", "Web Developer", "Frontend", "Front End", "Front-End",
-              "Full Stack", "Full-Stack", "Fullstack", "UI Engineer", "Product Engineer", "React", "JavaScript"]
+              "Full Stack", "Full-Stack", "Fullstack", "UI Engineer", "Product Engineer", "React", "JavaScript",
+              "Senior Frontend Engineer", "react"]
     s2 = {**base["search"], "sites": ["ashby", "greenhouse", "lever"], "same_titles_as_jobs": True,
-          "places": ["Toronto", "Vancouver", "Ottawa", "Canada"], "skip_words": ["India"], "my_queries": []}
+          "places": ["Toronto", "Vancouver", "Ottawa", "Canada", "canada"], "skip_words": ["India", "India"], "my_queries": []}
     built = search_queries({**base, "titles_include": titles, "search": s2})
-    per_site = [q for q in built if q["site"] == "ashby"]
-    assert len(per_site) >= 2 and len(built) == 3 * len(per_site)
     assert all(query_words(q["query"]) <= MAX_QUERY_WORDS for q in built)
-    searched = " ".join(q["query"] for q in per_site)
-    assert all(f'intitle:"{t}"' in searched for t in titles)
-    assert all("-India" in q["query"] and '"Canada"' in q["query"] for q in built)
+    searched = " ".join(q["query"] for q in built)
+    distinct = ["Software Engineer", "Software Developer", "Web Developer", "Frontend", "Front End", "Full Stack",
+                "Fullstack", "UI Engineer", "Product Engineer", "React", "JavaScript"]
+    assert all(f'intitle:"{t}"' in searched for t in distinct)
+    for gone in ("Front-End", "Full-Stack", "Senior Frontend Engineer", "react"):
+        assert f'intitle:"{gone}"' not in searched
+    for host in ("jobs.ashbyhq.com", "greenhouse.io", "jobs.lever.co"):  # each site with every title
+        assert all(f'intitle:"{t}"' in " ".join(q["query"] for q in built if f"site:{host}" in q["query"]) for t in distinct)
+    one_each = len(jw.config.built_searches("jobs.ashbyhq.com", distinct, s2["places"], ["India"]))
+    assert len(built) < 3 * one_each  # fewer than one set of searches per site
+    assert all(q["query"].count("-India") == 1 and q["query"].count('"Canada"') == 1 for q in built)
 
 
 def test_a_half_merged_file_is_not_copied(tmp_path, monkeypatch):
@@ -678,3 +687,47 @@ def test_pathfinder_logo_files():
     assert frames == {16: "bmp", 24: "bmp", 32: "bmp", 48: "bmp", 64: "bmp", 128: "bmp", 256: "png"}
     assert "Pathfinder" in (assets / "logo.svg").read_text(encoding="utf-8")
     assert desktop.use_own_taskbar_icon("linux") is False  # only Windows needs its own taskbar ID
+
+
+@pytest.mark.skipif(__import__("shutil").which("git") is None, reason="needs git")
+def test_edits_to_the_shared_files_move_into_yours(tmp_path):
+    """Someone types their settings straight into config.toml (the shared file) instead of Settings.
+    Pathfinder reads my_settings.toml, and an update puts config.toml back, so those edits used to
+    vanish. Now they move into my_settings.toml (and my_companies.csv) first, and a copy is kept."""
+    import subprocess
+    from jobwatcher.config import config_from_text, keep_shared_file_edits, make_my_copies
+    home = tmp_path / "clone"
+    home.mkdir()
+    shared_cfg = (Path(jw.__file__).resolve().parent.parent / "config.toml").read_text(encoding="utf-8")
+    (home / "config.toml").write_text(shared_cfg, encoding="utf-8")
+    (home / "companies.csv").write_text("priority,region,company,board,slug\n1,Canada,Shared Co,greenhouse,shared\n",
+                                        encoding="utf-8")
+    git = lambda *a: subprocess.run(["git", "-C", str(home), *a], check=True, capture_output=True)
+    git("init", "-q")
+    git("-c", "user.email=t@t", "-c", "user.name=t", "add", "config.toml", "companies.csv")
+    git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "shared")
+    make_my_copies(home)
+    # a setting changed in the app first, which the hand edits must not undo
+    mine = home / "my_settings.toml"
+    mine.write_text(mine.read_text(encoding="utf-8").replace("max_age_hours = 24", "max_age_hours = 48"), encoding="utf-8")
+    edited = (shared_cfg.replace('provider = "serper"', 'provider = "serpapi"')
+              .replace('sites = ["ashby", "greenhouse", "lever"]', 'sites = ["ashby", "workday"]')
+              .replace('places = ["Toronto", "Vancouver", "Ottawa", "Canada"]', 'places = ["Surrey", "BC"]')
+              .replace('"Victoria", "Kelowna"]', '"Victoria", "Kelowna", "Abbotsford"]')
+              .replace("# parallel_requests = 8", "parallel_requests = 4"))
+    assert edited != shared_cfg
+    (home / "config.toml").write_text(edited, encoding="utf-8")
+    with (home / "companies.csv").open("a", encoding="utf-8") as f:
+        f.write("2,Canada,Hand Added,lever,handadded\n")
+
+    assert keep_shared_file_edits(home, force=True) == ["config.toml", "companies.csv"]
+    cfg, _ = config_from_text(mine.read_text(encoding="utf-8"))
+    s = cfg["search"]
+    assert s["provider"] == "serpapi" and s["sites"] == ["ashby", "workday"] and s["places"] == ["Surrey", "BC"]
+    assert "Abbotsford" in cfg["regions"][0]["match"] and cfg["max_posted_age_hours"] == 48
+    assert "parallel_requests = 4" in mine.read_text(encoding="utf-8")
+    assert (home / "config.toml").read_text(encoding="utf-8") == shared_cfg  # the shared file is back
+    assert (home / "config.toml.your-edits").read_text(encoding="utf-8") == edited
+    assert "Hand Added" in (home / "my_companies.csv").read_text(encoding="utf-8")
+    assert "Hand Added" not in (home / "companies.csv").read_text(encoding="utf-8")
+    assert keep_shared_file_edits(home, force=True) == []  # nothing left to move

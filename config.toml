@@ -138,7 +138,7 @@ provider = "serper"
 
 # How many times a day to search.
 # Each search uses up to (number of searches) x (pages_per_query) queries:
-# one built search per site below, plus your own my_queries.
+# the built searches (as few as cover every site and title), plus your own my_queries.
 runs_per_day = 2
 
 # How far back each search looks: "day", "week" or "month".
@@ -147,8 +147,9 @@ look_back = "day"
 # Job sites to search. Any of: ashby, greenhouse, lever, workable, smartrecruiters, workday
 sites = ["ashby", "greenhouse", "lever"]
 
-# true: search for the same titles as [jobs] titles above. A long list is split
-# over several searches per site, so no search passes Google's 32-word limit.
+# true: search for the same titles as [jobs] titles above. Repeats such as
+# "Front-End" after "Front End" are left out, and a long list is split so no
+# search passes Google's 32-word limit.
 same_titles_as_jobs = true
 
 # The titles to search for when same_titles_as_jobs = false.
@@ -160,8 +161,9 @@ places = ["Toronto", "Vancouver", "Ottawa", "Canada"]
 # Leave out postings that contain any of these words.
 skip_words = ["India"]
 
-# Run one search per job site built from the sites, titles, places and skip
-# words above. Set to false to run only your own searches (below).
+# Build searches from the sites, titles, places and skip words above: as few as
+# cover them all, asking several sites at once (site:a OR site:b) where they fit.
+# Set to false to run only your own searches (below).
 built_queries = true
 
 # Built searches you've removed (Settings, Finding companies: Remove on a search).

@@ -59,9 +59,10 @@ Every result links to a company's job board, so new companies are added and read
 
 **Seeing and editing the searches.** **Settings → Finding companies** lists every search exactly as it will be sent, updated as you edit:
 
-- **Same titles as Which jobs** searches for your job titles. A long list is split over a few searches, because Google ignores words past the 32nd.
-- **Your own searches**: one per line, in Google's search syntax. Keep a `site:` part so results link to job boards.
-- **Edit as my own** copies a built search into your list so you can change it. Turn off **Built searches** to run only yours.
+- **Built searches** are as few as cover every job site and title. One search can ask several job sites at once (`(site:jobs.lever.co OR site:greenhouse.io)`), since each result's link names its own job board. Repeated titles are left out ("Front-End" after "Front End", or "Senior Frontend Engineer" when "Frontend" is there), and the rest are split so no search passes 32 words, the most Google reads.
+- **Same titles as Which jobs** searches for your job titles instead of a separate list.
+- **Your own searches**: one per line, in Google's search syntax. Keep a `site:` part so results link to job boards. **How to write a search**, under the box, explains the syntax.
+- **Edit** on any search puts it in **Your own searches**, selected and ready to change, and takes the built one out so it doesn't run twice. **Remove** turns a search off; removed built searches wait under **Removed searches** to be brought back. Turn off **Built searches** to run only yours.
 
 > [!IMPORTANT]
 > Each search reads up to **Pages per search** result pages, so a run uses about *searches × pages* queries. 3 pages is plenty. **Monthly search limit** is a hard stop.

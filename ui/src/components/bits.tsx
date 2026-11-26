@@ -86,15 +86,21 @@ export function Mesh() {
 
 // ------------------------------------------------------------------ controls
 
-/** Text tabs with the active line beneath; the line slides to the tab you pick. */
+/** Text tabs with the active line beneath, as wide as the chosen tab; it slides to the tab you pick. */
 export function Tabs<T extends string>({ items, active, onPick, label }: {
   items: { id: T; label: string; count?: number | string }[]; active: T; onPick: (id: T) => void; label: string;
 }) {
   const refs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const [x, setX] = useState<number | null>(null);
+  const [line, setLine] = useState<{ x: number; w: number } | null>(null);
   useLayoutEffect(() => {
     const el = refs.current[active];
-    if (el) setX(el.offsetLeft);
+    if (!el) return;
+    const measure = () => setLine({ x: el.offsetLeft, w: el.offsetWidth });
+    measure();
+    // the width changes when the fonts arrive or a count updates
+    const watch = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
+    watch?.observe(el);
+    return () => watch?.disconnect();
   }, [active, items.length]);
   return (
     <nav className="tabs" aria-label={label}>
@@ -104,7 +110,7 @@ export function Tabs<T extends string>({ items, active, onPick, label }: {
           {t.label}{t.count != null && t.count !== "" && <span className="num">{t.count}</span>}
         </button>
       ))}
-      {x != null && <span className="tab-light" style={{ transform: `translateX(${x}px)` }} aria-hidden="true" />}
+      {line && <span className="tab-light" style={{ width: line.w, transform: `translateX(${line.x}px)` }} aria-hidden="true" />}
     </nav>
   );
 }

@@ -460,16 +460,23 @@ function editYourSearch(query: string) {
 
 /** Exactly what each web search sends, as you edit. Any search can be edited or removed; a built one
  *  you edit becomes yours, and a removed built one waits under Removed searches until you bring it back. */
+const SEARCHES_PER_PAGE = 5;
+
 function SearchList({ data, unsaved, onEdit, onRemove, onRestore }: {
   data: SearchPreview | undefined; unsaved: boolean;
   onEdit: (query: string, mine: boolean) => void;
   onRemove: (query: string, mine: boolean) => void;
   onRestore: (query: string | null) => void;
 }) {
+  const [page, setPage] = useState(1);
+  const running = data ? data.searches.filter((q) => !q.removed) : [];
+  const pages = Math.max(1, Math.ceil(running.length / SEARCHES_PER_PAGE));
+  useEffect(() => { if (page > pages) setPage(pages); }, [page, pages]);  // after a removal empties the last page
   if (!data) return null;
-  const running = data.searches.filter((q) => !q.removed);
   const removed = data.searches.filter((q) => q.removed);
   const count = running.length;
+  const at = (Math.min(page, pages) - 1) * SEARCHES_PER_PAGE;
+  const shown = running.slice(at, at + SEARCHES_PER_PAGE);
   return (
     <div className="search-list" id="search-list">
       <h3>{unsaved ? "Searches with your unsaved changes" : "Searches each run sends"}</h3>
@@ -479,7 +486,7 @@ function SearchList({ data, unsaved, onEdit, onRemove, onRestore }: {
           : "Nothing to search: pick at least one job site, bring back a removed search, or add searches of your own."}
       </p>
       <ol>
-        {running.map((q) => (
+        {shown.map((q) => (
           <li key={q.query}>
             <code>{q.query}</code>
             <span className="search-actions">
@@ -496,6 +503,13 @@ function SearchList({ data, unsaved, onEdit, onRemove, onRestore }: {
           </li>
         ))}
       </ol>
+      {pages > 1 && (
+        <div className="pager search-pager">
+          <button type="button" className="button small" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
+          <span className="num">{n(at + 1)}–{n(at + shown.length)} of {n(count)}</span>
+          <button type="button" className="button small" disabled={page >= pages} onClick={() => setPage(page + 1)}>Next</button>
+        </div>
+      )}
       {removed.length > 0 && (
         <details className="removed-searches">
           <summary>Removed searches ({removed.length})</summary>

@@ -227,8 +227,14 @@ def _apply_git():
                             "git merge --abort, then press Update again.")
     status = git("status", "--porcelain", "--untracked-files=no").stdout or ""
     dirty = [line[3:].strip().strip('"') for line in status.splitlines() if len(line) > 3]
+    if any(d in SHARED_FILES for d in dirty):
+        # edits typed into the shared files move into yours first (my_settings.toml, my_companies.csv),
+        # so the update never throws them away
+        from .config import keep_shared_file_edits, make_my_copies
+        make_my_copies(ROOT)
+        keep_shared_file_edits(ROOT, force=True)
     for name in [d for d in dirty if d in SHARED_FILES]:
-        git("checkout", "--", name)  # the shared copy goes back; yours is in my_settings.toml / my_companies.csv
+        git("checkout", "--", name)  # the shared copy goes back; your edits are in my_settings.toml / my_companies.csv
     others = [d for d in dirty if d not in SHARED_FILES]
     if others:
         listed = ", ".join(others[:5]) + (" and more" if len(others) > 5 else "")

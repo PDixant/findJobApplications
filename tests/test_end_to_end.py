@@ -84,14 +84,16 @@ def fake_board(provider):
 
 
 def fake_search(provider, key, query, page, look_back, country=""):
+    """Results from every job site the search asks for (one search can ask several: site:a OR site:b)."""
+    results = []
     if "greenhouse.io" in query:
-        return [("https://job-boards.greenhouse.io/newgh/jobs/1", "Job Application for Senior Software Developer at NewGH"),
-                ("https://boards.greenhouse.io/knowngh/jobs/1", "Job Application for Software Engineer at Known GH")]
+        results += [("https://job-boards.greenhouse.io/newgh/jobs/1", "Job Application for Senior Software Developer at NewGH"),
+                    ("https://boards.greenhouse.io/knowngh/jobs/1", "Job Application for Software Engineer at Known GH")]
     if "lever.co" in query:
-        return [("https://jobs.lever.co/clio/abc", "Clio - Software Developer II")]
+        results += [("https://jobs.lever.co/clio/abc", "Clio - Software Developer II")]
     if "ashbyhq" in query:
-        return [("https://jobs.ashbyhq.com/fresh-startup/uuid", "Web Developer @ Fresh Startup")]
-    return []
+        results += [("https://jobs.ashbyhq.com/fresh-startup/uuid", "Web Developer @ Fresh Startup")]
+    return results
 
 
 @pytest.fixture(scope="module", autouse=True)

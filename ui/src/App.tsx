@@ -22,6 +22,8 @@ import { Pipeline, usePipeline } from "./screens/Pipeline";
 // One paint per screen. Structural is the default; the application journey wears Nori; Settings is ink.
 // A paint chosen in Settings, Appearance replaces this and is worn on every screen.
 const PAINT: Partial<Record<Screen, string>> = { pipeline: "nori", outreach: "nori", settings: "sumi" };
+// Screens built around wide tables and boards get more room; the rest keep Kanso's 1200 px measure.
+const WIDE = new Set<Screen>(["jobs", "postings", "pipeline", "companies"]);
 const TITLES: Record<Screen, string> = {
   dashboard: "Today", jobs: "Jobs", postings: "Jobs", pipeline: "Pipeline", outreach: "Outreach",
   companies: "Companies", activity: "Activity", settings: "Settings",
@@ -121,7 +123,7 @@ export function App() {
         {!live.connected && <p className="offline-note" style={{ marginTop: 12 }}><Icon name="alert" />Reconnecting to the app</p>}
       </aside>
 
-      <main className="content" ref={content} onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 48)}>
+      <main className={`content ${WIDE.has(route.screen) ? "is-wide" : ""}`} ref={content} onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 48)}>
         <header className={`topbar ${scrolled ? "is-scrolled" : ""}`}>
           <span className="topbar-title" aria-hidden={!scrolled}>{TITLES[route.screen]}</span>
           <div className="topbar-end"><UpdateNotice /></div>

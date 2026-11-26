@@ -346,6 +346,158 @@ def make_my_copies(home=None):
     return made
 
 
+_edits_checked = False
+
+
+def _shared_at_head(home, name):
+    """The shared file as git last had it (the version your edits were made on), or None."""
+    r = _git(home, "show", f"HEAD:{name}")
+    return r.stdout if r is not None and r.returncode == 0 else None
+
+
+def _differs(home, name):
+    r = _git(home, "diff", "--quiet", "HEAD", "--", name)
+    return r is not None and r.returncode == 1
+
+
+def keep_shared_file_edits(home=None, force=False):
+    """Run by an update, just before it puts the shared files back to git's version: edits typed
+    straight into config.toml or companies.csv are moved into yours, my_settings.toml and
+    my_companies.csv. Before, an update put the shared files back and those edits were lost; now
+    nothing you typed is thrown away. It never runs on its own at startup, so editing the shared
+    defaults while working on Pathfinder is left alone.
+    Only settings you changed move across, so anything you changed in the app since stays. A copy of
+    the edited file is kept as config.toml.your-edits (companies.csv.your-edits) as well.
+    Returns the names of the shared files whose edits were moved."""
+    global _edits_checked
+    home = Path(home or BASE)
+    if home == BASE and not force:
+        if _edits_checked:
+            return []
+        _edits_checked = True
+    if not (home / ".git").exists():
+        return []
+    moved = []
+    if (home / MY_SETTINGS).exists() and tracked_by_git(home, "config.toml") and _differs(home, "config.toml"):
+        if _move_settings_edits(home):
+            moved.append("config.toml")
+    if (home / MY_COMPANIES).exists() and tracked_by_git(home, "companies.csv") and _differs(home, "companies.csv"):
+        if _move_company_edits(home):
+            moved.append("companies.csv")
+    return moved
+
+
+def _keep_copy_and_reset(home, name):
+    shutil.copy2(home / name, home / f"{name}.your-edits")
+    _git(home, "checkout", "--", name)
+
+
+def _move_settings_edits(home):
+    import tomlkit
+    from . import settings as settings_mod
+    shared, edited = _shared_at_head(home, "config.toml"), (home / "config.toml").read_text(encoding="utf-8-sig")
+    if shared is None:
+        return False
+    if CONFLICT_MARKERS.search(edited):
+        # a half-finished merge can't be read, so keep it whole for you to copy from
+        _keep_copy_and_reset(home, "config.toml")
+        log.warning("config.toml had an unfinished git merge in it, so its settings couldn't be moved into %s. "
+                    "It's kept as config.toml.your-edits; copy any values you need from it in Settings.", MY_SETTINGS)
+        return True
+    try:
+        before, after = tomllib.loads(shared), tomllib.loads(edited)
+    except tomllib.TOMLDecodeError as exc:
+        _keep_copy_and_reset(home, "config.toml")
+        log.warning("config.toml couldn't be read (%s), so it's kept as config.toml.your-edits and put back.", exc)
+        return True
+    kinds = {s: {k for k, _kind, _ in fields} for s, fields in settings_mod.FIELDS.items()}
+    known, other = {}, {}
+    for section, values in after.items():
+        if not isinstance(values, dict):
+            continue
+        for key, value in values.items():
+            if before.get(section, {}).get(key) == value:
+                continue  # unchanged from the shared file
+            if key in kinds.get(section, ()):
+                if section == "places" and key == "region":
+                    value = [{"name": r.get("name", ""), "color": r.get("color", ""), "match": r.get("match", [])}
+                             for r in value]
+                known.setdefault(section, {})[key] = value
+            else:
+                other.setdefault(section, {})[key] = value
+    if not known and not other:
+        _git(home, "checkout", "--", "config.toml")  # only spacing or notes changed
+        return False
+    mine = home / MY_SETTINGS
+    text = mine.read_text(encoding="utf-8-sig")
+    text, _cfg = settings_mod.apply_changes(text, known)
+    doc = tomlkit.parse(text)
+    for section, values in other.items():
+        table = doc.get(section)
+        if table is None:
+            table = tomlkit.table()
+            doc.add(section, table)
+        for key, value in values.items():
+            table[key] = value
+    text = tomlkit.dumps(doc)
+    config_from_text(text)  # still loads, or this raises and nothing changes
+    tmp = mine.with_suffix(".saving.toml")
+    tmp.write_text(text, encoding="utf-8")
+    replace_file(tmp, mine)
+    _keep_copy_and_reset(home, "config.toml")
+    changed = [f"{s}.{k}" for part in (known, other) for s, vals in part.items() for k in vals]
+    log.info("You had changed config.toml (the shared settings). Pathfinder moved those changes into %s, "
+             "which is the file it reads, and put config.toml back: %s. A copy of your edited file is "
+             "config.toml.your-edits.", MY_SETTINGS, ", ".join(changed))
+    return True
+
+
+def _move_company_edits(home):
+    import csv
+    import io
+    shared = _shared_at_head(home, "companies.csv")
+    edited_path, mine = home / "companies.csv", home / MY_COMPANIES
+    if shared is None or CONFLICT_MARKERS.search(edited_path.read_text(encoding="utf-8-sig", errors="replace")):
+        _keep_copy_and_reset(home, "companies.csv")
+        return True
+    before = {tuple(r) for r in csv.reader(io.StringIO(shared))}
+    with edited_path.open(encoding="utf-8-sig", newline="") as f:
+        edited = list(csv.reader(f))
+    with mine.open(encoding="utf-8-sig", newline="") as f:
+        rows = list(csv.reader(f))
+    if not edited or not rows:
+        _keep_copy_and_reset(home, "companies.csv")
+        return True
+    head, my_head = edited[0], rows[0]
+    if "company" not in head or "company" not in my_head:
+        _keep_copy_and_reset(home, "companies.csv")
+        return True
+    at, my_at = head.index("company"), my_head.index("company")
+    where = {r[my_at].strip().lower(): i for i, r in enumerate(rows[1:], 1) if len(r) > my_at}
+    added = 0
+    for r in edited[1:]:
+        if tuple(r) in before or len(r) <= at or not r[at].strip():
+            continue  # unchanged, or empty
+        row = [r[head.index(c)] if c in head and head.index(c) < len(r) else "" for c in my_head]
+        i = where.get(r[at].strip().lower())
+        if i is None:
+            rows.append(row)
+            where[r[at].strip().lower()] = len(rows) - 1
+        else:
+            rows[i] = row
+        added += 1
+    if added:
+        tmp = mine.with_suffix(".saving.csv")
+        with tmp.open("w", encoding="utf-8", newline="") as f:
+            csv.writer(f).writerows(rows)
+        replace_file(tmp, mine)
+        log.info("You had changed companies.csv (the shared list). Pathfinder moved %d compan%s into %s and put "
+                 "companies.csv back. A copy of your edited file is companies.csv.your-edits.",
+                 added, "y" if added == 1 else "ies", MY_COMPANIES)
+    _keep_copy_and_reset(home, "companies.csv")
+    return True
+
+
 def load_config():
     """Read your settings (or the older config.json). Raises ConfigError with a readable reason."""
     global _config_notice_shown
@@ -565,8 +717,29 @@ MAX_QUERY_WORDS = 32  # Google (and Serper, which uses it) ignores words past th
 
 
 def query_words(query):
-    """Words as a search engine counts them, erring high: operators and OR count too."""
-    return len(re.sub(r'["()]', " ", query).split())
+    """Words as a search engine counts them, erring high: operators and OR count too. An operator
+    joined to its first word (intitle:"Front End", site:jobs.lever.co) counts with that word."""
+    return len(re.sub(r'["()]', " ", query.replace(':"', ":")).split())
+
+
+def _words(text):
+    """A title or place as the words a search matches: case, hyphens and extra spaces don't matter
+    ("Front-End" and "front end" are the same search)."""
+    return tuple(re.sub(r"[-_/]+", " ", str(text)).lower().split())
+
+
+def distinct_terms(terms):
+    """Terms with the ones a search would already cover taken out, keeping your order: exact repeats
+    ("Front-End" after "Front End"), and longer ones containing a shorter one ("Senior Frontend
+    Engineer" when "Frontend" is there, since a title with "Frontend" in it matches either way)."""
+    kept = []
+    for t in terms:
+        w = _words(t)
+        if w and w not in [_words(k) for k in kept]:
+            kept.append(str(t).strip())
+    def covered(w, by):
+        return len(by) < len(w) and any(w[i:i + len(by)] == by for i in range(len(w) - len(by) + 1))
+    return [t for t in kept if not any(covered(_words(t), _words(o)) for o in kept if o is not t)]
 
 
 def search_titles(cfg):
@@ -575,18 +748,38 @@ def search_titles(cfg):
     return list(cfg.get("titles_include") or []) if s.get("same_titles_as_jobs", True) else list(s["titles"])
 
 
-def built_searches(host, titles, places, skip_words):
-    """One search per site, or more when there are too many titles for one: titles are split
-    across searches so none passes the search engine's word limit."""
-    titles = [t for t in titles if str(t).strip()]
+def _title_groups(hosts, titles, places, skip_words):
+    """Titles split into as few groups as fit the word limit alongside these sites."""
     groups, group = [], []
     for t in titles:
-        if group and query_words(build_query(host, group + [t], places, skip_words)) > MAX_QUERY_WORDS:
+        if group and query_words(build_query(hosts, group + [t], places, skip_words)) > MAX_QUERY_WORDS:
             groups.append(group)
             group = []
         group.append(t)
     groups.append(group)
-    return [build_query(host, g, places, skip_words) for g in groups]
+    return groups
+
+
+def built_searches(hosts, titles, places, skip_words):
+    """As few searches as cover every job site and every title. Results only tell Pathfinder which
+    companies exist (each link names its own job board), so one search can ask several sites at once:
+    (site:a OR site:b). Repeated and already-covered titles and places are dropped first, then sites
+    and titles are grouped so no search passes the search engine's word limit, picking the grouping
+    with the fewest searches (and, when two tie, the one asking fewer sites per search, which leaves
+    more room on each result page for every site)."""
+    hosts = [hosts] if isinstance(hosts, str) else list(dict.fromkeys(hosts))
+    titles = distinct_terms(t for t in titles if str(t).strip())
+    places = distinct_terms(p for p in places if str(p).strip())
+    skip = list(dict.fromkeys(str(w).strip() for w in skip_words if str(w).strip()))
+    if not hosts:
+        return []
+    best = None
+    for size in range(1, len(hosts) + 1):
+        site_groups = [hosts[i:i + size] for i in range(0, len(hosts), size)]
+        plan = [(sg, tg) for sg in site_groups for tg in _title_groups(sg, titles, places, skip)]
+        if best is None or len(plan) < len(best):
+            best = plan
+    return [build_query(sg, tg, places, skip) for sg, tg in best]
 
 
 def search_queries(cfg, include_removed=False):
@@ -599,14 +792,12 @@ def search_queries(cfg, include_removed=False):
     skipped = {" ".join(str(q).split()) for q in s.get("skipped_queries") or []}
     out = []
     if s.get("built_queries", True):
-        titles = search_titles(cfg)
-        for site in s["sites"]:
-            host = SEARCH_SITES.get(str(site).lower())
-            if host:
-                for q in built_searches(host, titles, s["places"], s["skip_words"]):
-                    removed = q in skipped
-                    if include_removed or not removed:
-                        out.append({"site": str(site).lower(), "query": q, "mine": False, "removed": removed})
+        hosts = [SEARCH_SITES[str(site).lower()] for site in s["sites"] if str(site).lower() in SEARCH_SITES]
+        for q in built_searches(hosts, search_titles(cfg), s["places"], s["skip_words"]):
+            removed = q in skipped
+            if include_removed or not removed:
+                sites = [name for name, host in SEARCH_SITES.items() if f"site:{host}" in q]
+                out.append({"site": ",".join(sites), "query": q, "mine": False, "removed": removed})
     seen = {q["query"] for q in out}
     for q in s.get("my_queries") or []:
         q = " ".join(str(q).split())
@@ -616,10 +807,12 @@ def search_queries(cfg, include_removed=False):
     return out
 
 
-def build_query(host, titles, places, skip_words):
+def build_query(hosts, titles, places, skip_words):
+    """One search: a site (or several, ORed), any of the titles, any of the places, none of the skip words."""
     def quoted(t):
         return '"' + str(t).replace('"', "").strip() + '"'
-    parts = [f"site:{host}"]
+    hosts = [hosts] if isinstance(hosts, str) else list(hosts)
+    parts = [f"site:{hosts[0]}" if len(hosts) == 1 else "(" + " OR ".join(f"site:{h}" for h in hosts) + ")"]
     if titles:
         parts.append("(" + " OR ".join(f"intitle:{quoted(t)}" for t in titles) + ")")
     if places:
